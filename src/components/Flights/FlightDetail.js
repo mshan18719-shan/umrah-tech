@@ -378,6 +378,7 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
                 padding={0}
                 radius="lg"
                 lockScroll
+                zIndex={2000}
                 classNames={{
                     inner: styles.modalInner,
                     content: styles.modalContent,

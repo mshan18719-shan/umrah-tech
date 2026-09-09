@@ -269,4 +269,8 @@
   .bottomBar > div {
     margin-bottom: 0.5rem;
   }
+
+  .ctaTitle {
+    font-size: 25px;
+  }
 }
