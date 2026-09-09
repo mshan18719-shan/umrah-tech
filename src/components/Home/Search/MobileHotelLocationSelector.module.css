@@ -1,0 +1,306 @@
+/* Covers the layout viewport so the iOS keyboard cannot reveal the page. */
+.screenCover {
+    position: fixed;
+    top: -100vh;
+    left: -20px;
+    right: -20px;
+    bottom: -100vh;
+    width: auto;
+    min-height: 300vh;
+    background-color: #ffffff;
+    z-index: 9999998;
+    pointer-events: none;
+}
+
+/* Mobile Hotel Location Selector - Full Screen Modal */
+.mobileLocationSelector {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100% !important;
+    min-height: -webkit-fill-available !important;
+    background-color: #ffffff !important;
+    z-index: 9999999 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 0 100vmax #ffffff;
+}
+
+/* Header Section */
+.header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.closeButton {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #333;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+    background-color: #f5f5f5;
+}
+
+.closeButton:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #222;
+    text-align: center;
+}
+
+/* Search Container */
+.searchContainer {
+    padding: 16px 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+    z-index: 99;
+}
+
+.searchWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 16px;
+    color: #999;
+    font-size: 18px;
+    pointer-events: none;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 14px 48px 14px 48px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.2s ease;
+    background-color: #f8f9fa;
+}
+
+.searchInput:focus {
+    border-color: #28a745;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.clearSearchButton {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.clearSearchButton:hover {
+    background-color: #f0f0f0;
+    color: #d32f2f;
+}
+
+.clearSearchButton:active {
+    transform: scale(0.95);
+}
+
+/* Location List Container */
+.locationListContainer {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: #ffffff;
+    -webkit-overflow-scrolling: touch;
+    z-index: 1;
+}
+
+/* Section */
+.section {
+    margin-bottom: 0;
+}
+
+/* Section Header */
+.sectionHeader {
+    position: sticky;
+    top: 0;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sectionIcon {
+    font-size: 14px;
+    color: #28a745;
+}
+
+/* Location Option */
+.locationOption {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f5f5f5;
+    background-color: #ffffff;
+    position: relative;
+}
+
+.locationOption:active {
+    background-color: #f0f0f0;
+}
+
+.selectedLocation {
+    background-color: #e8f5e9 !important;
+    border-left: 3px solid #28a745;
+    padding-left: 17px;
+}
+
+.selectedLocation:active {
+    background-color: #dcedc8 !important;
+}
+
+.checkIcon {
+    margin-left: auto;
+    padding-left: 12px;
+    color: #28a745;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.locationIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background-color: #f0f2f5;
+    border-radius: 12px;
+    margin-right: 14px;
+    flex-shrink: 0;
+}
+
+.locationIcon {
+    color: #666;
+    font-size: 22px;
+}
+
+.selectedLocation .locationIcon {
+    color: #28a745;
+}
+
+.selectedLocation .locationIconWrapper {
+    background-color: #c8e6c9;
+}
+
+.locationDetails {
+    flex: 1;
+    min-width: 0;
+}
+
+.locationName {
+    font-size: 16px;
+    font-weight: 500;
+    color: #222;
+    line-height: 1.3;
+    margin-bottom: 4px;
+}
+
+.locationCountry {
+    font-size: 14px;
+    color: #999;
+    line-height: 1.4;
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    min-height: 300px;
+}
+
+.emptyIcon {
+    font-size: 64px;
+    color: #ddd;
+    margin-bottom: 16px;
+}
+
+.emptyText {
+    font-size: 16px;
+    color: #999;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Animations */
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.mobileLocationSelector {
+    animation: slideUp 0.3s ease-out;
+}

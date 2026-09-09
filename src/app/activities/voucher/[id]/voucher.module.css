@@ -1,0 +1,521 @@
+/* ═══════════════════════════════════════════════════════════════
+   ACTIVITY BOOKING VOUCHER — confirmation receipt style
+   Palette: teal #0a6b6b · amber #d4a017 · white · soft grey
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Wrapper & Container ─────────────────────────────────────── */
+.invoicecontainerwrap {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #333;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    background-color: #dce8e8;
+}
+
+.invoicecontainer {
+    width: 860px;
+    padding: 20px 15px;
+    margin: 20px auto;
+    position: relative;
+    z-index: 5;
+}
+
+.themeholyinvoice {
+    position: relative;
+    z-index: 4;
+    background-color: #ffffff;
+    border: 1px solid #b2d0d0;
+}
+
+.downloadinner {
+    padding: 28px 32px;
+}
+
+/* ─── Confirmation Banner ─────────────────────────────────────── */
+.confirmBanner {
+    background: #0a6b6b;
+    padding: 20px 28px;
+    margin: -28px -32px 24px -32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 3px solid #d4a017;
+}
+
+.confirmLeft h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 2px 0;
+    letter-spacing: 0.4px;
+}
+
+.confirmLeft p {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.confirmBadge {
+    background: #d4a017;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 16px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ─── Voucher Ref Row ──────────────────────────────────────────── */
+.refRow {
+    display: flex;
+    gap: 0;
+    margin-bottom: 22px;
+    border: 1px solid #b2d0d0;
+}
+
+.refBox {
+    flex: 1;
+    padding: 12px 18px;
+    background: #f4fafa;
+    border-right: 1px solid #b2d0d0;
+}
+
+.refBox:last-child {
+    border-right: none;
+    text-align: right;
+}
+
+.refBox small {
+    display: block;
+    font-size: 10px;
+    color: #0a6b6b;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.refBox strong {
+    font-size: 14px;
+    color: #111;
+    font-weight: 700;
+}
+
+/* ─── Activity Highlight Card ─────────────────────────────────── */
+.activityCard {
+    background: #f4fafa;
+    border: 1px solid #b2d0d0;
+    border-left: 4px solid #0a6b6b;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+
+.activityTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0a6b6b;
+    margin: 0 0 4px 0;
+}
+
+.activityAddress {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 14px;
+}
+
+.activityMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.metaPill {
+    background: #fff;
+    border: 1px solid #b2d0d0;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 2px;
+}
+
+.metaPill strong {
+    color: #0a6b6b;
+}
+
+.starRow {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 2px;
+}
+
+/* ─── Section Header ──────────────────────────────────────────── */
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 0;
+}
+
+.sectionHeader h6 {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    background: #0a6b6b;
+    padding: 7px 16px;
+    margin: 0 !important;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    border-left: 4px solid #d4a017;
+    flex: 1;
+}
+
+/* ─── Passenger Info Grid ─────────────────────────────────────── */
+.passengerBlock {
+    border: 1px solid #b2d0d0;
+    border-top: none;
+    margin-bottom: 20px;
+}
+
+.passengerGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+}
+
+.passengerGridWide {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+
+.passengerCell {
+    padding: 12px 16px;
+    border-right: 1px solid #e0eded;
+    border-bottom: 1px solid #e0eded;
+}
+
+.passengerCell:nth-child(3n) {
+    border-right: none;
+}
+
+.passengerCellWide {
+    padding: 12px 16px;
+    border-right: 1px solid #e0eded;
+    border-bottom: none;
+}
+
+.passengerCellWide:last-child {
+    border-right: none;
+}
+
+.passengerCell small,
+.passengerCellWide small {
+    display: block;
+    font-size: 10px;
+    color: #0a6b6b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.passengerCell strong,
+.passengerCellWide strong {
+    font-size: 13px;
+    color: #222;
+    font-weight: 600;
+}
+
+.statusPill {
+    display: inline-block;
+    background: #e6f4f0;
+    color: #0a6b6b;
+    border: 1px solid #a3d4c6;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    letter-spacing: 0.3px;
+}
+
+/* ─── Guest List ──────────────────────────────────────────────── */
+.guestBlock {
+    border: 1px solid #b2d0d0;
+    border-top: none;
+    margin-bottom: 20px;
+}
+
+.guestRow {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e0eded;
+    gap: 16px;
+}
+
+.guestRow:last-child {
+    border-bottom: none;
+}
+
+.guestAvatar {
+    width: 32px;
+    height: 32px;
+    background: #0a6b6b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d4a017;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.guestName {
+    font-size: 13px;
+    font-weight: 600;
+    color: #222;
+    flex: 1;
+}
+
+.guestMeta {
+    font-size: 11px;
+    color: #777;
+}
+
+.guestTypeBadge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: #e6f4f0;
+    color: #0a6b6b;
+    border: 1px solid #a3d4c6;
+}
+
+/* ─── Traveler Count Block ────────────────────────────────────── */
+.travelerBlock {
+    border: 1px solid #b2d0d0;
+    border-top: none;
+    margin-bottom: 20px;
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.travelerPill {
+    background: #f4fafa;
+    border: 1px solid #b2d0d0;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 140px;
+}
+
+.travelerPill .count {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0a6b6b;
+    line-height: 1;
+}
+
+.travelerPill .label {
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* ─── Additional Services ─────────────────────────────────────── */
+.servicesBlock {
+    border: 1px solid #b2d0d0;
+    border-top: none;
+    margin-bottom: 20px;
+}
+
+.serviceRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e0eded;
+}
+
+.serviceRow:last-child {
+    border-bottom: none;
+}
+
+.serviceRow:nth-child(even) {
+    background: #f9fdfd;
+}
+
+.serviceName {
+    font-size: 13px;
+    color: #333;
+}
+
+.serviceQty {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0a6b6b;
+    background: #e6f4f0;
+    border: 1px solid #a3d4c6;
+    padding: 2px 10px;
+}
+
+/* ─── Footer Note ─────────────────────────────────────────────── */
+.invoicenote {
+    border-top: 1px solid #b2d0d0;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin-top: 24px;
+}
+
+.invoicenote b {
+    color: #0a6b6b;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────── */
+@media screen and (max-width: 998px) {
+    .invoicecontainer {
+        width: 99%;
+    }
+
+    .invmobile100 {
+        width: 100% !important;
+    }
+
+    .passengerGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .passengerCell:nth-child(3n) {
+        border-right: 1px solid #e0eded;
+    }
+
+    .passengerCell:nth-child(2n) {
+        border-right: none;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .confirmBanner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .passengerGrid,
+    .passengerGridWide {
+        grid-template-columns: 1fr;
+    }
+
+    .passengerCell,
+    .passengerCellWide {
+        border-right: none;
+    }
+
+    .travelerBlock {
+        flex-direction: column;
+    }
+}
+
+/* ─── Print ───────────────────────────────────────────────────── */
+@media print {
+
+    #voucher,
+    #voucher * {
+        visibility: visible;
+    }
+
+    #voucher {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    .invoicecontainerwrap {
+        width: 100% !important;
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .invoicecontainer {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .themeholyinvoice {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+    }
+
+    .downloadinner {
+        padding: 20px !important;
+    }
+
+    .confirmBanner {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: #0a6b6b !important;
+    }
+
+    .confirmBadge {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: #d4a017 !important;
+    }
+
+    .sectionHeader h6 {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: #0a6b6b !important;
+    }
+
+    .guestAvatar {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .premiumTable thead th {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        background: #d4a84b !important;
+        color: #1a1a1a !important;
+    }
+
+    .invoicecontainerwrap :global(button) {
+        display: none !important;
+    }
+
+    .invoicecontainerwrap :global(.mt-2.text-center) {
+        display: none !important;
+    }
+}

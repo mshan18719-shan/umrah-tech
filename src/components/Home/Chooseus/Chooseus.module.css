@@ -1,0 +1,94 @@
+/* ─── Section ─────────────────────────────────────────────── */
+.section {
+  background-color: #f8fafc;
+  padding: 3rem 0;
+}
+
+/* ─── Header ──────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  margin-bottom: 2.75rem;
+}
+
+.title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #0D1E3D;
+  margin: 0 0 0.75rem;
+  line-height: 40px;
+}
+
+.subtitle {
+  font-size: 14px;
+  width: 44%;
+  min-width: 300px;
+  color: #6B7A99;
+  margin: 0 auto;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* ─── Card ────────────────────────────────────────────────── */
+.card {
+  background: #FFFFFF;
+  border: 1px solid rgba(27, 59, 111, 0.12);
+  border-radius: 16px;
+  padding: 22px;
+  height: 100%;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 28px rgba(13, 30, 61, 0.08);
+  transform: translateY(-3px);
+}
+
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 16px;
+  background-color: #E8F4FD;
+  margin-bottom: 1.1rem;
+}
+
+.icon {
+  font-size: 1.15rem;
+  color: #1B3B6F;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0D1E3D;
+  margin: 0 0 0.6rem;
+  line-height: 1.2;
+}
+
+.cardText {
+  font-size: 12px;
+  color: #6B7A99;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .section {
+    padding: 3.5rem 0;
+  }
+
+  .header {
+    margin-bottom: 2rem;
+  }
+
+  .subtitle {
+    max-width: 100%;
+  }
+
+  .card {
+    padding: 1.5rem 1.25rem;
+  }
+}

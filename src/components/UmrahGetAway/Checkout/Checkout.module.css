@@ -1,0 +1,880 @@
+/* ── Page shell ── */
+.checkoutPage {
+    background: #f9f8f3;
+    min-height: 100vh;
+}
+
+.checkoutContainer {
+    padding-bottom: 3rem;
+}
+
+.checkoutPageHeader {
+    padding: 2rem 0 0.5rem;
+}
+
+.backBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.85rem;
+    padding: 0.45rem 0.9rem 0.45rem 0.7rem;
+    border: 1px solid #ebe7e0;
+    border-radius: 999px;
+    background: #fff;
+    color: #003e29;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.backBtn:hover {
+    background: #f9f8f3;
+    border-color: #d8e8e3;
+    box-shadow: 0 2px 8px rgba(0, 62, 41, 0.06);
+}
+
+.backBtn svg {
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+
+.checkoutPageTitle {
+    margin: 0 0 0.35rem;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+    color: #003e29;
+    line-height: 1.2;
+}
+
+.checkoutPageSub {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #6b7c76;
+}
+
+.checkoutMainCol {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.checkoutSidebar {
+    position: sticky;
+    top: 24px;
+}
+
+/* ── Trip meta bar ── */
+.tripMetaBar {
+    background: #fff;
+    border: 1px solid #ebe7e0;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    min-height: 76px;
+}
+
+.tripMetaGrid {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+}
+
+.tripMetaItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+    padding: 0.9rem 1.1rem;
+    background: #faf8f5;
+    border-right: 1px solid #ebe7e0;
+    transition: background 0.15s ease;
+}
+
+.tripMetaItem:last-child {
+    border-right: none;
+}
+
+.tripMetaItem:hover {
+    background: #f5f2ec;
+}
+
+.tripMetaIconBox {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #ebe7e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c5a059;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+}
+
+.tripMetaContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.tripMetaLabel {
+    margin: 0 0 0.15rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    line-height: 1.2;
+}
+
+.tripMetaValue {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #003e29;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.uheaderWrapper {
+    composes: tripMetaBar;
+}
+
+/* Legacy aliases */
+.tripMetaInner {
+    composes: tripMetaGrid;
+}
+
+.tripMetaChip {
+    composes: tripMetaItem;
+}
+
+.uheaderInfoBox {
+    composes: tripMetaItem;
+}
+
+/* ── Section cards ── */
+.sectionCard {
+    background: #fff;
+    border: 1px solid #ebe7e0;
+    border-radius: 16px;
+    padding: 1.25rem 1.35rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.sectionHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.usectiontitleIconBox {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #003e29;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.usectiontitleIcon {
+    color: #fff;
+}
+
+.usectiontitleTitle {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #003e29;
+    margin-bottom: 0.15rem;
+    line-height: 1.25;
+}
+
+.usectiontitleSubtitle {
+    font-size: 0.82rem;
+    color: #6b7c76;
+    margin-bottom: 0;
+}
+
+.usectiontitleBadge {
+    background: #e8f5f1;
+    color: #003e29;
+    border: 1px solid #c8e6dc;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.75rem;
+}
+
+/* ── Flight section ── */
+.flightDetailBox {
+    background: #f9f8f3;
+    border: 1px solid #ebe7e0;
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: 0.85rem;
+}
+
+.flightDetailBox:last-child {
+    margin-bottom: 0;
+}
+
+.flightLegBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.flightLegBadgeDeparture {
+    background: #e8f5f1;
+    color: #003e29;
+}
+
+.flightLegBadgeReturn {
+    background: #f5e6dc;
+    color: #8b6914;
+}
+
+.flightInnerWrap {
+    background: transparent;
+    padding: 0;
+}
+
+/* ── Hotel section ── */
+.hotelContentRow {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 0.25rem;
+}
+
+@media (min-width: 768px) {
+    .hotelContentRow {
+        flex-direction: row;
+    }
+}
+
+.hotelImageBox {
+    width: 100%;
+    max-width: 200px;
+    height: 150px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #f5f3ef;
+    flex-shrink: 0;
+}
+
+.hotelImageBox img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hotelName {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #003e29;
+    margin: 0 0 0.35rem;
+}
+
+.hotelAddress {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    color: #6b7c76;
+    margin: 0 0 0.65rem;
+}
+
+.hotelAddress svg {
+    color: #16a34a;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.hotelDates {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+}
+
+.hotelDatesLabel {
+    color: #8a9a94;
+}
+
+.hotelDatesValue {
+    font-weight: 600;
+    color: #003e29;
+}
+
+.hotelRoomDetails {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 0.85rem;
+}
+
+@media (max-width: 575px) {
+    .hotelRoomDetails {
+        grid-template-columns: 1fr;
+    }
+}
+
+.hotelRoomDetailCard {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.75rem 0.85rem;
+    background: #f9f8f3;
+    border: 1px solid #ebe7e0;
+    border-radius: 12px;
+    min-height: 64px;
+}
+
+.hotelRoomDetailIcon {
+    color: #c5a059;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.hotelRoomDetailContent {
+    min-width: 0;
+}
+
+.hotelRoomDetailLabel {
+    display: block;
+    margin: 0 0 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a9a94;
+}
+
+.hotelRoomDetailValue {
+    display: block;
+    margin: 0;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #003e29;
+    line-height: 1.35;
+}
+
+.hotelRoomInfo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+    padding: 0.65rem 0.85rem;
+    background: #f9f8f3;
+    border: 1px solid #ebe7e0;
+    border-radius: 12px;
+}
+
+.hotelRoomInfoIcon {
+    color: #c5a059;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.hotelRoomInfoText {
+    margin: 0;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #003e29;
+    line-height: 1.4;
+}
+
+.hotelRoomBoard {
+    color: #6b7c76;
+    font-weight: 500;
+}
+
+.hotelStar {
+    width: 14px;
+    height: 14px;
+    fill: #c5a059;
+    color: #c5a059;
+}
+
+.hotelAmenity {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #e8f5f1;
+    color: #003e29;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.hotelAmenityIcon {
+    width: 14px;
+    height: 14px;
+    color: #003e29;
+}
+
+.hotelAmenitiesRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 1rem;
+}
+
+/* ── Transfer section ── */
+.transferCard {
+    background: #f9f8f3;
+    border: 1px solid #ebe7e0;
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    margin-top: 1rem;
+}
+
+.transferType {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #003e29;
+}
+
+.transferRouteRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.transferRouteLabel {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a9a94;
+    margin: 0 0 0.2rem;
+}
+
+.transferRouteValue {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #003e29;
+    margin: 0;
+}
+
+.transferArrow {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e8f5f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.transferArrowIcon {
+    width: 16px;
+    height: 16px;
+    color: #003e29;
+}
+
+/* ── Visa section ── */
+.visaDescriptionBox {
+    background: #f9f8f3;
+    border: 1px solid #ebe7e0;
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    margin-top: 1rem;
+    font-size: 0.84rem;
+    color: #5a6b65;
+    line-height: 1.55;
+}
+
+.visaChecklistTitle {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #003e29;
+    margin: 1.25rem 0 0.75rem;
+}
+
+.visaCheckItem {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.82rem;
+    color: #4b5563;
+}
+
+.visaCheckIcon {
+    width: 18px;
+    height: 18px;
+    color: #003e29;
+    flex-shrink: 0;
+}
+
+.visaAlertBox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: #fffbf0;
+    border: 1px solid #f0e4c8;
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    margin-top: 1rem;
+}
+
+.visaAlertIcon {
+    width: 18px;
+    height: 18px;
+    color: #c5a059;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ── Price summary ── */
+.summaryCard {
+    background: #fff;
+    border: 1px solid #ebe7e0;
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+}
+
+.summaryCardHeader {
+    padding: 1.15rem 1.35rem;
+    border-bottom: 1px solid #f0ede8;
+}
+
+.summaryCardTitle {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #003e29;
+}
+
+.summaryCardBody {
+    padding: 1.25rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.84rem;
+}
+
+.summaryRowLabel {
+    color: #6b7c76;
+}
+
+.summaryRowValue {
+    font-weight: 600;
+    color: #1a1a2e;
+    text-align: right;
+}
+
+.summaryDivider {
+    border: none;
+    border-top: 1px dashed #dce8e3;
+    margin: 0;
+}
+
+.summaryTotalRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.summaryTotalLabel {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #003e29;
+}
+
+.visaTotalAmount {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #003e29;
+    line-height: 1.1;
+    text-align: right;
+}
+
+.summaryVatNote {
+    display: block;
+    text-align: center;
+    font-size: 0.68rem;
+    color: #3d8b6e;
+    font-weight: 500;
+}
+
+/* Legacy alias */
+.visaCard {
+    composes: summaryCard;
+}
+
+/* ── Actions ── */
+.checkoutActions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.confirmBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    border: none;
+    border-radius: 999px;
+    background: #003e29;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 4px 16px rgba(0, 62, 41, 0.22);
+}
+
+.confirmBtn:hover {
+    background: #004c3d;
+    box-shadow: 0 6px 20px rgba(0, 62, 41, 0.28);
+}
+
+.confirmBtn:active {
+    transform: translateY(1px);
+}
+
+.visaPayButton {
+    composes: confirmBtn;
+    width: 100%;
+    height: 52px;
+    font-size: 1rem;
+}
+
+.visaPayButton:hover {
+    opacity: 1;
+}
+
+/* ── Checkout form ── */
+.checkoutForm :global(.form-label) {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.35rem;
+}
+
+.checkoutForm :global(.form-control),
+.checkoutForm :global(.form-select),
+.checkoutForm :global(.mantine-Input-input) {
+    background-color: #fff !important;
+    border: 1px solid #e4ebe7 !important;
+    border-radius: 10px !important;
+    font-size: 0.88rem;
+    min-height: 42px;
+}
+
+.checkoutForm :global(.form-control:focus),
+.checkoutForm :global(.form-select:focus),
+.checkoutForm :global(.mantine-Input-input:focus) {
+    border-color: #003e29 !important;
+    box-shadow: 0 0 0 3px rgba(0, 62, 41, 0.08) !important;
+}
+
+.checkoutForm :global(.input-group-text) {
+    background: #f9f8f3 !important;
+    border: 1px solid #e4ebe7 !important;
+    border-radius: 10px 0 0 10px !important;
+    color: #003e29;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.checkoutForm :global(.form-check-input:checked) {
+    background-color: #003e29 !important;
+    border-color: #003e29 !important;
+}
+
+.formSectionTitle {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #003e29;
+    margin: 0 0 1rem;
+}
+
+.formSectionNote {
+    font-size: 0.82rem;
+    color: #6b7c76;
+    margin: 0;
+    line-height: 1.55;
+}
+
+.formDivider {
+    border: none;
+    border-top: 1px solid #f0ede8;
+    margin: 1rem 0;
+}
+
+.passengerBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: #e8f5f1;
+    color: #003e29;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.passengerTitle {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #003e29;
+    margin: 0;
+}
+
+.importantInfoBox {
+    background: #fff;
+    border: 1px solid #ebe7e0;
+    border-left: 4px solid #c5a059;
+    border-radius: 14px;
+    padding: 1.25rem 1.35rem;
+    margin-top: 1rem;
+}
+
+.importantInfoTitle {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #003e29;
+    margin: 0 0 0.85rem;
+}
+
+.importantInfoList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.importantInfoList li {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-bottom: 0.55rem;
+    font-size: 0.82rem;
+    color: #5a6b65;
+    line-height: 1.55;
+}
+
+.importantInfoList li:last-child {
+    margin-bottom: 0;
+}
+
+.importantInfoList li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #c5a059;
+}
+
+/* ── Responsive ── */
+@media (max-width: 767px) {
+    .checkoutPageHeader {
+        padding-top: 1.25rem;
+    }
+
+    .checkoutSidebar {
+        position: static;
+    }
+    .hotelImageBox {
+        width: 100%;
+        max-width: 100%;
+     
+    }
+    .checkoutActions {
+        justify-content: stretch;
+    }
+
+    .confirmBtn {
+        width: 100%;
+    }
+
+    .transferRouteRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .transferArrow {
+        align-self: center;
+        transform: rotate(90deg);
+    }
+
+    .tripMetaBar {
+        min-height: auto;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tripMetaGrid {
+        flex-wrap: wrap;
+        min-width: 100%;
+    }
+
+    .tripMetaItem {
+        flex: 1 1 calc(50% - 0.5px);
+        border-right: none;
+        border-bottom: 1px solid #ebe7e0;
+        padding: 0.85rem 1rem;
+    }
+
+    .tripMetaItem:nth-child(odd) {
+        border-right: 1px solid #ebe7e0;
+    }
+
+    .tripMetaItem:nth-last-child(-n+2) {
+        border-bottom: none;
+    }
+
+    .tripMetaValue {
+        font-size: 0.82rem;
+    }
+}

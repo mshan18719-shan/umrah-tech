@@ -1,0 +1,250 @@
+/* Flight Search — Hero variant
+   A dedicated, self-contained stylesheet for the homepage hero's
+   Flight tab. Kept separate from FlightSearchListing.module.css on
+   purpose so nothing here can affect the /flights listing page that
+   already uses that stylesheet. */
+
+.wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* ---------- Top summary row: trip type / passengers / class ---------- */
+.topRow {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #ebe7e0;
+    flex-wrap: wrap;
+}
+
+.topGroup {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.topItem {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.topItem:hover {
+    color: #004c4c;
+}
+
+.topItemActive {
+    color: #0c2c4a;
+}
+
+.topItem svg {
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+.topDivider {
+    width: 1px;
+    height: 16px;
+    background: #ddd8cf;
+    display: inline-block;
+}
+
+/* ---------- Main fields row ---------- */
+.fieldsRow {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.fieldPair {
+    display: flex;
+    align-items: stretch;
+    flex: 1 1 40%;
+    position: relative;
+    min-width: 260px;
+}
+
+.field {
+    flex: 1;
+    min-width: 0;
+    padding: 16px 24px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    position: relative;
+}
+
+.field + .field {
+    border-left: 1px solid #ebe7e0;
+}
+
+.fieldLabel {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: capitalize;
+    line-height: 1.2;
+}
+
+.fieldValue {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fieldPlaceholder {
+    color: #9ca3af;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.fieldSub {
+    font-size: 0.74rem;
+    color: #9ca3af;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Swap icon sitting between the From/To fields */
+.swapIcon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #e0ddd6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0c2c4a;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Departure / Return pair — visually two fields, one shared click
+   target so the single underlying date-range picker still works. */
+.dualDateField {
+    display: flex;
+    align-items: stretch;
+    flex: 1 1 45%;
+    min-width: 300px;
+    position: relative;
+    cursor: pointer;
+}
+
+.dualDateField .field {
+    text-align: right;
+}
+
+.dualDateField .field:first-child {
+    text-align: left;
+}
+
+/* The live Mantine date input is kept functional but invisible,
+   stretched over the whole dual-field so any click/keyboard
+   interaction still opens the real calendar. The formatted text
+   underneath is what's actually visible. */
+.hiddenDateInput {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    z-index: 2;
+}
+
+.hiddenDateInput :global(.mantine-Input-input) {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+/* ---------- Search button ---------- */
+.searchBtnWrap {
+    position: absolute;
+    right: 20px;
+    bottom: -22px;
+    z-index: 4;
+}
+
+.searchBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #0c2c4a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 34px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(12, 44, 74, 0.35);
+    transition: background 0.2s ease, transform 0.15s ease;
+    white-space: nowrap;
+}
+
+.searchBtn:hover {
+    background: #123a5e;
+    transform: translateY(-1px);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 991px) {
+    .topRow {
+        padding: 12px 16px;
+    }
+
+    .fieldsRow {
+        flex-direction: column;
+    }
+
+    .fieldPair,
+    .dualDateField {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .field {
+        padding: 14px 18px;
+    }
+
+    .field + .field {
+        border-left: none;
+        border-top: 1px solid #ebe7e0;
+    }
+
+    .dualDateField {
+        border-top: 1px solid #ebe7e0;
+    }
+
+    .searchBtnWrap {
+        position: static;
+        margin-top: 18px;
+        text-align: center;
+    }
+
+    .searchBtn {
+        width: 100%;
+        border-radius: 0 0 12px 12px;
+    }
+}

@@ -1,0 +1,303 @@
+.wrapper {
+    padding: 2rem 0 3rem;
+}
+
+/* ── Stepper skeleton ────────────────────────────────────────── */
+.stepper {
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px 24px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f0f0f0;
+    margin-bottom: 1.25rem;
+}
+
+.stepperRow {
+    display: flex;
+    align-items: flex-start;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 80px;
+}
+
+.stepCircle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #eef2f4 25%, #f8fafb 50%, #eef2f4 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+.stepLine {
+    width: 52px;
+    height: 10px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #eef2f4 25%, #f8fafb 50%, #eef2f4 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+.stepLineWide {
+    width: 68px;
+}
+
+.connector {
+    flex: 1;
+    height: 2px;
+    margin-top: 20px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #e8ecef 25%, #f5f6f8 50%, #e8ecef 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+/* ── Main card ───────────────────────────────────────────────── */
+.card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #ebe7e0;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.loaderBanner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 24px;
+    background: linear-gradient(135deg, #02245E 0%, #11326a 55%, #1046a3 100%);
+    color: #fff;
+}
+
+.spinnerWrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+}
+
+.spinnerRing {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #fff;
+    animation: spin 0.9s linear infinite;
+}
+
+.spinnerIcon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    color: #fff;
+}
+
+.bannerText {
+    flex: 1;
+    min-width: 0;
+}
+
+.bannerTitle {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.bannerMessage {
+    margin: 0 0 10px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+    min-height: 1.25rem;
+    transition: opacity 0.3s ease;
+}
+
+.progressTrack {
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+.progressBar {
+    height: 100%;
+    width: 40%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #fff, rgba(255, 255, 255, 0.6), #fff);
+    animation: progressSlide 1.6s ease-in-out infinite;
+}
+
+/* ── Content skeleton ────────────────────────────────────────── */
+.skeletonBody {
+    padding: 20px 24px 24px;
+}
+
+.skeletonTitle {
+    height: 22px;
+    width: 42%;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    background: linear-gradient(90deg, #e8ecef 25%, #f5f6f8 50%, #e8ecef 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+.skeletonGrid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 18px;
+}
+
+.skeletonImage {
+    aspect-ratio: 4 / 3;
+    border-radius: 14px;
+    background: linear-gradient(90deg, #e8ecef 25%, #f5f6f8 50%, #e8ecef 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+.skeletonRooms {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skeletonRoom {
+    height: 88px;
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    background: linear-gradient(90deg, #f1f5f8 25%, #fafbfc 50%, #f1f5f8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+.skeletonRoom:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.skeletonRoom:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.skeletonFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f8;
+}
+
+.skeletonBtn {
+    height: 42px;
+    width: 120px;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #e8ecef 25%, #f5f6f8 50%, #e8ecef 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+.skeletonBtnWide {
+    width: 160px;
+}
+
+.chipsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.chip {
+    height: 28px;
+    width: 90px;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #e8f5f0 25%, #f0fdf4 50%, #e8f5f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+.chip:nth-child(2) { width: 110px; animation-delay: 0.1s; }
+.chip:nth-child(3) { width: 80px; animation-delay: 0.2s; }
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes progressSlide {
+    0% { transform: translateX(-120%); }
+    100% { transform: translateX(320%); }
+}
+
+@media (max-width: 768px) {
+    .stepper {
+        padding: 14px 10px;
+    }
+
+    .step {
+        min-width: 0;
+        flex: 1;
+        gap: 6px;
+    }
+
+    .stepCircle {
+        width: 32px;
+        height: 32px;
+    }
+
+    .stepLine {
+        width: 36px;
+        height: 8px;
+    }
+
+    .stepLineWide {
+        width: 44px;
+    }
+
+    .connector {
+        margin-top: 16px;
+    }
+
+    .loaderBanner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 18px 16px;
+        gap: 14px;
+    }
+
+    .skeletonBody {
+        padding: 16px;
+    }
+
+    .skeletonGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .skeletonImage {
+        max-height: 200px;
+    }
+
+    .skeletonFooter {
+        flex-direction: column;
+    }
+
+    .skeletonBtn,
+    .skeletonBtnWide {
+        width: 100%;
+    }
+}

@@ -1,0 +1,329 @@
+/* Policy modal — navy theme (aligned with flight checkout / FlightDetail) */
+
+.modalContent {
+    overflow: hidden !important;
+    border-radius: 16px !important;
+    max-width: min(760px, 95vw) !important;
+    width: 100% !important;
+    box-shadow: 0 20px 50px rgba(15, 35, 70, 0.22) !important;
+    border: 1px solid #e8e4de !important;
+}
+
+.modalBody {
+    padding: 0 !important;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    background: #fff;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(
+        to right,
+        rgba(13, 49, 101, 1),
+        rgba(16, 54, 108, 1),
+        rgba(19, 61, 119, 1),
+        rgba(22, 66, 127, 1),
+        rgba(26, 74, 138, 1)
+    );
+    flex-shrink: 0;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+.closeBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.14);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.24);
+    color: #fff;
+}
+
+.tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 20px;
+    background: #fff;
+    border-bottom: 1px solid #e8e4de;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab {
+    flex-shrink: 0;
+    padding: 14px 16px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab:hover {
+    color: #1b3b6f;
+}
+
+.tabActive {
+    color: #1b3b6f;
+    border-bottom-color: #3b82c4;
+}
+
+.content {
+    padding: 20px 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+    background: #f8f9fc;
+}
+
+.flightBlock {
+    background: #fff;
+    border: 1px solid #e8e4de;
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 12px rgba(15, 35, 70, 0.05);
+}
+
+.flightBlock + .flightBlock {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: none;
+}
+
+.flightHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.airlineLogo {
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: contain;
+    background: #eef5ff;
+    border: 1px solid #cfe0f5;
+    padding: 2px;
+}
+
+.flightLabel {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #3b82c4;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+}
+
+.routeTitle {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1b3b6f;
+    line-height: 1.3;
+}
+
+.routeSub {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.4;
+}
+
+.sectionTitle {
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1b3b6f;
+}
+
+.tableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    border: 1px solid #e8e4de;
+    overflow: hidden;
+}
+
+.policyTable {
+    width: 100%;
+    min-width: 320px;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+    background: #fff;
+}
+
+.policyTable th,
+.policyTable td {
+    padding: 11px 14px;
+    border: 1px solid #ebe7e0;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.policyTable th {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b7280;
+    text-align: center;
+    background: #f3f4f6;
+}
+
+.policyTable td:first-child {
+    font-weight: 600;
+    color: #1b3b6f;
+}
+
+.policyTable td:not(:first-child) {
+    text-align: center;
+    color: #374151;
+}
+
+.disclaimer {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #6b7280;
+    line-height: 1.55;
+    padding: 10px 12px;
+    background: #eef5ff;
+    border-radius: 8px;
+    border-left: 3px solid #3b82c4;
+}
+
+.disclaimerLink {
+    color: #3b82c4;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.disclaimerLink:hover {
+    color: #1b3b6f;
+}
+
+.fareRules {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid #e8e4de;
+    border-radius: 12px;
+    border-left: 4px solid #1b3b6f;
+}
+
+.fareRules p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #4b5563;
+    line-height: 1.55;
+}
+
+.fareRules p strong {
+    color: #1b3b6f;
+    font-weight: 700;
+}
+
+.fareRulesLink {
+    font-size: 0.8125rem;
+    color: #3b82c4;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.fareRulesLink:hover {
+    color: #1b3b6f;
+}
+
+.fareRulesLinkMuted {
+    font-size: 0.8125rem;
+    color: #9ca3af;
+}
+
+.freeText {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+@media (max-width: 575px) {
+    .header {
+        padding: 14px 16px;
+    }
+
+    .title {
+        font-size: 0.95rem;
+    }
+
+    .tabs {
+        padding: 0 12px;
+    }
+
+    .tab {
+        padding: 12px 10px 10px;
+        font-size: 0.6rem;
+    }
+
+    .content {
+        padding: 14px 12px 18px;
+    }
+
+    .flightBlock {
+        padding: 14px 12px;
+    }
+
+    .routeTitle {
+        font-size: 0.9rem;
+    }
+
+    .routeSub {
+        font-size: 0.82rem;
+    }
+
+    .policyTable th,
+    .policyTable td {
+        padding: 9px 8px;
+        font-size: 0.78rem;
+    }
+}

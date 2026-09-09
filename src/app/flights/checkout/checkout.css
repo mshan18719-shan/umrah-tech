@@ -1,0 +1,376 @@
+/* Flight checkout — navy theme (aligned with hotels / transfers) */
+
+.flight-checkout-page {
+    --ck-navy: #1b3b6f;
+    --ck-navy-dark: #0f2a52;
+    --ck-blue-light: #eef5ff;
+    --ck-blue-border: #cfe0f5;
+    --ck-accent: #3b82c4;
+    --ck-card: #ffffff;
+    --ck-border: #e8e4de;
+    --ck-input-bg: #f3f4f6;
+    --ck-text: #111827;
+    --ck-muted: #6b7280;
+    --ck-shadow: 0 4px 20px rgba(15, 35, 70, 0.08);
+    --ck-radius: 16px;
+    --ck-radius-sm: 10px;
+
+    background: #f8f9fc;
+    min-height: 100vh;
+    padding-bottom: 3rem;
+    color: var(--ck-text);
+}
+
+.flight-checkout-page .checkout-page-header {
+    margin-bottom: 1.5rem;
+    padding-top: 1rem;
+}
+
+.flight-checkout-page .checkout-page-header h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+    color: var(--ck-navy);
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.01em;
+}
+
+.flight-checkout-page .checkout-page-header p {
+    color: var(--ck-muted);
+    font-size: 16px;
+    font-weight: 400;
+    margin: 0;
+}
+
+.flight-checkout-page .flight-checkout-main-row {
+    align-items: flex-start;
+}
+
+/* Checkout section header */
+.flight-checkout-page .checkout-section-header {
+    margin-bottom: 1.15rem;
+}
+
+.flight-checkout-page .checkout-section-header h2 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.25rem, 2.5vw, 1.55rem);
+    font-weight: 600;
+    color: var(--ck-navy);
+    margin: 0 0 0.3rem;
+}
+
+.flight-checkout-page .checkout-section-header p {
+    font-size: 0.86rem;
+    color: var(--ck-muted);
+    margin: 0;
+}
+
+/* Sidebar */
+.flight-checkout-page .checkout-sidebar {
+    position: sticky;
+    top: 1.5rem;
+    padding-top: 8.3rem;
+}
+
+/* Order summary card */
+.flight-checkout-page .summary-card {
+    background: var(--ck-card);
+    border: 1px solid var(--ck-border);
+    border-radius: var(--ck-radius);
+    box-shadow: var(--ck-shadow);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.flight-checkout-page .summary-card-header {
+    padding: 1.2rem 1.35rem 0.85rem;
+    background: #fff;
+}
+
+.flight-checkout-page .summary-card-header h5 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ck-navy);
+    margin: 0;
+}
+
+.flight-checkout-page .summary-card-body {
+    padding: 0 1.35rem 1.35rem;
+}
+
+.flight-checkout-page .summary-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.86rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.flight-checkout-page .summary-line .line-label {
+    color: var(--ck-muted);
+    flex: 1;
+}
+
+.flight-checkout-page .summary-line .line-value {
+    font-weight: 700;
+    color: var(--ck-text);
+    white-space: nowrap;
+}
+
+.flight-checkout-page .summary-line--muted .line-label {
+    font-size: 0.8rem;
+}
+
+.flight-checkout-page .summary-section-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin: 0.75rem 0 0.55rem;
+}
+
+.flight-checkout-page .summary-divider {
+    border: none;
+    border-top: 1px solid #ebe7e0;
+    margin: 0.85rem 0;
+}
+
+.flight-checkout-page .summary-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0 0;
+}
+
+.flight-checkout-page .summary-total-row .total-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ck-navy);
+}
+
+.flight-checkout-page .summary-total-row .total-value {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--ck-navy);
+    letter-spacing: -0.02em;
+}
+
+.flight-checkout-page .summary-tax-note {
+    font-size: 0.72rem;
+    color: var(--ck-muted);
+    text-align: center;
+    padding: 0.5rem 0 0;
+    margin: 0;
+}
+
+.flight-checkout-page .summary-free-text {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.flight-checkout-page .btn-flight-view-details {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: var(--ck-navy);
+    border: 1.5px solid var(--ck-navy);
+    border-radius: var(--ck-radius-sm);
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    margin-bottom: 0.75rem;
+}
+
+.flight-checkout-page .btn-flight-view-details:hover {
+    background: var(--ck-navy);
+    color: #fff;
+}
+
+.flight-checkout-page .btn-flight-policy-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.5rem 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ck-accent);
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.flight-checkout-page .btn-flight-policy-link:hover {
+    text-decoration: underline;
+}
+
+.flight-checkout-page .btn-confirm-booking {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: var(--ck-navy);
+    color: #fff;
+    border: none;
+    border-radius: var(--ck-radius-sm);
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(27, 59, 111, 0.28);
+    transition: background 0.2s ease, transform 0.15s ease;
+    margin-top: 0.5rem;
+}
+
+.flight-checkout-page .btn-confirm-booking:hover:not(:disabled) {
+    background: var(--ck-navy-dark);
+    color: #fff;
+}
+
+.flight-checkout-page .btn-confirm-booking:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.flight-checkout-page .summary-secure-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: #9ca3af;
+    margin-top: 0.75rem;
+    text-align: center;
+}
+
+/* Form cards */
+.flight-checkout-page .checkout-form-card {
+    background: var(--ck-card);
+    border: 1px solid var(--ck-border);
+    border-radius: var(--ck-radius);
+    box-shadow: var(--ck-shadow);
+    padding: 1.35rem 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.flight-checkout-page .checkout-form-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.15rem;
+}
+
+.flight-checkout-page .checkout-form-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--ck-blue-light);
+    color: var(--ck-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.flight-checkout-page .checkout-form-card-header h5 {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--ck-navy);
+    margin: 0;
+}
+
+.flight-checkout-page .checkout-form-card-header p {
+    font-size: 0.78rem;
+    color: var(--ck-muted);
+    margin: 0.1rem 0 0;
+}
+
+.flight-checkout-page .checkout-passenger-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.flight-checkout-page .checkout-passenger-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ck-input-bg);
+    border: 1px solid #e5e7eb;
+    border-radius: var(--ck-radius-sm);
+    padding: 0.45rem 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ck-navy);
+    min-width: 48px;
+}
+
+.flight-checkout-page .checkout-passenger-label {
+    font-size: 0.88rem;
+    color: var(--ck-muted);
+    font-weight: 500;
+}
+
+.flight-checkout-page .checkout-form-note {
+    font-size: 0.8rem;
+    color: var(--ck-muted);
+    background: #fff9e6;
+    border-radius: var(--ck-radius-sm);
+    padding: 0.75rem 1rem;
+    border-left: 3px solid #f59e0b;
+    margin-bottom: 1rem;
+    line-height: 1.55;
+}
+
+.flight-checkout-page .checkout-form-card .mantine-Input-input {
+    background: var(--ck-input-bg) !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: var(--ck-radius-sm) !important;
+    min-height: 42px;
+}
+
+.flight-checkout-page .checkout-form-card .mantine-Input-input:focus {
+    border-color: var(--ck-navy) !important;
+    box-shadow: 0 0 0 3px rgba(27, 59, 111, 0.1) !important;
+    background: #fff !important;
+}
+
+@media (max-width: 991px) {
+    .flight-checkout-page .checkout-sidebar {
+        position: static;
+        margin-bottom: 0.5rem;
+    }
+
+    .flight-checkout-page .checkout-sidebar {
+        padding-top: .3rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .flight-checkout-page .checkout-page-header {
+        margin-bottom: 1.25rem;
+    }
+
+    .flight-checkout-page .checkout-form-card {
+        padding: 1.15rem 1.1rem;
+    }
+
+    .flight-checkout-page .summary-card-body,
+    .flight-checkout-page .summary-card-header {
+        padding-left: 1.1rem;
+        padding-right: 1.1rem;
+    }
+}

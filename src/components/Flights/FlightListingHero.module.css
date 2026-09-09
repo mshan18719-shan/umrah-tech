@@ -1,0 +1,117 @@
+/* Flight listing — hero image with overlapping search bar */
+
+.heroSection {
+  position: relative;
+  width: 100%;
+  margin-bottom: 7.5rem;
+}
+
+.heroImageWrap {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  background-color: #061422;
+}
+
+.heroImage {
+  object-fit: cover;
+  object-position: center 55%;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(6, 20, 34, 0.28) 0%,
+      rgba(6, 20, 34, 0.42) 45%,
+      rgba(6, 20, 34, 0.62) 100%
+    ),
+    rgba(15, 35, 70, 0.12);
+  pointer-events: none;
+}
+
+.searchPanel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateY(42%);
+  z-index: 5;
+  padding: 0 12px;
+}
+
+.searchCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.15rem 1.35rem 1.35rem;
+  box-shadow: 0 14px 42px rgba(15, 35, 70, 0.16);
+  border: 1px solid #eceae5;
+}
+
+/*
+  Tall search (Multi-City): keep a light hero overlap, but put the panel
+  back in document flow so it no longer covers filters / results below.
+*/
+.heroSectionTall {
+  margin-bottom: 1.5rem;
+}
+
+.heroSectionTall .searchPanel {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  transform: none;
+  margin-top: -4.5rem;
+  padding-bottom: 0.25rem;
+}
+
+@media (max-width: 1199px) {
+  .heroImageWrap {
+    height: 260px;
+  }
+
+  .heroSection {
+    margin-bottom: 8.5rem;
+  }
+
+  .searchPanel {
+    transform: translateY(48%);
+  }
+
+  .heroSectionTall {
+    margin-bottom: 1.25rem;
+  }
+
+  .heroSectionTall .searchPanel {
+    transform: none;
+    margin-top: -3.75rem;
+  }
+}
+
+@media (max-width: 991px) {
+  .heroImageWrap {
+    height: 220px;
+  }
+
+  .heroSection {
+    margin-bottom: 10rem;
+  }
+
+  .searchPanel {
+    transform: translateY(52%);
+  }
+
+  .heroSectionTall {
+    margin-bottom: 1rem;
+  }
+
+  .heroSectionTall .searchPanel {
+    transform: none;
+    margin-top: -3rem;
+  }
+}

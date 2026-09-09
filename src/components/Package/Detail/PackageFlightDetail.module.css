@@ -1,0 +1,268 @@
+/* Package Flight Details — compact route cards */
+
+.flightSection {
+  margin: 1.5rem 0 2rem;
+  background: #FFFFFF;
+  border: 1px solid #EBE7DF;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  border-radius: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.1rem;
+}
+
+.sectionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #1B3B6F;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.sectionHeading {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #0A1628;
+  line-height: 1.3;
+}
+
+.flightCard {
+  background: #fff;
+  border: 1px solid #e5ebf5;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 82px 82px rgba(0, 0, 0, 0.09);
+}
+
+.flightRow {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.9fr) minmax(90px, 0.9fr) minmax(80px, 1fr) minmax(90px, 1.1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #eef1f6;
+}
+
+.flightRow:last-child {
+  border-bottom: none;
+}
+
+.airlineBlock {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.airlineIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #eef5ff;
+  color: #1B3B6F;
+  flex-shrink: 0;
+}
+
+.airlineMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.airlineName {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0D1E3D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flightNumber {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6B7A99;
+}
+
+.endpoint {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.endpointEnd {
+  align-items: flex-start;
+}
+
+.dateTop {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #9ca3af;
+  margin-bottom: 0.1rem;
+}
+
+.time {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0D1E3D;
+  line-height: 1.2;
+}
+
+.code {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1B3B6F;
+  margin-top: 0.15rem;
+}
+
+.place {
+  font-size: 0.68rem;
+  color: #6B7A99;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.route {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.routeLine {
+  width: 100%;
+  height: 0;
+  border-top: 2px solid #29ABD8;
+}
+
+.directBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #1B3B6F;
+  background: #eef5ff;
+  border: 1px solid #d7e6fb;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.duration {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+
+@media (max-width: 992px) {
+  .flightRow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: start;
+  }
+
+  /* Airline section takes full width */
+  .airlineBlock {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  /* Allow all grid items to shrink */
+  .airlineBlock,
+  .endpoint,
+  .route {
+    min-width: 0;
+  }
+
+  /* Airline name can wrap */
+  .airlineName {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+  }
+
+  /* Airport names can wrap */
+  .place {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: 100%;
+    word-break: break-word;
+  }
+
+  /* Center all three bottom columns */
+  .endpoint,
+  .endpointEnd,
+  .route {
+    align-items: center;
+    text-align: center;
+  }
+
+  .code,
+  .time,
+  .dateTop {
+    text-align: center;
+  }
+
+  /* Prevent the route line from overflowing */
+  .routeLine {
+    width: 100%;
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 767px) {
+  .flightRow {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .endpoint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .endpointEnd {
+    text-align: left;
+    align-items: center;
+  }
+
+  .code {
+    text-align: center;
+  }
+
+  .place{
+    text-align: center;
+  }
+
+  .route {
+    gap: 2rem;
+    margin: 1rem auto;
+  }
+
+
+  .routeLine {
+    width: 40px;
+    rotate: 90deg;
+  }
+}

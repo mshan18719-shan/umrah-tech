@@ -1,0 +1,285 @@
+.transferGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.transferCard {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e5ebf5;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 14px rgba(27, 59, 111, 0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+}
+
+.transferCard:hover {
+    border-color: #c5d0e3;
+    box-shadow: 0 8px 24px rgba(27, 59, 111, 0.1);
+}
+
+.includedCard {
+    border: 2px solid #1B3B6F;
+    box-shadow: 0 8px 28px rgba(27, 59, 111, 0.14);
+}
+
+.cardImageWrap {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    background: #ffffff;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.cardImage {
+    object-fit: contain !important;
+    object-position: center;
+}
+
+.cardImagePlaceholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #8BA3C7;
+    font-size: 2.5rem;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.titleRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.45rem;
+}
+
+.cardTitle {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #0D1E3D;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+}
+
+.cardTitle:hover {
+    color: #1B3B6F;
+}
+
+.rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    flex-shrink: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0D1E3D;
+    line-height: 1;
+    padding-top: 0.15rem;
+}
+
+.ratingStar {
+    color: #F5A623;
+    font-size: 0.85rem;
+}
+
+.cardDescription,
+.cardDescriptionMuted {
+    margin: 0 0 0.85rem;
+    font-size: 0.8rem;
+    color: #6B7A99;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.4em;
+}
+
+.cardDescription {
+    cursor: pointer;
+}
+
+.featureTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+}
+
+.featureTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.38rem 0.7rem;
+    border-radius: 999px;
+    background: #EAF1FB;
+    color: #1B3B6F;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.featureTag svg {
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    color: #4A7FD4;
+}
+
+.cardFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.85rem;
+    border-top: 1px solid #eef1f6;
+}
+
+.footerActions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.selectBtn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    background: #1B3B6F;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+}
+
+.selectBtn:hover {
+    background: #0D1E3D;
+}
+
+.detailsBtn {
+    padding: 0.5rem 0.85rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #1B3B6F;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+}
+
+.detailsBtn:hover {
+    background: #f5f8fc;
+    color: #0D1E3D;
+}
+
+.priceBlock {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.priceLabel {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: #6B7A99;
+    margin-bottom: 0.1rem;
+    line-height: 1;
+}
+
+.priceValue {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1B3B6F;
+    line-height: 1.2;
+}
+
+.includedAlert {
+    margin: 0.75rem 0;
+    border-radius: 10px;
+}
+
+@media (max-width: 1199px) {
+    .cardImageWrap {
+        height: 180px;
+    }
+
+    .cardTitle {
+        font-size: 0.95rem;
+    }
+
+    .priceValue {
+        font-size: 1.05rem;
+    }
+}
+
+@media (max-width: 991px) {
+    .transferGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767px) {
+    .transferGrid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .cardImageWrap {
+        height: 190px;
+    }
+
+    .cardFooter {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+    }
+
+    .footerActions {
+        width: 100%;
+    }
+
+    .selectBtn,
+    .detailsBtn {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .detailsBtn {
+        background: #f5f8fc;
+    }
+
+    .priceBlock {
+        text-align: left;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .priceLabel {
+        margin-bottom: 0;
+    }
+}

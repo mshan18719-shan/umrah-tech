@@ -1,0 +1,378 @@
+/* ── Modal shell ── */
+.modalContent {
+    background: #f4f7fb !important;
+}
+
+.modalBody {
+    padding: 0 !important;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.umrahChangeFlight {
+    min-height: 100%;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.pageWrapper {
+    margin: 0;
+    background: #f4f7fb;
+    border-radius: 0;
+    min-height: 100%;
+}
+
+.modalHeaderPanel {
+    border-bottom: 1px solid #ece8e8;
+}
+
+.modalHeaderRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #ffffff;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0D1E3D;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+}
+
+.headerDivider {
+    height: 1px;
+    background: #e8edf3;
+}
+
+.modalCloseBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+    background: #f1f5f9;
+    color: #1B3B6F;
+}
+
+.routeTabsSection {
+    padding: 1.5rem 1.5rem;
+}
+
+/* ── Route tabs ── */
+.routeTabsRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.routeTab {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    padding: 0.7rem 1.35rem;
+    border-radius: 12px;
+    border: 1px solid #d8e0ec;
+    background: #fff;
+    min-width: 148px;
+}
+
+.routeTabLabel {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.45px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    line-height: 1;
+}
+
+.routeTabRoute {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1B3B6F;
+    line-height: 1.1;
+    letter-spacing: 0.2px;
+}
+
+.routeArrow {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.routeTabActive {
+    background: #1B3B6F;
+    border-color: #1B3B6F;
+}
+
+.routeTabActive .routeTabLabel {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.routeTabActive .routeTabRoute,
+.routeTabActive .routeArrow {
+    color: #fff;
+}
+
+.routeAltLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.25rem;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.routeAltLink:hover {
+    color: #1B3B6F;
+}
+
+.routeAltLink .routeArrow {
+    color: #94a3b8;
+}
+
+/* ── Results bar (above flight cards) ── */
+.resultsBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    margin: 1rem 0;
+    min-height: 42px;
+    padding: 0 15px;
+}
+
+.resultsCount {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.resultsCount svg {
+    color: #29ABD8;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+}
+
+.resultsCountNum {
+    font-weight: 800;
+    color: #29ABD8;
+}
+
+/* ── Layout ── */
+.layoutRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: flex-start;
+}
+
+.filterCol {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+.resultsCol {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+    .filterCol {
+        flex: 0 0 calc(28% - 0.88rem);
+        max-width: calc(28% - 0.88rem);
+        background: #ffffff;
+        padding: 16px;
+    }
+
+    .resultsCol {
+        flex: 1 1 calc(72% - 0.37rem);
+    }
+}
+
+.filterwrapper {
+    background: #ffffff;
+    overflow: hidden;
+    position: sticky;
+    top: 1rem;
+}
+
+.filterHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.15rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #1B3B6F;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.filterHeader svg {
+    color: #29ABD8;
+}
+
+.filterBody {
+    padding: 0.5rem 1.15rem 1rem;
+}
+
+.filterBody hr {
+    margin: 0.85rem 0;
+    border: none;
+    border-top: 1px solid #eef2f7;
+    opacity: 1;
+}
+
+.umrahChangeFlight .filterBody :global(p.small.fw-bold),
+.umrahChangeFlight .mobileFilterDrawer :global(p.small.fw-bold) {
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    color: #1B3B6F !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.umrahChangeFlight .filterBody :global(.small),
+.umrahChangeFlight .mobileFilterDrawer :global(.small) {
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.umrahChangeFlight .filterBody :global(.form-check-label),
+.umrahChangeFlight .mobileFilterDrawer :global(.form-check-label) {
+    font-size: 0.84rem;
+    color: #334155;
+    font-weight: 500;
+}
+
+.umrahChangeFlight .filterBody :global(.form-check-input:checked),
+.umrahChangeFlight .mobileFilterDrawer :global(.form-check-input:checked) {
+    background-color: #1B3B6F;
+    border-color: #1B3B6F;
+}
+
+/* ── Results header (legacy – kept for other usages) ── */
+.resultsHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.25rem 0;
+}
+
+.mobileFilterBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #d1dae8;
+    border-radius: 10px;
+    background: #fff;
+    color: #1B3B6F;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 1px 4px rgba(27, 59, 111, 0.06);
+}
+
+.mobileFilterBtn:hover,
+.mobileFilterBtn:focus-visible {
+    background: #eef6fc;
+    border-color: #29ABD8;
+    outline: none;
+}
+
+.mobileFilterDrawer {
+    padding-bottom: 0.5rem;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.drawerDoneBtn {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 10px;
+    background: #1B3B6F;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.drawerDoneBtn:hover {
+    background: #0f2a52;
+}
+
+.umrahChangeFlight .mobileFilterDrawer :global(.mantine-Drawer-title) {
+    color: #1B3B6F;
+    font-weight: 800;
+    font-size: 1rem;
+}
+
+@media (max-width: 767px) {
+
+    .sectionTitle {
+        font-size: 1.1rem;
+    }
+
+    .routeTabsSection {
+        padding: 1rem 1rem;
+    }
+
+    .routeTab {
+        min-width: 128px;
+        padding: 0.6rem 1rem;
+    }
+
+    .routeTabRoute {
+        font-size: 0.92rem;
+    }
+
+    .routeAltLink {
+        font-size: 0.85rem;
+    }
+
+    .layoutRow {
+        padding: 0 1rem 1.5rem;
+    }
+
+    .resultsBar {
+        flex-wrap: wrap;
+    }
+
+    .resultsCount {
+        flex: 1 1 auto;
+        font-size: 0.85rem;
+    }
+}

@@ -1,0 +1,54 @@
+
+.loginCard {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 20px;
+}
+
+.signInBtn {
+  background-color: green;
+  color: white;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.signInBtn:hover {
+  background-color: rgba(0, 128, 0, 0.918);
+  color: white;
+}
+
+.showBtn {
+  position: absolute;
+  top: 36px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #007bff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 992px) {
+  .leftSection {
+    text-align: center;
+    padding: 50px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .loginCard {
+    margin-top: 30px;
+  }
+}

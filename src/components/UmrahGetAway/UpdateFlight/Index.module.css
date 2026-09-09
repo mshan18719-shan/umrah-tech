@@ -1,0 +1,58 @@
+.resultsBar {
+    width: 100%;
+}
+
+.resultsCount {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sortSelect {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.sortSelect :global(.mantine-Select-root) {
+    width: 190px;
+}
+
+.sortSelect :global(.mantine-Select-input) {
+    border: 1px solid #d1dae8 !important;
+    background: #fff !important;
+    font-size: 0.84rem !important;
+    font-weight: 600 !important;
+    color: #1B3B6F !important;
+    min-height: 38px !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 3px rgba(27, 59, 111, 0.05);
+    border-radius: 999px !important;
+    padding-left: 1rem !important;
+    padding-right: 2rem !important;
+}
+
+.sortSelect :global(.mantine-Select-section[data-position="right"]) {
+    display: flex;
+    color: #1B3B6F;
+    pointer-events: none;
+}
+
+@media (max-width: 767px) {
+    .resultsBar {
+        row-gap: 0.75rem;
+    }
+
+    .sortSelect {
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+
+    .sortSelect :global(.mantine-Select-root) {
+        width: 160px;
+    }
+}
+
+@media (max-width: 575px) {
+    .sortSelect :global(.mantine-Select-root) {
+        width: 140px;
+    }
+}

@@ -1,0 +1,380 @@
+/* Package checkout guest form */
+
+.formWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  padding: 1.25rem 1.3rem;
+  box-shadow: 0 4px 16px rgba(15, 35, 70, 0.04);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+}
+
+.cardHeaderBetween {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.cardIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #e8f0fb;
+  color: #1B3B6F;
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0D1E3D;
+}
+
+.passengerCountBox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1.1rem;
+  background: #f8fafc;
+}
+
+.passengerCountValue {
+  color: #02245E;
+  text-align: center;
+  min-width: 1.5rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  border: 1px solid #E8F0FB;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.passengerCountLabel {
+  font-size: 0.85rem;
+  color: #6B7A99;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.1rem;
+}
+
+.extraGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eef1f6;
+}
+
+.field {
+  min-width: 0;
+}
+
+.span2 {
+  grid-column: span 2;
+}
+
+.label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #6B7A99;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 0.45rem;
+}
+
+.req {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+.input,
+.textarea,
+select.input {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.78rem 0.9rem;
+  font-size: 0.9rem;
+  background: #f8fafc;
+  color: #0D1E3D;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  appearance: none;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #a0aec0;
+}
+
+.input:focus,
+.textarea:focus,
+select.input:focus {
+  border-color: #1B3B6F;
+  box-shadow: 0 0 0 3px rgba(27, 59, 111, 0.1);
+  background: #fff;
+}
+
+.invalid {
+  border-color: #f87171 !important;
+}
+
+.error {
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.phoneGroup {
+  display: flex;
+  align-items: stretch;
+}
+
+.phoneCode {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  background: #eef2f8;
+  border: 1px solid #e2e8f0;
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1B3B6F;
+  white-space: nowrap;
+}
+
+.phoneInput {
+  border-radius: 0 10px 10px 0 !important;
+}
+
+.mantineInput {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  min-height: 46px !important;
+  font-size: 0.9rem !important;
+  color: #0D1E3D !important;
+}
+
+.mantineInput:focus {
+  border-color: #1B3B6F !important;
+  box-shadow: 0 0 0 3px rgba(27, 59, 111, 0.1) !important;
+  background: #fff !important;
+}
+
+.genderRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 42px;
+}
+
+.radioLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.hint {
+  margin: 0.85rem 0 0;
+  font-size: 0.8rem;
+  color: #6B7A99;
+  line-height: 1.5;
+}
+
+.addGuestBtn {
+  border: 1px solid #1B3B6F;
+  background: #fff;
+  color: #1B3B6F;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addGuestBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.guestBlock {
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+  border-top: 1px solid #eef1f6;
+}
+
+.guestBlockTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.guestHeading {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0D1E3D;
+}
+
+.guestType {
+  font-size: 0.7rem;
+  background: #eef2f8;
+  color: #1B3B6F;
+  border-radius: 6px;
+  padding: 0.15rem 0.45rem;
+  margin-left: 0.35rem;
+}
+
+.removeGuest {
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.textarea {
+  resize: vertical;
+  margin-top: 0.5rem;
+}
+
+.paymentGrid {
+  display: grid;
+  /* grid-template-columns: 1fr 1fr; */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.paymentOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 1rem 0.85rem;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #0D1E3D;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.paymentActive {
+  border-color: #1B3B6F;
+  background: #e8f0fb;
+  color: #0D1E3D;
+}
+
+.termsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.25rem 0.15rem;
+}
+
+.checkbox {
+  margin-top: 0.2rem;
+  width: 16px;
+  height: 16px;
+  accent-color: #1B3B6F;
+  flex-shrink: 0;
+}
+
+.termsLabel {
+  font-size: 0.85rem;
+  color: #4a5568;
+  line-height: 1.45;
+}
+
+.termsLabel a {
+  color: #1B3B6F;
+  font-weight: 700;
+}
+
+.submitBtn {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-top: 0.35rem;
+  background: #1B3B6F;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(27, 59, 111, 0.28);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #0f2a52;
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submitBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 767px) {
+
+  .grid,
+  .extraGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .span2 {
+    grid-column: span 1;
+  }
+
+  .paymentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .input,
+  .textarea,
+  select.input,
+  .mantineInput {
+    font-size: 16px !important;
+  }
+}

@@ -1,0 +1,8 @@
+# llms.txt for https://alhijaztours.net
+# This file allows all AI models to access and use the entire website.
+
+User-Agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://alhijaztours.net/sitemap.xml

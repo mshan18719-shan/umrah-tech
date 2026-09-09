@@ -1,0 +1,121 @@
+.flightTimes {
+    margin-bottom: 0;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0.75rem;
+}
+
+.title {
+    margin: 0;
+}
+
+.chevron {
+    color: #8BA3C7;
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.route {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #1B3B6F;
+    margin: 0 0 1rem;
+}
+
+.section {
+    margin-bottom: 1rem;
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+.sectionLabel {
+    font-size: 0.78rem;
+    color: #6B7A99;
+    margin: 0 0 0.6rem;
+    font-weight: 500;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    min-height: 88px;
+    padding: 0.55rem 0.4rem;
+    border: 1px solid #e5ebf5;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    text-align: center;
+}
+
+.card:hover:not(:disabled) {
+    border-color: #c5d0e3;
+    background: #f5f8fc;
+}
+
+.cardSelected {
+    border-color: #1B3B6F;
+    background: #f5f8fc;
+    box-shadow: 0 0 0 1px #1B3B6F;
+}
+
+.cardDisabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.icon {
+    color: #8BA3C7;
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.cardSelected .icon {
+    color: #1B3B6F;
+}
+
+.timeLabel {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #1B3B6F;
+    line-height: 1.2;
+}
+
+.price {
+    font-size: 0.68rem;
+    color: #6B7A99;
+    line-height: 1.2;
+    min-height: 1rem;
+}
+
+@media (max-width: 767px) {
+    .grid {
+        gap: 0.45rem;
+    }
+
+    .card {
+        min-height: 82px;
+    }
+}

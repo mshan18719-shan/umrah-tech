@@ -1,0 +1,260 @@
+/* Full Screen Loader Container — Al Hijaz navy theme */
+.loaderContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #F8F9FC;
+}
+
+/* Orbiting Container */
+.orbitContainer {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  margin-bottom: 32px;
+}
+
+/* Outer Rotating Ring */
+.outerRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px dashed #d8e0ef;
+  animation: spin 8s linear infinite;
+}
+
+/* Middle Pulsing Ring */
+.middleRing {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(27, 59, 111, 0.28);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Center Icon Container */
+.centerIcon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.centerIconInner {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1B3B6F 0%, #4A7FD4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(27, 59, 111, 0.4);
+  animation: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.compassIcon {
+  width: 28px;
+  height: 28px;
+  color: white;
+  animation: spin 4s linear infinite;
+}
+
+/* Orbiting Icon 1 (Plane) */
+.orbitingIcon1 {
+  position: absolute;
+  inset: 0;
+  animation: spin 3s linear infinite;
+}
+
+.orbitingIcon1Inner {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(74, 127, 212, 0.14);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(27, 59, 111, 0.2);
+}
+
+.planeIcon {
+  width: 14px;
+  height: 14px;
+  color: #1B3B6F;
+  animation: spinReverse 3s linear infinite;
+}
+
+/* Orbiting Icon 2 (MapPin) */
+.orbitingIcon2 {
+  position: absolute;
+  inset: 0;
+  animation: spinReverse 3s linear infinite;
+}
+
+.orbitingIcon2Inner {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(74, 127, 212, 0.14);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(27, 59, 111, 0.2);
+}
+
+.mapPinIcon {
+  width: 14px;
+  height: 14px;
+  color: #1B3B6F;
+  animation: spin 3s linear infinite;
+}
+
+/* Text Section */
+.textSection {
+  text-align: center;
+}
+
+.mainTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1B3B6F;
+  letter-spacing: -0.025em;
+  margin-bottom: 8px;
+}
+
+.subTitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* Animated Dots Bar */
+.dotsContainer {
+  display: flex;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1B3B6F;
+  opacity: 0.3;
+}
+
+.dot:nth-child(1) {
+  animation: pulseDot 1.2s ease-in-out 0s infinite;
+}
+
+.dot:nth-child(2) {
+  animation: pulseDot 1.2s ease-in-out 0.15s infinite;
+}
+
+.dot:nth-child(3) {
+  animation: pulseDot 1.2s ease-in-out 0.3s infinite;
+}
+
+.dot:nth-child(4) {
+  animation: pulseDot 1.2s ease-in-out 0.45s infinite;
+}
+
+.dot:nth-child(5) {
+  animation: pulseDot 1.2s ease-in-out 0.6s infinite;
+}
+
+/* Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(27, 59, 111, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(74, 127, 212, 0.55);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .orbitContainer {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 24px;
+  }
+
+  .centerIconInner {
+    width: 44px;
+    height: 44px;
+  }
+
+  .compassIcon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mainTitle {
+    font-size: 1rem;
+  }
+
+  .subTitle {
+    font-size: 0.8125rem;
+  }
+}
+

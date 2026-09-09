@@ -1,0 +1,86 @@
+.page {
+    background: #f4f6fa;
+    min-height: 50vh;
+    padding: 2.75rem 0 4rem;
+  }
+  
+  .inner {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  
+  .intro {
+    margin: 0 0 2rem;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #4a5a78;
+    text-align: justify;
+  }
+  
+  .section {
+    margin-bottom: 1.25rem;
+  }
+  
+  .sectionTitle {
+    margin: 0 0 0.65rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0d1e3d;
+    font-family: Georgia, "Times New Roman", serif;
+    letter-spacing: -0.2px;
+  }
+  
+  .card {
+    background: #fff;
+    border: 1px solid #e6ebf2;
+    border-radius: 14px;
+    padding: 1.25rem 1.4rem;
+    box-shadow: 0 6px 22px rgba(15, 35, 70, 0.06);
+    border-left: 4px solid #1b3b6f;
+    color: #3d4f6f;
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+  
+  .card ul {
+    margin: 0.75rem 0 0;
+    padding-left: 1.15rem;
+  }
+  
+  .card li {
+    margin-bottom: 0.45rem;
+  }
+  
+  .card li:last-child {
+    margin-bottom: 0;
+  }
+  
+  .card a {
+    color: #1b3b6f;
+    text-decoration: none;
+    font-weight: 700;
+  }
+  
+  .card a:hover {
+    text-decoration: underline;
+  }
+  
+  .cardNote {
+    margin-top: 0.85rem;
+  }
+  
+  @media (max-width: 576px) {
+    .page {
+      padding: 1.75rem 0 3rem;
+    }
+  
+    .card {
+      padding: 1rem 1.1rem;
+    }
+  
+    .intro {
+      font-size: 0.98rem;
+      text-align: left;
+    }
+  }
+  

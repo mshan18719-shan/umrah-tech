@@ -1,0 +1,687 @@
+.invoicecontainerwrap {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #333;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    background-color: #e8eaed;
+}
+
+.invoicecontainer {
+    width: 860px;
+    padding: 20px 15px;
+    margin: 20px auto;
+    position: relative;
+    z-index: 5;
+}
+
+.themeholyinvoice {
+    position: relative;
+    z-index: 4;
+    background-color: #ffffff;
+    border: 1px solid #d0d5dd;
+}
+
+.downloadinner {
+    padding: 28px 32px;
+}
+
+.invoicenote {
+    border-top: 1px solid #d0d5dd;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin-top: 24px;
+}
+
+.invoicenote b {
+    color: #004c4c;
+}
+
+.invoiceprintbutton {
+    position: absolute;
+    right: -3em;
+}
+
+@media screen and (max-width: 998px) {
+    .invoiceprintbutton {
+        position: fixed;
+        z-index: 7;
+        right: 5px;
+    }
+
+    .invoicecontainer {
+        width: 99%;
+    }
+
+    .invmobile100 {
+        width: 100% !important;
+    }
+}
+
+@media print {
+
+    #invoice,
+    #invoice * {
+        visibility: visible;
+    }
+
+    #printPageButton {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    #invoice {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    .invoicecontainerwrap {
+        width: 100% !important;
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .invoicecontainer {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .themeholyinvoice {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+    }
+
+    .invoiceprintbutton {
+        display: none !important;
+    }
+
+    .downloadinner {
+        padding: 20px !important;
+    }
+
+    .sectionCard:hover,
+    .dateTimeCard:hover,
+    .travelerCard:hover {
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    .invoiceHero {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: #004c4c !important;
+        color: white !important;
+    }
+
+    .infoCard {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .infoIcon {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .sectionHeader {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .totalCard {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: #004c4c !important;
+    }
+
+    .invoicecontainerwrap :global(button) {
+        display: none !important;
+    }
+}
+
+
+/* ─── Invoice Hero / Header Bar ───────────────────────────────── */
+.invoiceHero {
+    background: #004c4c;
+    padding: 22px 28px;
+    margin: -28px -32px 28px -32px;
+    color: white;
+    border-bottom: 3px solid #c9a84c;
+}
+
+.invoiceTitle h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 3px;
+    letter-spacing: 0.3px;
+}
+
+.invoiceTitle p {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0;
+}
+
+.infoCard {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 14px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.infoIcon {
+    width: 32px;
+    height: 32px;
+    background: rgba(201, 168, 76, 0.25);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #c9a84c;
+    flex-shrink: 0;
+}
+
+.infoCard small {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.55);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.infoCard strong {
+    font-size: 13px;
+    color: #ffffff;
+}
+
+/* ─── Section Cards ───────────────────────────────────────────── */
+.sectionCard {
+    background: #ffffff;
+    border: 1px solid #d0d5dd;
+    border-radius: 0;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.sectionHeader {
+    background: #f2f4f7;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #d0d5dd;
+}
+
+.sectionIcon {
+    width: 28px;
+    height: 28px;
+    background: #004c4c;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c9a84c;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.sectionHeader h5 {
+    color: #004c4c;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.2px;
+}
+
+.cardBody {
+    padding: 16px;
+}
+
+/* ─── Detail Items ────────────────────────────────────────────── */
+.detailItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fb;
+    border: 1px solid #e8eaed;
+    border-radius: 3px;
+}
+
+.detailIcon {
+    color: #004c4c;
+    font-size: 14px;
+    margin-top: 3px;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.detailItem small {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: block;
+}
+
+.detailItem strong {
+    color: #222;
+    font-size: 13px;
+}
+
+/* ─── Status Badge ────────────────────────────────────────────── */
+.statusBadge {
+    padding: 8px 14px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    font-size: 12px;
+}
+
+.statusSuccess {
+    background: #eaf5ec;
+    color: #1e6e35;
+    border: 1px solid #b6dfbc;
+}
+.statusPending {
+    background: #fff4e5;
+    color: #b36b00;
+    border: 1px solid #ffcc80;
+}
+.statusCancelled {
+    background: #fef0f0;
+    color: #c0392b;
+    border: 1px solid #f5b8b8;
+}
+.statusBadge strong {
+    font-weight: 600;
+}
+
+/* ─── Traveler Cards ──────────────────────────────────────────── */
+.travelerCard {
+    background: #f8f9fb;
+    padding: 12px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e0e3e8;
+}
+
+.travelerIcon {
+    width: 36px;
+    height: 36px;
+    background: #004c4c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c9a84c;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.travelerCard strong {
+    color: #222;
+    font-size: 13px;
+}
+
+.travelerCard small {
+    color: #777;
+    font-size: 11px;
+}
+
+/* ─── Route Display ───────────────────────────────────────────── */
+.routeDisplay {
+    background: #f8f9fb;
+    padding: 16px;
+    border: 1px solid #d0d5dd;
+    border-left: 3px solid #004c4c;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.routePoint {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.routeIconStart {
+    width: 36px;
+    height: 36px;
+    background: #eaf5ec;
+    border: 1px solid #b6dfbc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #256b38;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.routeIconEnd {
+    width: 36px;
+    height: 36px;
+    background: #fef0f0;
+    border: 1px solid #f5b8b8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c0392b;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.routeLine {
+    color: #1a2332;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    flex-direction: column;
+    display: flex;
+}
+
+.routeArrow {
+    color: #004c4c;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.routePoint small {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: block;
+}
+
+.routePoint strong {
+    color: #222;
+    font-size: 13px;
+}
+
+/* ─── Date / Time Cards ───────────────────────────────────────── */
+.dateTimeCard {
+    background: #f8f9fb;
+    border: 1px solid #d8dce3;
+    border-top: 2px solid #004c4c;
+    padding: 12px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dtIcon {
+    color: #004c4c;
+    font-size: 18px;
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
+.dateTimeCard small {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: block;
+}
+
+.dateTimeCard strong {
+    color: #222;
+    font-size: 13px;
+}
+
+/* ─── Vehicle Card ────────────────────────────────────────────── */
+.vehicleCard {
+    background: #f8f9fb;
+    padding: 16px;
+    border: 1px solid #d0d5dd;
+    border-left: 3px solid #004c4c;
+}
+
+.vehicleName {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e3e8;
+    margin-bottom: 10px;
+}
+
+.vehicleName svg {
+    color: #004c4c;
+    opacity: 0.75;
+}
+
+.vehicleName strong {
+    color: #004c4c;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.vehicleName small {
+    color: #777;
+    font-size: 11px;
+    display: block;
+}
+
+.capacityCard {
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e0e3e8;
+}
+
+.capacityCard svg {
+    color: #004c4c;
+    opacity: 0.7;
+}
+
+.capacityCard small {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: block;
+}
+
+.capacityCard strong {
+    color: #222;
+    font-size: 13px;
+}
+
+/* ─── Locations List ──────────────────────────────────────────── */
+.locationsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.locationItem {
+    background: #f8f9fb;
+    padding: 14px;
+    border: 1px solid #d8dce3;
+    border-left: 3px solid #004c4c;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.locationNumber {
+    width: 32px;
+    height: 32px;
+    background: #004c4c;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.locationRoute {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.locationFrom,
+.locationTo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.locationFrom svg,
+.locationTo svg {
+    font-size: 17px;
+    flex-shrink: 0;
+}
+
+.locationFrom small,
+.locationTo small {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: block;
+}
+
+.locationFrom strong,
+.locationTo strong {
+    color: #222;
+    font-size: 13px;
+}
+
+.locationArrow {
+    color: #004c4c;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+
+/* ─── Pricing Section ─────────────────────────────────────────── */
+.pricingSection {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #d0d5dd;
+}
+
+.noteCard {
+    background: #f0f4fa;
+    padding: 14px 16px;
+    border: 1px solid #c8d4e8;
+    border-left: 3px solid #004c4c;
+    display: flex;
+    gap: 12px;
+}
+
+.noteIcon {
+    width: 32px;
+    height: 32px;
+    background: #004c4c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c9a84c;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.noteCard strong {
+    color: #004c4c;
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.noteCard p {
+    color: #555;
+    font-size: 11px;
+    margin: 0;
+}
+
+.totalCard {
+    background: #004c4c;
+    padding: 18px 20px;
+}
+
+.totalRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.totalRow strong {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+}
+
+.totalDivider {
+    height: 1px;
+    background: rgba(201, 168, 76, 0.4);
+    margin: 10px 0;
+}
+
+.totalRowFinal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 4px;
+}
+
+.totalRowFinal span {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.totalAmount {
+    color: #c9a84c;
+    font-size: 20px;
+    font-weight: 700;
+}

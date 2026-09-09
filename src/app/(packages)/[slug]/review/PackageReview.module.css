@@ -1,0 +1,583 @@
+/* Package Review Booking — hotels / flights / services */
+
+.page {
+  background: #f4f6fa;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 3rem;
+}
+
+.header {
+  margin-bottom: 1.75rem;
+}
+
+.title {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  font-weight: 700;
+  color: #0D1E3D;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.3px;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #6B7A99;
+}
+
+.empty {
+  color: #6B7A99;
+  margin-bottom: 1rem;
+}
+
+.section {
+  margin-bottom: 1.15rem;
+}
+
+/* Hotels */
+.hotelList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hotelCard {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e6ebf2;
+  box-shadow: 0 6px 22px rgba(15, 35, 70, 0.06);
+}
+
+.hotelMedia {
+  position: relative;
+  min-height: 150px;
+  background: #eef2f8;
+}
+
+.hotelImage {
+  object-fit: cover;
+}
+
+.hotelPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 150px;
+  background: linear-gradient(135deg, #1B3B6F, #0D1E3D);
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.hotelBody {
+  padding: 1.1rem 1.25rem;
+  min-width: 0;
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+  color: #f5b301;
+  margin-bottom: 0.35rem;
+}
+
+.hotelTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+}
+
+.bookingDate {
+  color: #1b3b6f;
+  white-space: nowrap;
+  background: #eef5ff;
+  border: 1px solid #d7e6fb;
+  border-radius: 999px;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.hotelName {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0D1E3D;
+}
+
+.hotelAddress {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.82rem;
+  color: #6B7A99;
+  line-height: 1.4;
+}
+
+.hotelAddress svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #1B3B6F;
+}
+
+.amenityRow,
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.45rem;
+}
+
+.amenityChip {
+  background: #e8f0fb;
+  color: #1B3B6F;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+}
+
+.metaChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #f4f6fa;
+  border: 1px solid #e6ebf2;
+  color: #4a5568;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+}
+
+/* Flights */
+.flightCard {
+  background: #fff;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem 0.85rem;
+  box-shadow: 0 6px 22px rgba(15, 35, 70, 0.06);
+}
+
+.flightLeg + .flightLeg {
+  margin-top: 1.15rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid #eef1f6;
+}
+
+.flightLegTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.legBadge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+}
+
+.legBadgeDepart {
+  background: #e8f0fb;
+  color: #1B3B6F;
+}
+
+.legBadgeReturn {
+  background: #e6f7ef;
+  color: #0f766e;
+}
+
+.legDate {
+  font-size: 0.85rem;
+  color: #6B7A99;
+  font-weight: 600;
+}
+
+.flightLegBody {
+  display: grid;
+  grid-template-columns: minmax(0, 140px) minmax(0, 1fr) minmax(88px, 1.1fr) minmax(0, 1fr);
+  gap: 0.75rem 1rem;
+  align-items: center;
+}
+
+.airlineCol {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.airlineName {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0D1E3D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.cabinClass {
+  display: block;
+  font-size: 0.75rem;
+  color: #8A94A8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.endpoint {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+}
+
+.endpointEnd {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.time {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0D1E3D;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.dayPlus {
+  color: #dc2626;
+  font-size: 0.65rem;
+  margin-left: 2px;
+}
+
+.code {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4a5568;
+  margin-top: 0.15rem;
+}
+
+.place {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+  color: #8A94A8;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.route {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  min-width: 0;
+  padding: 0 0.25rem;
+}
+
+.duration {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #8A94A8;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.routeLineWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 160px;
+}
+
+.routeLine {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #29ABD8;
+  border-radius: 2px;
+}
+
+.routePlane {
+  position: absolute;
+  right: -10px;
+  color: #29ABD8;
+  transform: translateX(2px);
+  rotate: 320deg;
+}
+
+.stopBadge {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Service cards */
+.serviceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.serviceCard {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: #fff;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  padding: 1.1rem 1.15rem;
+  box-shadow: 0 6px 22px rgba(15, 35, 70, 0.05);
+}
+
+.serviceIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e8f0fb;
+  color: #1B3B6F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.serviceIconDark {
+  background: #1B3B6F;
+  color: #fff;
+}
+
+.serviceBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.serviceTitle {
+  margin: 0 0 0.2rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #0D1E3D;
+}
+
+.serviceSub {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6B7A99;
+  line-height: 1.4;
+}
+
+.serviceAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.servicePrice {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0D1E3D;
+}
+
+.btnSelect,
+.btnAdded {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 84px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid #1B3B6F;
+}
+
+.btnSelect {
+  background: #fff;
+  color: #1B3B6F;
+}
+
+.btnAdded {
+  background: #1B3B6F;
+  color: #fff;
+  border-color: #1B3B6F;
+  cursor: default;
+}
+
+button.btnAdded {
+  cursor: pointer;
+}
+
+/* Footer */
+.footerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 6px 22px rgba(15, 35, 70, 0.05);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #1B3B6F;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: #0D1E3D;
+}
+
+.trustNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #6B7A99;
+  font-weight: 600;
+}
+
+.continueBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #1B3B6F;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 1.35rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(27, 59, 111, 0.28);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.continueBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+@media (max-width: 900px) {
+  .flightLegBody {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .flightLegBody > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .endpointEnd {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .route {
+    align-items: flex-start;
+    text-align: left;
+    padding: 0.35rem 0;
+  }
+
+  .routeLineWrap {
+    justify-content: flex-start;
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 767px) {
+  .inner {
+    padding: 1.75rem 1rem 2.5rem;
+  }
+
+  .hotelCard {
+    grid-template-columns: 1fr;
+  }
+
+  .hotelMedia {
+    min-height: 180px;
+  }
+
+  .hotelTop {
+    flex-wrap: wrap;
+  }
+
+  .serviceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .serviceCard {
+    flex-wrap: wrap;
+  }
+
+  .serviceAction {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footerBar {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .backLink,
+  .trustNote {
+    justify-content: center;
+  }
+
+  .continueBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

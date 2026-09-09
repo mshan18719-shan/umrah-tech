@@ -1,0 +1,633 @@
+/* ── Transfer section ── */
+.priceToggleWrap {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.25rem;
+}
+
+.priceToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem;
+    background: #f3f4f6;
+    border-radius: 999px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.priceToggleBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border: none;
+    border-radius: 999px;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.82rem;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.priceToggleBtnInactive {
+    background: #fdf8f0;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.priceToggleBtnInactive:hover {
+    color: #003e29;
+}
+
+.priceToggleBtnActive {
+    background: #003e29;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 62, 41, 0.2);
+}
+
+.priceToggleBtn svg {
+    flex-shrink: 0;
+}
+
+.transferSection {
+    background: #f9f8f3;
+    border-radius: 18px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.transferHeader {
+    margin-bottom: 1.25rem;
+}
+
+.transferIconBox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: #003e29;
+    color: #fff;
+    font-size: 1.1rem;
+    margin-bottom: 0.65rem;
+}
+
+.serviceLabel {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c5a059;
+    margin-bottom: 0.35rem;
+}
+
+.transferTitle {
+    margin: 0 0 0.5rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #003e29;
+    line-height: 1.2;
+}
+
+.transferDesc {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #5a6b65;
+    line-height: 1.55;
+    max-width: 640px;
+}
+
+/* Hide default radio indicator */
+.transferSection :global(.mantine-Radio-indicator),
+.visaSection :global(.mantine-Radio-indicator) {
+    display: none;
+}
+
+.transferSection :global(.mantine-Radio-card),
+.visaSection :global(.mantine-Radio-card) {
+    cursor: pointer;
+}
+
+/* ── Without Transfer bar ── */
+.withoutTransferCard {
+    display: block;
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid #003e29 !important;
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.withoutTransferCard:hover {
+    box-shadow: 0 4px 16px rgba(0, 62, 41, 0.08);
+}
+
+.withoutTransferSelected {
+    background: #f0faf7;
+    box-shadow: 0 4px 16px rgba(0, 62, 41, 0.1);
+}
+
+.withoutTransferInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.withoutTransferLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.withoutTransferCheck {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #cbd5ce;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.withoutTransferSelected .withoutTransferCheck {
+    background: #003e29;
+    border-color: #003e29;
+    color: #fff;
+}
+
+.withoutTransferTitle {
+    margin: 0 0 0.15rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #003e29;
+}
+
+.withoutTransferSub {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6b7c76;
+}
+
+.freeBadge {
+    flex-shrink: 0;
+    padding: 0.35rem 0.85rem;
+    border-radius: 50px;
+    background: #e0f2ef;
+    color: #003e29;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+/* ── Transfer cards grid ── */
+.transferGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.transferCard {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e4ebe7 !important;
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 0 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transferCard:hover {
+    border-color: #b8cfc6 !important;
+    box-shadow: 0 8px 24px rgba(0, 62, 41, 0.08);
+}
+
+.transferCardSelected {
+    border: 2px solid #003e29 !important;
+    box-shadow: 0 8px 28px rgba(0, 62, 41, 0.12);
+}
+
+.cardImageWrap {
+    position: relative;
+    width: 100%;
+    height: 170px;
+    overflow: hidden;
+    background: #eef2f0;
+}
+
+.cardImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cardImageOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.15) 45%, transparent 100%);
+    pointer-events: none;
+}
+
+.cardBadge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    background: #c5a059;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+.cardImageText {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    z-index: 1;
+    color: #fff;
+}
+
+.cardVehicleName {
+    margin: 0 0 0.2rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.cardVehicleMeta {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.92;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1rem 1.1rem 1.1rem;
+}
+
+.routeRow {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #003e29;
+    line-height: 1.45;
+    min-width: 0;
+    cursor: help;
+}
+
+.routeIcon {
+    flex-shrink: 0;
+    color: #003e29;
+    font-size: 0.72rem;
+}
+
+.routeText {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cardDescription {
+    margin: 0 0 0.75rem;
+    font-size: 0.78rem;
+    color: #6b7c76;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.4em;
+}
+
+.featureTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.85rem;
+}
+
+.featureTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 50px;
+    background: #e8f5f1;
+    color: #003e29;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.featureTag svg {
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+
+.cardFooter {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.85rem;
+    border-top: 1px dashed #dce8e3;
+}
+
+.priceBlock {
+    min-width: 0;
+}
+
+.priceLabel {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a9a94;
+    margin-bottom: 0.15rem;
+}
+
+.priceValue {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #003e29;
+    line-height: 1.2;
+}
+
+.priceNote {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.62rem;
+    color: #3d8b6e;
+    font-weight: 500;
+}
+
+.selectBtn {
+    flex-shrink: 0;
+    padding: 0.55rem 1.1rem;
+    border: none;
+    border-radius: 50px;
+    background: #e8f5f1;
+    color: #003e29;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.transferCardSelected .selectBtn,
+.visaCardSelected .selectBtn {
+    background: #003e29;
+    color: #fff;
+}
+
+/* ── Visa section ── */
+.visaSection {
+    background: #f9f8f3;
+    border-radius: 18px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.visaGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.visaCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e4ebe7 !important;
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 0 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.visaCard:hover {
+    border-color: #b8cfc6 !important;
+    box-shadow: 0 8px 24px rgba(0, 62, 41, 0.08);
+}
+
+.visaCardSelected {
+    border: 2px solid #003e29 !important;
+    box-shadow: 0 8px 28px rgba(0, 62, 41, 0.12);
+}
+
+.visaCardDecor {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 72px;
+    height: 72px;
+    background: #f5e6dc;
+    border-bottom-left-radius: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.visaCardContent {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1.15rem 1.1rem 1.1rem;
+}
+
+.visaCardTop {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.visaIconCircle {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #e8f5f1;
+    color: #003e29;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+}
+
+.visaTitleWrap {
+    min-width: 0;
+    flex: 1;
+}
+
+.visaTitleRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 0.2rem;
+}
+
+.visaTitle {
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #003e29;
+    line-height: 1.25;
+}
+
+.visaMetaBadge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 50px;
+    background: #f5e6dc;
+    color: #8b6914;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.visaMetaBadgeRecommended {
+    background: #f5e6dc;
+    color: #a16207;
+}
+
+.visaMetaBadgeMulti {
+    background: #ede4d4;
+    color: #7c5c2a;
+}
+
+.visaSubtitle {
+    margin: 0;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c5a059;
+}
+
+.visaDescription {
+    margin: 0 0 0.75rem;
+    font-size: 0.78rem;
+    color: #6b7c76;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.stayBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 50px;
+    background: #e8f5f1;
+    color: #003e29;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+}
+
+.stayBadge svg {
+    font-size: 0.72rem;
+    flex-shrink: 0;
+}
+
+.visaPriceValue {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #003e29;
+    line-height: 1.2;
+}
+
+/* ── Responsive ── */
+@media (max-width: 991px) {
+    .transferGrid,
+    .visaGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 575px) {
+    .priceToggleWrap {
+        justify-content: center;
+    }
+
+    .priceToggle {
+        width: 100%;
+        max-width: 360px;
+    }
+
+    .priceToggleBtn {
+        flex: 1;
+        justify-content: center;
+        padding: 0.55rem 0.65rem;
+        font-size: 0.76rem;
+    }
+
+    .transferSection,
+    .visaSection {
+        padding: 1.1rem;
+    }
+
+    .transferTitle {
+        font-size: 1.45rem;
+    }
+
+    .transferGrid,
+    .visaGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .cardFooter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .selectBtn {
+        width: 100%;
+        text-align: center;
+    }
+}

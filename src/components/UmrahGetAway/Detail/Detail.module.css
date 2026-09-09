@@ -1,0 +1,617 @@
+/* ── Hotel info card ── */
+.hotelInfoCard {
+    background: #fff;
+    border: 1px solid #e8ecef;
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-top: 20px;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04);
+}
+
+.hotelInfoHeader {
+    margin-bottom: 4px;
+}
+
+.cityBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 50px;
+    background: #e8f5f0;
+    color: #004c4c;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.hotelName {
+    margin: 0 0 8px;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    line-height: 1.25;
+    letter-spacing: -0.3px;
+}
+
+.hotelAddress {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.85rem;
+    color: #16a34a;
+    line-height: 1.45;
+}
+
+.hotelAddress svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ── Description ── */
+.descriptionSection {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid #f1f5f8;
+}
+
+.descriptionTitle {
+    margin: 0 0 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #004c4c;
+}
+
+.descriptionText {
+    font-size: 0.88rem;
+    color: #4b5563;
+    line-height: 1.65;
+    margin: 0;
+}
+
+.descriptionCollapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.descriptionExpanded {
+    display: block;
+}
+
+.descriptionHtml {
+    font-size: 0.88rem;
+    color: #4b5563;
+    line-height: 1.65;
+}
+
+.descriptionHtml p {
+    margin-bottom: 0.5rem;
+}
+
+.descriptionHtml p:last-child {
+    margin-bottom: 0;
+}
+
+.readMoreBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #004c4c;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.readMoreBtn:hover {
+    color: #003535;
+    text-decoration: underline;
+}
+
+/* ── Hotel Stats Bar ── */
+.hotelStatsBar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.hotelStatChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafb;
+    border: 1px solid #e8ecef;
+    border-radius: 12px;
+    padding: 10px 14px;
+    min-width: 0;
+    flex: 1;
+    min-width: 140px;
+}
+
+.hotelStatChipGreen {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.hotelStatLabel {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #9ca3af;
+    display: block;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.hotelStatValue {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1a202c;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.hotelStatValueGreen {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #15803d;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+    .hotelStatsBar {
+        gap: 8px;
+    }
+    .hotelStatChip {
+        padding: 6px 10px;
+        gap: 6px;
+    }
+    .hotelStatValue,
+    .hotelStatValueGreen {
+        font-size: 0.78rem;
+    }
+}
+
+/* ── Rooms Available ── */
+.roomsSection {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e8edf3;
+    padding: 24px;
+    margin-top: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.roomsSectionTitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.roomsSectionTitle::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 22px;
+    background: linear-gradient(180deg, #16a34a, #22c55e);
+    border-radius: 4px;
+}
+
+.roomCard {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    background: #fafbfc;
+}
+
+.roomCard:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, 0.10);
+    border-color: #86efac;
+}
+
+.roomImageCol {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-right: 1px solid #e2e8f0;
+}
+
+.roomName {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 6px;
+}
+
+.roomImg {
+    border-radius: 10px;
+    object-fit: cover;
+    width: 100%;
+    height: 130px;
+}
+
+.amenitiesWrap {
+    margin-top: 6px;
+}
+
+.seeAmenitiesBtn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #004c4c;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.seeAmenitiesBtn:hover {
+    color: #003535;
+    text-decoration: underline;
+}
+
+.amenitiesList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.amenityTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.mealPlanCol {
+    padding: 16px;
+    border-right: 1px solid #e2e8f0;
+}
+
+.mealPlanHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #004c4c;
+}
+
+.mealPlanHeader svg {
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+.mealPlanList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mealOption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.mealOption:hover {
+    border-color: #86efac;
+    background: #fafffe;
+}
+
+.mealOptionSelected {
+    border-color: #16a34a;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    box-shadow: 0 2px 10px rgba(22, 163, 74, 0.12);
+}
+
+.mealOptionMain {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.mealOptionRadio {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    transition: border-color 0.18s ease;
+}
+
+.mealOptionSelected .mealOptionRadio {
+    border-color: #16a34a;
+}
+
+.mealOptionRadioDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+}
+
+.mealOptionInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.mealOptionName {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1a202c;
+    line-height: 1.35;
+    margin-bottom: 6px;
+    word-break: break-word;
+}
+
+.mealOptionGuests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.guestChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.mealOptionSelected .guestChip {
+    background: rgba(255, 255, 255, 0.75);
+    color: #475569;
+}
+
+.mealOptionPrice {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.mealPriceUp {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.mealPriceDown {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.mealPriceIncluded {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.cancellationBox {
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    margin-top: 12px;
+}
+
+.cancellationTitle {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.priceCol {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+}
+
+.roomPriceMain {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #16a34a;
+    line-height: 1.2;
+}
+
+.priceDiffNote {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+.includedBadge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #16a34a;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 20px;
+    padding: 2px 10px;
+}
+
+.roompricediff{
+    margin-bottom: .15rem;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #dc2626;
+}
+.roompricediffup{
+    margin-bottom: .15rem;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #0ac713;
+}
+.selectRoomBtn {
+    /* border-radius: 10px; */
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 20px;
+    width: 100%;
+    margin-top: 4px;
+    transition: all 0.18s;
+}
+
+/* ── Facilities ── */
+.facilitiesSection {
+    background: #fff;
+    border: 1px solid #e8ecef;
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-top: 24px;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04);
+}
+
+.facilitiesGrid {
+    background: transparent;
+}
+
+.sectionLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #64748b;
+}
+
+.sectionLine {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, #e2e8f0, transparent);
+}
+
+.facilityTile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.facilityIcon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+    .roomImageCol,
+    .mealPlanCol {
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .priceCol {
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 576px) {
+    .hotelInfoCard,
+    .facilitiesSection,
+    .roomsSection {
+        padding: 16px;
+    }
+
+    .hotelName {
+        font-size: 1.2rem;
+    }
+
+    .hotelStatChip {
+        min-width: calc(50% - 5px);
+        flex: 1 1 calc(50% - 5px);
+    }
+
+    .mealPlanCol {
+        padding: 14px;
+    }
+
+    .mealOption {
+        flex-wrap: wrap;
+        padding: 12px;
+    }
+
+    .mealOptionMain {
+        width: 100%;
+    }
+
+    .mealOptionPrice {
+        width: 100%;
+        text-align: center;
+        margin-top: 2px;
+    }
+}

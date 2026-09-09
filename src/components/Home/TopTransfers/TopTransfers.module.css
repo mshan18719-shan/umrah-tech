@@ -1,0 +1,425 @@
+/* ─── Section ─────────────────────────────────────────────── */
+.section {
+  background-color: #f9f9f9;
+  padding: 2rem 0 4rem;
+}
+
+/* ─── Header ──────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.tag {
+  display: inline-block;
+  background-color: #e8f3f2;
+  color: #136a61;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 1.1rem;
+  border-radius: 50px;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 0.65rem;
+  line-height: 1.25;
+}
+
+.subtitle {
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  color: #666;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ─── Slider wrapper ──────────────────────────────────────── */
+.sliderWrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1.5px solid #136a61;
+  background: #fff;
+  color: #136a61;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.navBtn:hover {
+  background: #136a61;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(19, 106, 97, 0.25);
+}
+
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.transferSwiper {
+  touch-action: pan-y;
+  padding-bottom: 2.5rem;
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+}
+
+.transferSwiper :global(.swiper-wrapper) {
+  height: auto !important;
+  align-items: stretch;
+}
+
+.transferSwiper :global(.swiper-slide) {
+  height: auto;
+  box-sizing: border-box;
+  display: flex;
+}
+
+.transferSwiper :global(.swiper-pagination) {
+  bottom: 0;
+}
+
+.transferSwiper :global(.swiper-pagination-bullet) {
+  width: 10px;
+  height: 10px;
+  background-color: #c5d9d7;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.transferSwiper :global(.swiper-pagination-bullet-active) {
+  background-color: #136a61;
+  width: 28px;
+  border-radius: 6px;
+}
+
+/* ─── Skeleton loader ─────────────────────────────────────── */
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.skeletonCard {
+  pointer-events: none;
+}
+
+.skeletonBlock {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e8ecef 25%, #f5f6f8 50%, #e8ecef 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.skeletonTitle {
+  height: 18px;
+  width: 75%;
+  margin-bottom: 0.45rem;
+}
+
+.skeletonCategory {
+  height: 14px;
+  width: 45%;
+}
+
+.skeletonImage {
+  background: linear-gradient(90deg, #e8ecef 25%, #f5f6f8 50%, #e8ecef 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.skeletonBadge {
+  height: 30px;
+  width: 88px;
+  border-radius: 8px;
+}
+
+.skeletonPrice {
+  height: 22px;
+  width: 110px;
+  margin-bottom: 0.35rem;
+}
+
+.skeletonTax {
+  height: 12px;
+  width: 130px;
+}
+
+.skeletonBtn {
+  height: 40px;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ─── Card ────────────────────────────────────────────────── */
+.card {
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  transition: box-shadow 0.28s ease, transform 0.28s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 32px rgba(19, 106, 97, 0.15);
+  transform: translateY(-4px);
+}
+
+.cardHeader {
+  padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.vehicleName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 0.2rem;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.vehicleCategory {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ─── Image ───────────────────────────────────────────────── */
+.imageWrap {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  /* background: linear-gradient(180deg, #f4f7f6 0%, #eef2f1 55%, #fff 100%); */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cardImage {
+  object-fit: contain;
+  object-position: center;
+  transition: transform 0.45s ease;
+}
+
+.card:hover .cardImage {
+  transform: scale(1.03);
+}
+
+/* ─── Features ────────────────────────────────────────────── */
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 1rem 1.25rem 0.85rem;
+}
+
+.featureBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #e8f3f2;
+  color: #136a61;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+}
+
+.featureIcon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ─── Footer ──────────────────────────────────────────────── */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem 1.25rem;
+  margin-top: auto;
+}
+
+.priceBlock {
+  min-width: 0;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.15rem;
+  flex-wrap: wrap;
+}
+
+.priceValue {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #136a61;
+  line-height: 1.2;
+}
+
+.priceUnit {
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 400;
+}
+
+.taxNote {
+  display: block;
+  font-size: 0.72rem;
+  color: #999;
+  margin-top: 2px;
+}
+
+.viewBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0.65rem 1.1rem;
+  background-color: #136a61;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.22s ease;
+}
+
+.viewBtn:hover {
+  background-color: #0f5a52;
+  color: #fff;
+}
+
+.viewBtnIcon {
+  font-size: 0.75rem;
+  transition: transform 0.22s ease;
+}
+
+.card:hover .viewBtnIcon {
+  transform: translateX(3px);
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 991px) {
+  .skeletonGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding: 2.5rem 0 3rem;
+  }
+
+  .header {
+    margin-bottom: 1.75rem;
+  }
+
+  .controls {
+    margin-bottom: 1rem;
+  }
+
+  .navBtn {
+    width: 38px;
+    height: 38px;
+    font-size: 0.8rem;
+  }
+
+  .transferSwiper {
+    padding-bottom: 2.25rem;
+  }
+
+  .skeletonGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .imageWrap {
+    height: 190px;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .viewBtn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vehicleName {
+    font-size: 0.95rem;
+  }
+
+  .imageWrap {
+    height: 175px;
+  }
+
+  .priceValue {
+    font-size: 1.1rem;
+  }
+
+  .features {
+    padding: 0.85rem 1rem 0.75rem;
+  }
+
+  .cardHeader {
+    padding: 1rem 1rem 0.65rem;
+  }
+
+  .cardFooter {
+    padding: 0.75rem 1rem 1rem;
+  }
+}

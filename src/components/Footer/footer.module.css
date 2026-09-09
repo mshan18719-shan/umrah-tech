@@ -1,0 +1,272 @@
+/* ─── Wrapper ─────────────────────────────────────────────── */
+.footerWrapper {
+  position: relative;
+}
+
+/* ─── CTA / Hero Section ──────────────────────────────────── */
+.ctaSection {
+  position: relative;
+  padding: 5.5rem 0;
+  background-image: url('/images/footerbg.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.ctaSection::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #000000B2 70%;
+}
+
+.ctaContent {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.ctaTitle {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1rem;
+  line-height: 40px;
+}
+
+.ctaSubtitle {
+  font-size: 18px;
+  color: #DBEAFE;
+  margin-bottom: 2.25rem;
+  line-height: 20px;
+}
+
+.ctaButtons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #F5D68A;
+  color: #0D1E3D;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 14px 32px;
+  border-radius: 16px;
+  text-decoration: none;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(245, 197, 99, 0.35);
+  color: #0D1E3D;
+}
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 14px 32px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  transition: background-color 0.22s ease, transform 0.22s ease;
+}
+
+.secondaryBtn:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* ─── Footer Bottom ───────────────────────────────────────── */
+.footerBottom {
+  background-color: #0D1E3D;
+  color: #fff;
+  padding: 3.5rem 0 1.75rem;
+}
+
+.footerLogo {
+  margin-bottom: 1rem;
+}
+
+.text {
+  color: #8EC5FF;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.1rem;
+}
+
+/* ─── Social icons ────────────────────────────────────────── */
+.socialIcons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1.25rem;
+}
+
+.socialIcons span {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: background-color 0.22s ease;
+}
+
+.socialIcons a:hover span {
+  background-color: #556584;
+  border-color: #556584;
+  color: #0D1E3D;
+}
+
+/* ─── Quick Links ─────────────────────────────────────────── */
+.quickLinks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.quickLinks li {
+  margin-bottom: 10px;
+}
+
+.quickLinks li a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8EC5FF;
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.quickLinks li a:hover {
+  color: #6d81a9;
+}
+
+.linkIcon {
+  color: #6d81a9;
+  font-size: 0.75rem;
+}
+
+/* ─── Phone icon flip (face right) ────────────────────────── */
+.phoneFlip {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+/* ─── Contact ─────────────────────────────────────────────── */
+.contactItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 1.1rem;
+}
+
+.contactItem a {
+  color: #8EC5FF;
+  font-size: 0.92rem;
+}
+
+.contactItem a:hover {
+  color: #6d81a9;
+}
+
+.hoursText {
+  color: #8EC5FF;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.hoursText a:hover {
+  color: #6d81a9;
+}
+
+.iconCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 30px;
+  color: #29ABD8;
+  font-size: 0.85rem;
+}
+
+/* ─── Separator ───────────────────────────────────────────── */
+.separator {
+  border-color: rgba(255, 255, 255, 0.12);
+  margin: 0.5rem 0 1.5rem;
+}
+
+/* ─── Bottom Bar ──────────────────────────────────────────── */
+.bottomBar {
+  font-size: 14px;
+  color: #51A2FF;
+}
+
+.bottomLink {
+  color: #51A2FF;
+  text-decoration: none;
+  margin: 0 6px;
+  transition: color 0.2s ease;
+}
+
+.bottomLink:hover {
+  color: #6d81a9;
+}
+
+.bottomDivider {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .ctaSection {
+    padding: 4rem 0;
+  }
+
+  .ctaButtons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .primaryBtn,
+  .secondaryBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .footerBottom {
+    padding: 2.75rem 0 1.5rem;
+  }
+
+  .bottomBar > div {
+    margin-bottom: 0.5rem;
+  }
+}

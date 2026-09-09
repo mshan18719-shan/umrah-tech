@@ -1,0 +1,273 @@
+/* Custom Airport Dropdown Styles */
+
+.customDropdown {
+    padding: 0 !important;
+    max-width: 350px !important;
+    min-width: 350px !important;
+    z-index: 1000;
+}
+.clearButton {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 15;
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+    background-color: #f0f0f0;
+    color: #d32f2f;
+}
+
+.clearButton:active {
+    transform: translateY(-50%) scale(0.95);
+}
+.searchWrapper {
+    padding: 12px;
+    border-bottom: 2px solid #e0e0e0;
+    background-color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+    border-color: #1B3B6F;
+    box-shadow: 0 0 0 3px rgba(27, 59, 111, 0.1);
+}
+
+.airportList {
+    max-height: 350px;
+    min-height: 350px;
+    overflow-y: auto;
+}
+
+/* Country Header */
+.countryHeader {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.selectedBadge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #1B3B6F;
+    background-color: #e8f5e9;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Scrollbar styling for airport list */
+.airportList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.airportList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.airportList::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.airportList::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.airportOption {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.airportOption:hover {
+    background-color: #f8f9fa;
+}
+
+.countryHeader + .airportOption {
+    border-top: none;
+}
+
+.airportOption.selected {
+    background-color: #f0f4f8;
+    border-left: 3px solid #1B3B6F;
+}
+
+.airportIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #f0f2f5;
+    border-radius: 8px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.airportIcon {
+    color: #666;
+    font-size: 20px;
+}
+
+.airportDetails {
+    flex: 1;
+    min-width: 0;
+}
+
+.airportMainInfo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.airportName {
+    font-size: 15px;
+    font-weight: 500;
+    color: #222;
+}
+
+.airportCode {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+}
+
+.airportLocation {
+    font-size: 13px;
+    color: #999;
+}
+
+.checkmarkWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.checkmark {
+    color: #1B3B6F;
+    font-size: 20px;
+    animation: checkmarkPop 0.3s ease;
+}
+
+@keyframes checkmarkPop {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Selected option highlight */
+.airportOption[data-selected="true"] {
+    background-color: #e8f5e9;
+}
+
+/* Empty state */
+.emptyState {
+    padding: 24px 16px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+}
+
+/* Loading state */
+.loadingState {
+    padding: 16px;
+    text-align: center;
+    color: #666;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .customDropdown {
+        min-width: 380px !important;
+    }
+    
+    .airportOption {
+        padding: 10px 12px;
+    }
+    
+    .airportIconWrapper {
+        width: 36px;
+        height: 36px;
+        margin-right: 10px;
+    }
+    
+    .airportName {
+        font-size: 14px;
+    }
+    
+    .airportCode {
+        font-size: 13px;
+    }
+    
+    .airportLocation {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .customDropdown {
+        min-width: 320px !important;
+    }
+}
+
+/* Custom option group styling */
+.optionGroup {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: #fafafa;
+}

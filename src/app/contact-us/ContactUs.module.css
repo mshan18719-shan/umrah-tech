@@ -1,0 +1,352 @@
+/* ─── Map Section ─────────────────────────────────────────── */
+.mapSection {
+    margin-top: 4em;
+    width: 100%;
+}
+
+.mapHeading {
+    text-align: center;
+    font-size: 30px;
+    font-weight: 400;
+    color: #1D2530;
+    margin-bottom: 24px;
+}
+
+.map {
+    position: relative;
+    width: 100%;
+    height: 450px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+}
+
+.map iframe {
+    border-radius: 16px;
+    border: 0;
+}
+
+.openMapsLink {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #fff;
+    color: #111827;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.openMapsLink:hover {
+    color: #0D1E3D;
+}
+
+/* ─── Contact Form ─────────────────────────────────────────── */
+.contactform {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 35px 30px;
+    height: 100%;
+    /* box-shadow: 0 10px 35px rgba(0, 0, 0, 0.06); */
+    border: 1px solid #E1E7EF;
+    box-sizing: border-box;
+}
+
+.formHeading {
+    font-size: 28px;
+    font-weight: 400;
+    color: #111827;
+    margin-bottom: 24px;
+}
+
+.contactform label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.contactform .form-control {
+    border-radius: 10px;
+    border: 1px solid #E5E7EB;
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+.contactform .form-control:focus {
+    border-color: #0D1E3D;
+    box-shadow: 0 0 0 0.15rem rgba(13, 30, 61, 0.15);
+}
+
+.contactform select.form-control {
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.submitBtn {
+    background-color: #1B3B6F;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 0;
+    font-weight: 600;
+    transition: background-color 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.submitBtnIcon {
+    font-size: 15px;
+}
+
+.submitBtn:hover:not(:disabled) {
+    background-color: #16296b;
+    color: #fff;
+}
+
+.submitBtn:disabled {
+    opacity: 0.7;
+}
+
+/* ─── Contact Detail / Get In Touch ───────────────────────── */
+.contactdetail {
+    height: 100%;
+}
+
+.infodiv {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.infoheader h3 {
+    font-size: 28px;
+    font-weight: 400;
+    color: #1D2530;
+}
+
+.infoheader p {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+.contactinfocard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: auto;
+}
+
+.infocard {
+    background-color: #fff;
+    border: 1px solid #E9EBF0;
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 10px rgba(13, 30, 61, 0.04);
+    transition: all 0.25s ease;
+}
+
+.infocard:hover {
+    box-shadow: 0 8px 20px rgba(13, 30, 61, 0.1);
+    transform: translateY(-2px);
+}
+
+.infocard .iconcontainer {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    background-color: #1B3B6F;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.infocard h4 {
+    font-size: 16px;
+    font-weight: 400;
+    color: #1D2530;
+    margin-bottom: 4px;
+}
+
+.infocard p {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+.infocard a {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.infocard a:hover {
+    color: #0D1E3D;
+}
+
+.contactsocialLinks h5 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #111827;
+}
+
+.contactsocialLinks .socialicons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.contactsocialLinks .socialicons a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #F3F4F6;
+    color: #0D1E3D;
+    font-size: 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.socialicons a:hover {
+    background-color: #0D1E3D;
+    color: #fff;
+}
+
+/* ─── Begin Your Next Journey CTA ─────────────────────────── */
+.ctaJourneyWrapper {
+    width: 100%;
+    background-color: rgba(241, 245, 249, 0.3);
+    padding: 90px 20px;
+    box-sizing: border-box;
+}
+
+.ctaJourneyCard {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: rgba(27, 59, 111, 1);
+    border-radius: 12px;
+    padding: 60px 50px;
+    text-align: center;
+    box-sizing: border-box;
+    box-shadow: 0 20px 45px rgba(22, 41, 107, 0.25);
+}
+
+.ctaJourneyHeading {
+    color: #fff;
+    font-size: 36px;
+    font-weight: 400;
+    margin: 0 0 16px 0;
+}
+
+.ctaJourneySubheading {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 560px;
+    margin: 0 auto 36px auto;
+}
+
+.ctaJourneyButtons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ctaJourneyBtnPrimary,
+.ctaJourneyBtnOutline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 24px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.ctaJourneyBtnPrimary {
+    background-color: #fff;
+    color: #1D2530;
+    border: 1.5px solid #fff;
+}
+
+.ctaJourneyBtnPrimary:hover {
+    background-color: #eef1f8;
+    color: #16296B;
+    transform: translateY(-2px);
+}
+
+.ctaJourneyBtnOutline {
+    background-color: transparent;
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+}
+
+.ctaJourneyBtnOutline:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+@media screen and (max-width: 767px) {
+    .ctaJourneyWrapper {
+        padding: 70px 16px;
+    }
+
+    .ctaJourneyCard {
+        padding: 48px 28px;
+        border-radius: 20px;
+    }
+
+    .ctaJourneyHeading {
+        font-size: 28px;
+    }
+
+    .ctaJourneySubheading {
+        font-size: 15px;
+    }
+
+    .ctaJourneyButtons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .ctaJourneyBtnPrimary,
+    .ctaJourneyBtnOutline {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media screen and (max-width: 448px) {
+    .ctaJourneyCard {
+        padding: 40px 20px;
+    }
+
+    .ctaJourneyHeading {
+        font-size: 24px;
+    }
+}

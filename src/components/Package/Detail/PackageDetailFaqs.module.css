@@ -1,0 +1,97 @@
+/* Package Detail FAQs — centered card accordion */
+
+.faqsSection {
+  /* margin: 3rem 0 2.5rem; */
+  padding: 2.5rem 1rem;
+  background: #f7f5f2;
+  border-radius: 20px;
+}
+
+.header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 1.75rem;
+}
+
+.title {
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  font-weight: 800;
+  color: #0D1E3D;
+  margin: 0 0 0.55rem;
+  letter-spacing: -0.3px;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #6B7A99;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.accordionWrap {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.accordionWrap :global(.mantine-Accordion-item) {
+  border: 1px solid #ebe7e1 !important;
+  border-radius: 18px !important;
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(15, 35, 70, 0.04);
+}
+
+.accordionWrap :global(.mantine-Accordion-item[data-active]) {
+  border-color: #d7e6fb !important;
+  box-shadow: 0 6px 18px rgba(27, 59, 111, 0.08);
+}
+
+.accordionWrap :global(.mantine-Accordion-control) {
+  padding: 1.15rem 1.35rem;
+  background: transparent !important;
+}
+
+.accordionWrap :global(.mantine-Accordion-control:hover) {
+  background: #fafbfc !important;
+}
+
+.accordionWrap :global(.mantine-Accordion-label) {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #0D1E3D;
+  line-height: 1.45;
+}
+
+.accordionWrap :global(.mantine-Accordion-chevron) {
+  color: #29ABD8;
+  width: 22px;
+}
+
+.accordionWrap :global(.mantine-Accordion-panel) {
+  padding: 0 1.35rem 1.15rem;
+}
+
+.accordionWrap :global(.mantine-Accordion-content) {
+  font-size: 0.9rem;
+  color: #6B7A99;
+  line-height: 1.7;
+  border-top: 1px solid #f0ece6;
+  padding-top: 0.85rem;
+}
+
+@media (max-width: 767px) {
+  .faqsSection {
+    margin: 2rem 0;
+    padding: 1.75rem 0.75rem;
+    border-radius: 16px;
+  }
+
+  .accordionWrap :global(.mantine-Accordion-control) {
+    padding: 1rem 1.1rem;
+  }
+
+  .accordionWrap :global(.mantine-Accordion-panel) {
+    padding: 0 1.1rem 1rem;
+  }
+}

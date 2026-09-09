@@ -1,0 +1,79 @@
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 0 6px;
+}
+
+.tag {
+  color: #1b3b6f;
+  letter-spacing: .04em;
+  background-color: #e8f4fd;
+  border-radius: 50px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: .35rem 1.1rem;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+} 
+
+.tag svg {
+  color: #29abd8;
+  font-size: .75rem;
+}
+
+.title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: 36px;
+  font-weight: 700;
+  color: #0D1E3D;
+  margin: 0 0 0.65rem;
+  line-height: 1.25;
+}
+
+.subtitle {
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  font-size: 18px;
+  color: #666;
+  margin: auto;
+  font-weight: 400;
+  /* width: 530px; */
+}
+
+.pakage-btn {
+  background-color: blue !important;
+}
+
+/* ===================================
+   CATEGORY TABS (scoped to this component only)
+   Overrides the shared global .nav-pills.lights
+   look — other places using that global class
+   are untouched since these rules only apply
+   inside .categoryTabs.
+   =================================== */
+.categoryTabs :global(.nav-link) {
+  background: #ffffff !important;
+  color: #1B3B6F !important;
+  border: 1px solid #FFFFFF !important;
+  border-radius: 50px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease;
+  padding: 8px 20px !important;
+}
+
+.categoryTabs :global(.nav-link:hover) {
+  border-color: #1B3B6F !important;
+  color: #1B3B6F !important;
+}
+
+.categoryTabs :global(.nav-link.active),
+.categoryTabs :global(.show > .nav-link) {
+  background: #1B3B6F !important;
+  color: #ffffff !important;
+  border-color: #1B3B6F !important;
+}
+
+.categoryTabs :global(.nav-link.active:hover) {
+  color: #ffffff !important;
+}

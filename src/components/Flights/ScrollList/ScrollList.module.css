@@ -1,0 +1,53 @@
+.trackingwrapper {
+  height: 46px;
+  background-color: #091d42;
+}
+
+.pe6 {
+  padding-right: 1.5rem;
+}
+
+.tickerWrapper {
+  overflow: hidden;
+}
+
+.tickerTrack {
+  display: flex;
+}
+
+.marquee {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
+  pointer-events: none;
+  touch-action: pan-y;
+}
+
+.marqueeContent {
+  display: inline-flex;
+  align-items: center;
+  animation: scroll var(--marquee-duration, 60s) linear infinite;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@media screen and (max-width: 776px) {
+  .trackingwrapper {
+    height: unset;
+  }
+
+  .marquee {
+    padding-top: 8px;
+  }
+}

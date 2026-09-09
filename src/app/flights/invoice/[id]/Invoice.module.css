@@ -1,0 +1,1651 @@
+/* ============================================================
+   PROFESSIONAL FLIGHT INVOICE — Invoice.module.css
+   ============================================================ */
+
+/* ── Page background ────────────────────────────────────────── */
+.invoicePageBg {
+  background: #eef2f7;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Invoice document card ──────────────────────────────────── */
+.invoiceCard {
+  background: #ffffff;
+  max-width: 960px;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,.08), 0 20px 50px -12px rgba(0,0,0,.15);
+  overflow: hidden;
+}
+
+/* ── Header image ───────────────────────────────────────────── */
+.headerImageWrap {
+  line-height: 0;
+}
+.headerImageWrap img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ── Title strip ────────────────────────────────────────────── */
+.titleStrip {
+  background: linear-gradient(135deg, #004c4c 0%, #004c4cc5 100%);
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.titleLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  color: #ffffff;
+}
+
+.titleIcon {
+  font-size: 2rem;
+  color: #f0b429;
+  flex-shrink: 0;
+}
+
+.titleLabel {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.titleSub {
+  font-size: 0.78rem;
+  color: #94c2e8;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 2px 0 0;
+}
+
+.titleRight {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+/* ── Status pills ───────────────────────────────────────────── */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pillGreen {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+}
+
+.pillAmber {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+/* ── Meta info bar ──────────────────────────────────────────── */
+.metaBar {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 2px solid #e2e8f0;
+  background: #f8fafc;
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.5rem;
+}
+
+.metaDivider {
+  width: 1px;
+  background: #e2e8f0;
+  margin: 0.75rem 0;
+}
+
+.metaLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.metaValue {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #004c4c;
+  word-break: break-all;
+}
+
+/* ── Generic section wrapper ────────────────────────────────── */
+.section {
+  padding: 1.75rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1.25rem;
+}
+
+.sectionHeadBar {
+  display: block;
+  width: 4px;
+  height: 1.5rem;
+  background: linear-gradient(180deg, #004c4c, #004c4ca2);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.sectionHeadIcon {
+  font-size: 1.15rem;
+  color: #004c4ca2;
+}
+
+.sectionHeadTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #004c4c;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+/* ── Segment card ───────────────────────────────────────────── */
+.segCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.segCard:last-child {
+  margin-bottom: 0;
+}
+
+/* Airline header row */
+.segAirlineRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  background: #f0f6ff;
+  border-bottom: 1px solid #dbe9fa;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.segAirlineLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.segAirlineLogo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #dbe9fa;
+  padding: 4px;
+}
+
+.segAirlineName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #004c4c;
+  margin: 0 0 2px;
+}
+
+.segFlightNo {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 600;
+}
+
+.segClassBadge {
+  background: linear-gradient(135deg, #004c4c, #004c4ca2);
+  color: #ffffff;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Route timeline ─────────────────────────────────────────── */
+.routeTimeline {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0;
+  padding: 1.5rem 1.25rem 1rem;
+}
+
+.routeNode {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.routeNodeRight {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.routeNodeRight .routeNodeInfo {
+  align-items: flex-end;
+}
+
+.routeNodeDot {
+  background: linear-gradient(135deg, #004c4c, #004c4ca2);
+  color: #ffffff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.routeNodeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.routeNodeCity {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #004c4c;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.routeNodeAirport {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 220px;
+}
+
+.routeNodeCode {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #004c4ca2;
+  margin: 0;
+}
+
+.routeNodeTime {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  background: #eef6ff;
+  border: 1px solid #dbe9fa;
+  border-radius: 6px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #004c4c;
+}
+
+.timeIconSm {
+  color: #004c4ca2;
+  font-size: 0.75rem;
+}
+
+/* Duration connector */
+.routeConnector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 1rem;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.connectorLine {
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+  border-radius: 1px;
+}
+
+.connectorDuration {
+  background: linear-gradient(135deg, #004c4c, #004c4ca2);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 0.5rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(13, 43, 69, 0.25);
+  min-width: 80px;
+}
+
+.connectorPlane {
+  font-size: 0.9rem;
+  color: #f0b429;
+}
+
+.connectorDuration span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* ── Baggage row ────────────────────────────────────────────── */
+.baggageRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  background: #f8fafc;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.baggageRowIcon {
+  color: #004c4ca2;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.baggageRowTitle {
+  font-weight: 700;
+  color: #004c4c;
+  margin-right: 0.25rem;
+}
+
+.baggagePill {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.25rem 0.65rem;
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+}
+
+/* ── Passenger table ────────────────────────────────────────── */
+.passengerTable {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.85rem;
+}
+
+.passengerTableHead {
+  display: grid;
+  grid-template-columns: 40px 1.8fr 0.8fr 0.8fr 1fr 1.2fr;
+  gap: 0;
+  background: linear-gradient(135deg, #004c4c, #1a4a6e);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.passengerTableHead span,
+.passengerTableRow span {
+  padding: 0.7rem 0.875rem;
+}
+
+.passengerTableRow {
+  display: grid;
+  grid-template-columns: 40px 1.8fr 0.8fr 0.8fr 1fr 1.2fr;
+  gap: 0;
+  border-top: 1px solid #e2e8f0;
+  color: #334155;
+  transition: background 0.15s;
+}
+
+.passengerTableRow:nth-child(even) {
+  background: #f8fafc;
+}
+
+.passengerTableRow:hover {
+  background: #eef6ff;
+}
+
+.passengerIdx {
+  font-weight: 700;
+  color: #004c4ca2;
+  display: flex;
+  align-items: center;
+}
+
+.passengerFullName {
+  font-weight: 700;
+  color: #004c4c;
+}
+
+.typeBadge {
+  display: inline-block;
+  background: #eef6ff;
+  color: #004c4ca2;
+  border: 1px solid #dbe9fa;
+  border-radius: 4px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.passengerContact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* ── Pricing summary ────────────────────────────────────────── */
+.pricingWrap {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pricingBox {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pricingLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pricingLine:last-child {
+  border-bottom: none;
+}
+
+.pricingLineLabel {
+  font-size: 0.88rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pricingLineVal {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #004c4c;
+}
+
+.pricingDivider {
+  border-top: 2px solid #004c4c;
+  margin: 0;
+}
+
+.pricingTotal {
+  background: linear-gradient(135deg, #004c4c, #1a4a6e);
+  color: #ffffff;
+}
+
+.pricingTotal .pricingLineLabel {
+  color: #94c2e8;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pricingTotal .pricingLineVal {
+  color: #f0b429;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+/* ── Notice / Important info box ────────────────────────────── */
+.noticeBox {
+  margin: 0 2rem 1.75rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.noticeHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.875rem;
+}
+
+.noticeIcon {
+  color: #d97706;
+  font-size: 1.1rem;
+}
+
+.noticeTitle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.noticeList {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: none;
+}
+
+.noticeList li {
+  position: relative;
+  padding-left: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  color: #78350f;
+  line-height: 1.6;
+}
+
+.noticeList li:last-child {
+  margin-bottom: 0;
+}
+
+.noticeList li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* ── Footer image ───────────────────────────────────────────── */
+.footerImageWrap {
+  line-height: 0;
+}
+.footerImageWrap img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ── Action buttons (hidden on print) ───────────────────────── */
+.actionBar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.actionBtnPrimary {
+  background: linear-gradient(135deg, #004c4c, #004c4ca2);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.actionBtnPrimary:hover {
+  background: linear-gradient(135deg, #0a2238, #155c94);
+  box-shadow: 0 4px 14px rgba(13, 43, 69, 0.35);
+  color: #ffffff;
+}
+
+.actionBtnOutline {
+  background: #ffffff;
+  color: #004c4c;
+  border-color: #004c4c;
+}
+
+.actionBtnOutline:hover {
+  background: #004c4c;
+  color: #ffffff;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .invoicePageBg {
+    padding: 1rem 0;
+  }
+
+  .invoiceCard {
+    border-radius: 0;
+  }
+
+  .titleStrip {
+    padding: 1rem 1.25rem;
+  }
+
+  .titleLabel {
+    font-size: 1.1rem;
+  }
+
+  .metaBar {
+    flex-direction: column;
+  }
+
+  .metaDivider {
+    display: none;
+  }
+
+  .metaItem {
+    padding: 0.6rem 1.25rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .section {
+    padding: 1.25rem;
+  }
+
+  .routeTimeline {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+    padding: 1rem;
+  }
+
+  .routeConnector {
+    flex-direction: row;
+    padding: 0 0.5rem;
+    justify-content: center;
+  }
+
+  .connectorLine {
+    width: 40px;
+    height: 2px;
+  }
+
+  .routeNodeRight {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .routeNodeRight .routeNodeInfo {
+    align-items: flex-start;
+  }
+
+  .passengerTableHead,
+  .passengerTableRow {
+    grid-template-columns: 36px 1fr 1fr;
+    font-size: 0.78rem;
+  }
+
+  /* Hide less critical columns on small screens */
+  .passengerTableHead span:nth-child(4),
+  .passengerTableHead span:nth-child(5),
+  .passengerTableHead span:nth-child(6),
+  .passengerTableRow span:nth-child(4),
+  .passengerTableRow span:nth-child(5),
+  .passengerTableRow span:nth-child(6) {
+    display: none;
+  }
+
+  .pricingWrap {
+    justify-content: stretch;
+  }
+
+  .pricingBox {
+    max-width: 100%;
+  }
+
+  .noticeBox {
+    margin: 0 1rem 1.25rem;
+  }
+}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+@media print {
+  .invoicePageBg {
+    background: white;
+    padding: 0;
+  }
+
+  .invoiceCard {
+    box-shadow: none;
+    border-radius: 0;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .actionBar {
+    display: none !important;
+  }
+
+  .segCard:hover,
+  .passengerTableRow:hover {
+    background: inherit;
+    box-shadow: none;
+  }
+
+  .section {
+    page-break-inside: avoid;
+  }
+}
+
+
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.actionBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.voucherCard {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Header Styles */
+.voucherHeader {
+  /* background: linear-gradient(135deg, #004c4c 0%, #006666 100%); */
+  /* color: white; */
+  /* padding: 2rem; */
+  /* display: flex;
+  justify-content: space-between;
+  align-items: center; */
+}
+
+.headerLeft {
+  flex: 1;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logoIcon {
+  font-size: 3rem;
+  color: #ffd700;
+}
+
+.companyName {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  color: #e0e0e0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+}
+
+.bookingStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #74747445;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  backdrop-filter: blur(10px);
+}
+
+.confirmedIcon {
+  font-size: 1.5rem;
+  color: #4ade80;
+}
+
+.confirmedText {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+/* Booking Bar */
+.bookingBar {
+  background: linear-gradient(to right, #f8fafc, #e2e8f0);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  border-bottom: 3px solid #004c4c;
+}
+
+.bookingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bookingLabel {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bookingValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #004c4c;
+}
+
+/* Segment Styles */
+.segmentGroup {
+  padding: 2rem;
+  border-bottom: 2px dashed #e2e8f0;
+}
+
+.segmentGroup:last-of-type {
+  border-bottom: none;
+}
+
+.segmentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #004c4c;
+}
+
+.segmentIcon {
+  font-size: 1.5rem;
+  color: #004c4c;
+}
+
+.segmentTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #004c4c;
+  margin: 0;
+}
+
+.flightSegment {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.flightSegment:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.flightSegment:last-child {
+  margin-bottom: 0;
+}
+
+.segmentTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.airlineInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.airlineDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.airlineName {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.flightNumber {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 600;
+}
+
+.aircraftType {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.classInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: linear-gradient(135deg, #004c4c, #006666);
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  color: white;
+}
+
+.classLabel {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.classValue {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Flight Route */
+.flightRoute {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.routePoint {
+  flex: 1;
+  display: flex;
+  gap: 1rem;
+}
+
+.routeIcon {
+  font-size: 2rem;
+  color: #004c4c;
+  background: #e0f2f1;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  flex-shrink: 0;
+}
+
+.routeDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.routeCity {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.routeAirport {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routeCode {
+  font-size: 0.9rem;
+  color: #004c4c;
+  font-weight: 600;
+  margin: 0;
+}
+
+.routeTime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  background: #f1f5f9;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.timeIcon {
+  color: #004c4c;
+  font-size: 1rem;
+}
+
+.timeValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.routeLine {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  padding: 0 1rem;
+}
+
+.durationBox {
+  background: linear-gradient(135deg, #004c4c, #006666);
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  z-index: 2;
+  box-shadow: 0 4px 10px rgba(0, 76, 76, 0.2);
+}
+
+.planeIcon {
+  font-size: 1.2rem;
+  transform: rotate(90deg);
+}
+
+.duration {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.line {
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(to bottom, #004c4c, #006666);
+  border-radius: 2px;
+  position: absolute;
+  top: 0;
+  z-index: 1;
+}
+
+/* Baggage Info */
+.baggageInfo {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  border-left: 4px solid #004c4c;
+}
+
+.baggageItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.baggageIcon {
+  font-size: 1.5rem;
+  color: #004c4c;
+}
+
+.baggageLabel {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-right: 0.5rem;
+}
+
+.baggageValue {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Passengers Section */
+.passengersSection {
+  padding: 2rem;
+  background: #f8fafc;
+  border-top: 3px solid #004c4c;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionIcon {
+  font-size: 1.5rem;
+  color: #004c4c;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #004c4c;
+  margin: 0;
+}
+
+.passengersSummary {
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.passengersList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.passengerCard {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.passengerCard:hover {
+  border-color: #004c4c;
+  box-shadow: 0 4px 12px rgba(0, 76, 76, 0.1);
+}
+
+.passengerNumber {
+  background: linear-gradient(135deg, #004c4c, #006666);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.passengerInfo {
+  flex: 1;
+}
+
+.passengerName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.75rem 0;
+}
+
+.passengerDetails {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.passengerDetail {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.passengerDetail strong {
+  color: #1e293b;
+  margin-right: 0.25rem;
+}
+
+/* Pricing Section */
+.pricingSection {
+  padding: 2rem;
+  background: white;
+}
+
+.pricingDetails {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.pricingRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pricingRow:last-child {
+  border-bottom: none;
+}
+
+.totalRow {
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 3px solid #004c4c;
+  font-size: 1.2rem;
+}
+
+.pricingLabel {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.pricingValue {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.totalRow .pricingLabel,
+.totalRow .pricingValue {
+  color: #004c4c;
+  font-size: 1.3rem;
+}
+
+/* Important Info */
+.importantInfo {
+  padding: 2rem;
+  background: #fff8e1;
+  border-left: 5px solid #ffa726;
+}
+
+.infoTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #e65100;
+  margin: 0 0 1rem 0;
+}
+
+.infoList {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.infoList li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #5d4037;
+  line-height: 1.6;
+}
+
+.infoList li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #ff9800;
+  font-weight: 700;
+}
+
+/* Contact Section */
+.contactSection {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.contactTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #004c4c;
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+.contactInfo {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.contactIcon {
+  color: #004c4c;
+  font-size: 1.2rem;
+}
+
+/* Footer */
+.voucherFooter {
+  /* background: linear-gradient(135deg, #004c4c 0%, #006666 100%);
+  color: white;
+  padding: 2rem;
+  text-align: center; */
+}
+
+.footerText {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0 0 0.5rem 0;
+}
+
+.footerNote {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .voucherHeader {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .logo {
+    justify-content: center;
+  }
+
+  .bookingBar {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .bookingInfo {
+    align-items: center;
+    text-align: center;
+  }
+
+  .flightRoute {
+    flex-direction: column;
+  }
+
+  .routeLine {
+    width: 100%;
+    flex-direction: row;
+    padding: 1rem 0;
+  }
+
+  .line {
+    width: 100%;
+    height: 3px;
+  }
+
+  .durationBox {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .planeIcon {
+    transform: rotate(0deg);
+  }
+
+  .segmentTop {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .classInfo {
+    align-self: stretch;
+    align-items: center;
+  }
+
+  .baggageInfo {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .contactInfo {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .passengerDetails {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .actionButtons {
+    justify-content: center;
+  }
+}
+
+/* Baggage Section Styles */
+.baggageSection {
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.baggageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.baggageCard {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 4px solid #006666;
+}
+
+.baggageCard h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #004c4c;
+  margin-bottom: 0.5rem;
+}
+
+.baggageCard p {
+  margin: 0;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Deadlines Section Styles */
+.deadlinesSection {
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.deadlinesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.deadlineCard {
+  background: #fff7ed;
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 4px solid #f59e0b;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.deadlineCard strong {
+  color: #92400e;
+  font-size: 0.9rem;
+}
+
+.deadlineCard span {
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Penalties Section Styles */
+.penaltiesSection {
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.penaltiesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.penaltyCard {
+  background: #fef2f2;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border-left: 4px solid #ef4444;
+}
+
+.penaltyCard h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #991b1b;
+  margin-bottom: 0.75rem;
+}
+
+.penaltyCard p {
+  margin: 0.5rem 0 0 0;
+  color: #374151;
+}
+
+.penaltyCard strong {
+  color: #991b1b;
+}
+
+/* Operating Carrier Styles */
+.operatingCarrier {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.operatingCarrier p {
+  margin: 0;
+  color: #065f46;
+  font-size: 0.9rem;
+}
+
+/* Airline Logo Styles */
+.airlineLogo {
+  margin-right: 1rem;
+}
+
+/* Print Styles */
+@media print {
+
+  /* Hide action buttons on print */
+  .actionButtons {
+    display: none !important;
+  }
+
+  .voucherPrintHide {
+    display: none !important;
+  }
+
+  /* Remove all margins, padding, and background from container */
+  .voucherContainer {
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+  }
+
+  .voucherContainer {
+    background: white;
+    padding: 0;
+  }
+
+  /* Remove padding from voucher card container */
+  .voucherCard {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure page breaks properly */
+  .voucherCard {
+    page-break-inside: avoid;
+  }
+
+  /* Reset any section padding for print */
+ 
+}

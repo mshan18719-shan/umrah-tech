@@ -1,0 +1,246 @@
+/* Package Accommodation — horizontal cards (screenshot layout) */
+
+.hotelSection {
+  margin: 1.5rem 0 2rem;
+  background: #FFFFFF;
+  border: 1px solid #EBE7DF;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  border-radius: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.1rem;
+}
+
+.sectionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #1B3B6F;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.sectionHeading {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #0A1628;
+  line-height: 1.3;
+}
+
+.hotelList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.hotelCard {
+  background: rgba(255, 255, 255, 1);
+  border: 1px solid rgba(27, 59, 111, 0.12);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(15, 35, 70, 0.04);
+}
+
+.hotelCardInner {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+}
+
+.media {
+  position: relative;
+  min-height: 140px;
+  background: #eef2f8;
+  overflow: hidden;
+}
+
+.hotelImage {
+  object-fit: cover;
+}
+
+.mediaPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 140px;
+  background: linear-gradient(135deg, #1B3B6F 0%, #0D1E3D 100%);
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 2rem;
+}
+
+.viewPhotosBtn {
+  position: absolute;
+  left: 50%;
+  bottom: 0.65rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: rgba(13, 30, 61, 0.82);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.viewPhotosBtn:hover {
+  background: rgba(27, 59, 111, 0.95);
+  transform: translateX(-50%) translateY(-1px);
+}
+
+.viewPhotosBtn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.content {
+  padding: 0.95rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.starsRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: space-between;
+  margin-bottom: .35rem;
+}
+
+.star {
+  color: #f5b301;
+}
+
+.noRating {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+.hotelName {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0D1E3D;
+  line-height: 1.3;
+}
+
+.bookingDate {
+  color: #1b3b6f;
+  white-space: nowrap;
+  background: #eef5ff;
+  border: 1px solid #d7e6fb;
+  border-radius: 999px;
+  align-items: center;
+  gap: .35rem;
+  padding: .35rem .65rem;
+  font-size: .72rem;
+  font-weight: 600;
+  display: inline-flex;
+}
+
+.addressRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0 0 0.65rem;
+  font-size: 0.8rem;
+  color: #6B7A99;
+  line-height: 1.45;
+}
+
+.addressIcon {
+  color: #29ABD8;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.amenityRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.amenityChip {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #4b5563;
+  background: #f4f6fa;
+  border: 1px solid #e6ebf2;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  line-height: 1.3;
+}
+
+.amenityMore {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #1B3B6F;
+  background: #eef5ff;
+  border: 1px solid #d7e6fb;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+}
+
+.cardFooter {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.distance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1B3B6F;
+}
+
+.nightsBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1B3B6F;
+  background: #eef5ff;
+  border: 1px solid #d7e6fb;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+}
+
+@media (max-width: 640px) {
+  .hotelCardInner {
+    grid-template-columns: 1fr;
+  }
+
+  .media {
+    min-height: 170px;
+  }
+
+  .mediaPlaceholder {
+    min-height: 170px;
+  }
+}

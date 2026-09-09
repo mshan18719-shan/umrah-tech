@@ -1,0 +1,522 @@
+.flightCardList {
+    width: 100%;
+}
+
+.flightCard {
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(27, 59, 111, 0.12);
+    border-radius: 14px;
+    padding: 1rem 0rem 0rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 27px 59px 0 rgba(0, 0, 0, 0.1);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flightCard:hover {
+    border-color: #c8d2df;
+    box-shadow: 0 80px 80px 0 rgba(0, 0, 0, 0.09);
+}
+
+.includedBanner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.85rem;
+    margin-bottom: 0.85rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.includedBanner strong {
+    font-weight: 800;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+}
+
+.segmentsCol {
+    min-width: 0;
+}
+
+.legSection {
+    padding: 0.40rem 1.15rem 1rem;
+}
+
+.legSectionDivider {
+    margin-bottom: 0.15rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px dashed #d8dee8;
+}
+
+.legHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+
+.legBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 40px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.legBadgeDeparture {
+    background: #E8F4FD;
+    color: #1B3B6F;
+    border: 1px solid #cfe0f5;
+}
+
+.legBadgeDeparture  svg {
+  transform: rotate(320deg);
+}
+
+.legBadgeReturn {
+    background: #ecfdf5;
+    color: #1b3b6f;
+    border: 1px solid #bbf7d0;
+}
+
+.legBadgeReturn  svg {
+    transform: rotate(320deg);
+  }
+
+.legBadgeOther {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
+.legDate {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #6b7a99;
+}
+
+.flightRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.airlineCol {
+    flex-shrink: 0;
+    min-width: 148px;
+    max-width: 190px;
+}
+
+.airlineInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.airlineLogoWrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid #e8edf3;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.airlineLogo {
+    object-fit: contain;
+}
+
+.airlineCodeFallback {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #1b3b6f;
+}
+
+.airlineText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.airlineName {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0d1e3d;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cabinClass {
+    font-size: 0.72rem;
+    color: #6b7a99;
+    font-weight: 500;
+}
+
+.routeCol {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.flightEndpoint,
+.flightEndpointRight {
+    flex-shrink: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.flightEndpointRight {
+    align-items: flex-start;
+}
+
+.flightTime {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0d1e3d;
+    line-height: 1.2;
+}
+
+.dayOffset {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #dc2626;
+    vertical-align: super;
+    margin-left: 1px;
+}
+
+.airportCode {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1b3b6f;
+    line-height: 1.1;
+}
+
+.flightMiddle {
+    flex: 1;
+    min-width: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0.25rem;
+}
+
+.durationAboveLine {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+    color: #6B7A99;
+    margin-bottom: 0.45rem;
+    white-space: nowrap;
+}
+
+.flightLineTrack {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+}
+
+.lineSegment {
+    flex: 1;
+    height: 2px;
+    background: #29ABD8;
+    border-radius: 2px;
+}
+
+.stopsPillOnLine {
+    flex-shrink: 0;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: #E17100;
+    background: #FFFBEB;
+    border: 1px solid #FFB900;
+    border-radius: 999px;
+    padding: 3px 9px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0 -2px;
+    z-index: 1;
+}
+
+.planeIconEnd {
+    flex-shrink: 0;
+    color: #29ABD8;
+    font-size: 0.72rem;
+    margin-left: 2px;
+    transform: rotate(320deg);
+}
+
+.cardFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1.15rem;
+    background: #F8F9FC;
+    margin-top: 0.35rem;
+    /* padding-top: 0.95rem; */
+    border-top: 1px solid rgba(27, 59, 111, 0.12);
+}
+
+.footerDetailsWrap {
+    flex-shrink: 0;
+}
+
+.footerRight {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto;
+}
+
+.priceBlock {
+    text-align: right;
+    min-width: 0;
+}
+
+.priceLabel {
+    display: block;
+    font-size: 0.72rem;
+    color: #6b7a99;
+    font-weight: 500;
+    margin-bottom: 0.1rem;
+}
+
+.priceMain {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2a9d8f;
+    line-height: 1.15;
+    margin: 0;
+}
+
+.priceNote,
+.priceTotal {
+    display: block;
+    font-size: 0.74rem;
+    color: #6b7a99;
+    font-weight: 500;
+    margin-top: 0.12rem;
+}
+
+.selectBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-height: 42px;
+    padding: 0.55rem 1.15rem;
+    border-radius: 10px;
+    border: 1.5px solid #1b3b6f;
+    background: #fff;
+    color: #1b3b6f;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.selectBtn:hover {
+    background: #f4f8ff;
+    box-shadow: 0 4px 12px rgba(27, 59, 111, 0.12);
+    transform: translateY(-1px);
+}
+
+.selectBtn:active {
+    transform: translateY(0);
+}
+
+.emptyState {
+    text-align: center;
+    padding: 2.5rem 1rem;
+}
+
+.emptyStateTitle {
+    margin-top: 1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0d1e3d;
+}
+
+.emptyStateText {
+    color: #6b7a99;
+    font-size: 0.9rem;
+    max-width: 420px;
+    margin: 0.5rem auto 0;
+}
+
+@media (max-width: 991px) {
+    .flightRow {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .airlineCol {
+        width: 100%;
+        max-width: none;
+    }
+
+    .routeCol {
+        width: 100%;
+    }
+}
+
+@media (max-width: 767px) {
+    .flightCard {
+        /* padding: 0.85rem 0.85rem 0.75rem; */
+        border-radius: 12px;
+        margin-bottom: 0.85rem;
+    }
+
+    .legSection {
+        padding-bottom: 0.85rem;
+    }
+
+    .legHeader {
+        margin-bottom: 0.65rem;
+    }
+
+    .flightRow {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
+        grid-template-areas:
+            "airline airline airline"
+            "depart route arrive";
+        gap: 0.65rem 0.5rem;
+        align-items: start;
+    }
+
+    .airlineCol {
+        grid-area: airline;
+        min-width: 0;
+    }
+
+    .routeCol {
+        display: contents;
+    }
+
+    .flightEndpoint {
+        grid-area: depart;
+    }
+
+    .flightMiddle {
+        grid-area: route;
+        align-self: center;
+        min-width: 0;
+        padding: 0;
+    }
+
+    .flightEndpointRight {
+        grid-area: arrive;
+        width: max-content;
+    }
+
+    .durationAboveLine {
+        font-size: 0.55rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .stopsPillOnLine {
+        font-size: 0.52rem;
+        padding: 2px 7px;
+    }
+
+    .planeIconEnd {
+        font-size: 0.65rem;
+    }
+
+    .flightTime {
+        font-size: 0.95rem;
+    }
+
+    .airportCode {
+        font-size: 0.8rem;
+    }
+
+    .airlineLogoWrap {
+        width: 34px;
+        height: 34px;
+    }
+
+    .cardFooter {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+        padding-top: 0.85rem;
+    }
+
+    .footerRight {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-left: 0;
+        gap: 0.75rem;
+    }
+
+    .priceBlock {
+        text-align: left;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .priceMain {
+        font-size: 1.1rem;
+    }
+
+    .selectBtn {
+        min-width: 124px;
+        min-height: 40px;
+        padding: 0.5rem 0.85rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .durationAboveLine {
+        font-size: 0.5rem;
+        letter-spacing: 0.2px;
+    }
+
+    .airlineName {
+        font-size: 0.75rem;
+    }
+
+    .selectBtn {
+        min-width: 108px;
+        font-size: 0.75rem;
+        padding: 0.45rem 0.65rem;
+    }
+
+    .priceMain {
+        font-size: 1rem;
+    }
+}

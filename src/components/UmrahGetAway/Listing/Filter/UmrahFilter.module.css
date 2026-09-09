@@ -1,0 +1,195 @@
+/* Umrah GetAway listing filters — navy theme (matches hotel listing) */
+
+/* ── City collapse headers ────────────────────────────────────────── */
+.cityToggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    color: inherit;
+    padding: 0 0 0.75rem;
+    margin-bottom: 0.25rem;
+    cursor: pointer;
+    border-bottom: 1px solid #eef2f8;
+}
+
+.cityToggle:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+.chevron {
+    color: #6B7A99;
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.cityToggle[aria-expanded="true"] .chevron {
+    transform: rotate(180deg);
+}
+
+.cityPanel {
+    padding-top: 0.25rem;
+}
+
+.cityPanel > * + * {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.cityPanel .hotel-filter-section {
+    padding-top: 0.85rem;
+    margin-top: 0.85rem;
+    border-top: 1px solid #eef2f8;
+}
+
+.cityPanel .hotel-filter-section:first-child {
+    padding-top: 0;
+    margin-top: 0;
+    border-top: none;
+}
+
+/* ── Sort / price pill controls (Mantine SegmentedControl) ────────── */
+.pillControl :global(.mantine-SegmentedControl-root) {
+    background: #f5f8fc;
+    gap: 4px;
+    flex-wrap: wrap;
+    border: 1px solid #e5ebf5;
+    border-radius: 10px;
+    padding: 3px;
+}
+
+.pillControl :global(.mantine-SegmentedControl-controls) {
+    gap: 4px;
+}
+
+.pillControl :global(.mantine-SegmentedControl-control) {
+    border: none !important;
+    display: flex;
+    align-items: center;
+    border-radius: 8px !important;
+    background: transparent !important;
+    min-height: 34px;
+    flex: 1;
+}
+
+.pillControl :global(.mantine-SegmentedControl-label) {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #6B7A99;
+    padding: 4px 10px;
+}
+
+.pillControl :global(.mantine-SegmentedControl-indicator) {
+    background: #1B3B6F !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(27, 59, 111, 0.18);
+}
+
+.pillControl :global(.mantine-SegmentedControl-control[data-active] .mantine-SegmentedControl-label) {
+    color: #fff !important;
+}
+
+/* ── Hotel search input ───────────────────────────────────────────── */
+.searchInput {
+    width: 100%;
+    padding: 10px 32px 10px 2.15rem;
+    border: 1px solid #d8e0ef;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #1B3B6F;
+    background: #fff;
+    outline: none;
+    min-height: 42px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.searchInput::placeholder {
+    color: #8BA3C7;
+}
+
+.searchInput:focus {
+    border-color: #4A7FD4;
+    box-shadow: 0 0 0 3px rgba(74, 127, 212, 0.12);
+}
+
+.searchDropdown {
+    position: absolute;
+    z-index: 1000;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    top: calc(100% + 4px);
+    left: 0;
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    border: 1px solid #e5ebf5;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(27, 59, 111, 0.1);
+}
+
+.searchOption {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    color: #1B3B6F;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.searchOption:hover {
+    background: #f5f8fc;
+}
+
+.searchClear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6B7A99;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Mobile filter pills ──────────────────────────────────────────── */
+.mobilePill {
+    border: 1px solid #d8e0ef;
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1B3B6F;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(27, 59, 111, 0.06);
+}
+
+.mobilePill:hover {
+    border-color: #4A7FD4;
+    background: #f5f8fc;
+    color: #1B3B6F;
+}
+
+.mobilePillArrow {
+    font-size: 0.7rem;
+    color: #6B7A99;
+}
+
+@media (max-width: 767px) {
+    .cityToggle {
+        padding-bottom: 0.65rem;
+    }
+
+    .cityPanel .hotel-filter-section {
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+    }
+}

@@ -1,0 +1,161 @@
+@media (min-width : 1200px) and (max-width : 1406px) {
+   .flight-traveler-btn-size {
+      font-size: 11px !important;
+   }
+
+}
+@media (min-width : 768px) and (max-width :1200px) {
+   .umrahgetaway-hotels .container {
+      max-width: 98% !important;
+   }
+
+}
+@media screen and (max-width: 768px) {
+   .home1 .d-flex {
+      flex-wrap: wrap;
+   }
+
+   .top-hotel-swipper .swiper-pagination-bullets-dynamic {
+      position: relative;
+      bottom: 0px !important;
+   }
+
+   .home-package-section h2 {
+      font-size: 24px;
+   }
+
+   .section-gap {
+      padding: 3em 0 !important;
+   }
+
+   .hide-on-mobile {
+      display: none;
+   }
+
+   .header-module__nrpHoW__navlogo {
+      height: 2.1em !important;
+   }
+
+   .traveller,
+   .traveller select {
+      width: 100%;
+   }
+
+   .flight-type {
+      width: 100%;
+   }
+
+   .filter-scroll {
+      display: block;
+   }
+
+   .filter_box a {
+      display: none !important;
+   }
+
+   .filter_box {
+      background-color: unset !important;
+      border: none !important;
+      margin-bottom: 0px !important;
+      padding: 0px !important;
+
+   }
+
+   .umrah-getaway-card-slider {
+      height: 25em !important;
+   }
+
+   .home-package-category-wrapper {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      white-space: nowrap;
+      border-bottom: 1px solid #80808033;
+      margin-bottom: 18px;
+      overflow-x: auto;
+      display: block !important;
+   }
+
+   .home-package-category-wrapper .nav {
+      flex-wrap: nowrap;
+      padding-right: 10px;
+      padding-left: 10px;
+      justify-content: unset !important;
+   }
+}
+
+@media screen and (min-width: 992px) {
+   .see-saudia .top-margin {
+      margin-top: 50%;
+   }
+
+
+}
+
+@media screen and (max-width : 992px) {
+   .flight-swap-btn {
+      bottom: -1em;
+      right: 1rem;
+   }
+}
+
+@media screen and (max-width: 786px) {
+   .fs-60 {
+      font-size: 40px !important;
+   }
+
+   .search-radio-butons {
+      font-size: 14px;
+   }
+
+   .flight-swap-btn {
+      rotate: 90deg;
+   }
+
+   .multiity-flight-search button {
+      width: 100%;
+   }
+
+   .transfer-destination-icon svg {
+      rotate: 90deg;
+   }
+
+   .flight-traveller-label {
+      display: block;
+   }
+
+   .home-search-top-wrapper .nav-pills.lights .nav-link.active {
+      background: none;
+      border-radius: 0px;
+      color: #0b659b !important;
+      border-bottom: 2px solid #0b659b;
+      cursor: pointer;
+   }
+
+   .traveller button {
+      width: 100%;
+      line-height: 2.8em;
+   }
+
+   .traveller select {
+      line-height: 2.6em;
+   }
+
+   .home-search-top-wrapper .nav-pills.lights .nav-link {
+      background: none;
+      color: #000;
+      cursor: pointer;
+   }
+}
+
+@media screen and (max-width: 448px) {
+   .traveller button {
+      width: 100%;
+      line-height: 2.8em;
+   }
+
+}
+@media screen and (max-width: 550px) {
+   .activity-gallery-mobile-image{
+      height: 100% !important;
+   }
+}

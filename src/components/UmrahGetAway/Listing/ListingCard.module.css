@@ -1,0 +1,798 @@
+/* ── Package card shell ─────────────────────────────────────────── */
+.packageCard {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(27, 59, 111, 0.06);
+    overflow: hidden;
+}
+
+.packageCard + .packageCard {
+    margin-top: 20px;
+}
+
+/* ── Hotels section ───────────────────────────────────────────────── */
+.hotelsSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: 0;
+    padding: 16px;
+}
+
+.hotelLeg {
+    min-width: 0;
+    padding: 0 8px;
+}
+
+.hotelLeg:first-child {
+    padding-left: 0;
+    border-right: 1px solid #eef0f2;
+}
+
+.hotelLeg:last-child {
+    padding-right: 0;
+}
+
+.legDivider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    position: relative;
+}
+
+.legDivider::before {
+    content: '';
+    position: absolute;
+    top: 12%;
+    bottom: 12%;
+    left: 50%;
+    width: 1px;
+    background: #ebe7e0;
+    transform: translateX(-50%);
+}
+
+.planeCircle {
+    position: relative;
+    z-index: 1;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #ebe7e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #13293d;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+}
+
+.hotelInner {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.shortLabel {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #6B7A99;
+    text-transform: lowercase;
+}
+
+.hotelImageWrap {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f5f3ef;
+}
+
+.hotelImage {
+    object-fit: cover;
+}
+
+.nightsBadge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 2;
+    background: rgba(27, 59, 111, 0.94);
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    line-height: 1.3;
+}
+
+.imageLoading,
+.imagePlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #f5f3ef;
+    color: #9ca3af;
+    font-size: 0.68rem;
+}
+
+.hotelContent {
+    flex: 1;
+    min-width: 0;
+    padding-top: 2px;
+}
+
+.legLabel {
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #3B82C4;
+    margin: 0 0 4px;
+}
+
+.hotelNameRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.hotelName {
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1B3B6F;
+    margin: 0;
+    line-height: 1.3;
+    word-break: break-word;
+    flex: 1;
+    min-width: 0;
+}
+
+.ratingRow {
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: #d4a72c;
+}
+
+.address {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 0.72rem;
+    color: #6B7A99;
+    margin: 0 0 8px;
+    line-height: 1.35;
+    overflow: hidden;
+}
+
+.address span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+
+.addressIcon {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #9ca3af;
+}
+
+.hotelBadges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.distBadge {
+    font-size: 0.66rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #E8F4FD;
+    color: #1B3B6F;
+    /* border: 1px solid #e5e7eb; */
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.walkBadge {
+    font-size: 0.66rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #F0F4F8;
+    color: #6B7A99;
+    /* border: 1px solid #e5e7eb; */
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.changeHotelBadge {
+    font-size: 0.66rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: #fff;
+    color: rgba(27, 59, 111, 1);
+    border: 1px solid rgba(27, 59, 111, 0.4);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.changeHotelBadge:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.distSkeleton {
+    display: inline-block;
+    height: 20px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Flights section ──────────────────────────────────────────────── */
+.flightsSection {
+    border-top: 1px solid #eef0f2;
+    padding: 0 16px;
+}
+
+.flightBlock {
+    padding: 14px 0;
+}
+
+.flightBlock + .flightBlock {
+    border-top: 1px dashed #e5e7eb;
+}
+
+.flightRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.airlineCol {
+    min-width: 148px;
+    max-width: 168px;
+    flex-shrink: 0;
+}
+
+.flightLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #e67e22;
+    margin-bottom: 10px;
+}
+
+.flightLabelIcon {
+    flex-shrink: 0;
+}
+
+.flightLabelDeparture .flightLabelIcon {
+    transform: rotate(-45deg);
+}
+
+.flightLabelReturn .flightLabelIcon {
+    transform: rotate(45deg);
+}
+
+.airlineInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.airlineLogoWrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.airlineLogo {
+    object-fit: contain;
+}
+
+.airlineCodeFallback {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #13293d;
+}
+
+.airlineText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.airlineName {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1B3B6F;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.airlineClass {
+    font-size: 0.68rem;
+    color: #9ca3af;
+    line-height: 1.2;
+}
+
+.flightActions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.flightViewBtn {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1B3B6F;
+    border: 1px solid rgba(27, 59, 111, 0.3);
+    border-radius: 12px;
+    padding: 4px 12px;
+    cursor: pointer;
+    background: #fff;
+    white-space: nowrap;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.flightViewBtn:hover {
+    border-color: #1B3B6F;
+    background: #f9fafb;
+}
+
+.flightEndpoint {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 0;
+    flex-shrink: 0;
+    padding-top: 24px;
+}
+
+.flightEndpointRight {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex-shrink: 0;
+    align-items: flex-start;
+    text-align: right;
+    padding-top: 24px;
+}
+
+.flightTime {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0D1E3D;
+    line-height: 1.2;
+}
+
+.flightTime sup {
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: #ef4444;
+}
+
+.airportCode {
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: #1B3B6F;
+    line-height: 1.1;
+}
+
+.airportName {
+    font-size: 0.68rem;
+    color: #6B7A99;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+
+.flightMiddle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    padding-top: 24px;
+}
+
+.durationPill {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #374151;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    padding: 5px 12px;
+    white-space: nowrap;
+    margin-bottom: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.flightLine {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+    position: relative;
+    min-height: 14px;
+}
+
+.line {
+    flex: 1;
+    height: 1px;
+    background: #d1d5db;
+}
+
+.routePlaneIcon {
+    position: absolute;
+    left: 47%;
+    /* top: 8%; */
+    transform: translate(-50%, -50%);
+    color: #3B82C4;
+    background: #fff;
+    padding: 0 4px;
+    flex-shrink: 0;
+    transform: rotate(320deg);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.footerSection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #F8F9FC;
+    gap: 16px;
+    padding: 16px;
+    border-top: 1px solid #eef0f2;
+    flex-wrap: wrap;
+}
+
+.footerLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.atolBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #6B7A99;
+    border: 1px solid rgba(107, 122, 153, 0.4);
+    border-radius: 999px;
+    padding: 6px 12px;
+}
+
+.footerRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+}
+
+.priceBlock {
+    text-align: right;
+}
+
+.priceLabel {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #6B7A99;
+    margin: 0 0 2px;
+}
+
+.priceMain {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0D1E3D;
+    line-height: 1.1;
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.priceSub {
+    font-size: 0.72rem;
+    color: #6B7A99;
+    margin: 4px 0 0;
+}
+
+.viewDetailsBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #1B3B6F;
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    padding: 12px 20px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+    min-width: 150px;
+}
+
+.viewDetailsBtn:hover:not(:disabled) {
+    background: #0f2a52;
+}
+
+.viewDetailsBtn:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 991px) {
+    .hotelsSection {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 14px;
+    }
+
+    .hotelLeg:first-child {
+        padding: 0;
+        border-right: none;
+        border-bottom: 1px solid #eef0f2;
+        padding-bottom: 14px;
+    }
+
+    .hotelLeg:last-child {
+        padding: 0;
+    }
+
+    .flightsSection {
+        padding: 0 12px;
+    }
+
+    .flightRow {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
+        grid-template-areas:
+            "airline airline airline"
+            "depart route arrive"
+            "actions actions actions";
+        gap: 10px 8px;
+        align-items: start;
+    }
+
+    .airlineCol {
+        grid-area: airline;
+        min-width: 0;
+        max-width: none;
+        width: auto;
+    }
+
+    .flightEndpoint {
+        grid-area: depart;
+        flex-shrink: 1;
+        min-width: 0;
+        padding-top: 0;
+    }
+
+    .flightEndpointRight {
+        grid-area: arrive;
+        flex-shrink: 1;
+        min-width: 0;
+        padding-top: 0;
+    }
+
+    .flightMiddle {
+        grid-area: route;
+        order: unset;
+        width: auto;
+        flex: unset;
+        padding: 6px 2px 0;
+        padding-top: 0;
+        align-self: center;
+    }
+
+    .durationPill {
+        font-size: 0.52rem;
+        padding: 4px 7px;
+        margin-bottom: 2px;
+        line-height: 1.25;
+        text-align: center;
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .flightLine {
+        min-width: 0;
+    }
+
+    .flightActions {
+        grid-area: actions;
+        flex-direction: row;
+        width: 100%;
+        align-self: stretch;
+        margin-top: 4px;
+        gap: 8px;
+    }
+
+    .flightViewBtn {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+        text-align: center;
+        padding: 10px 10px;
+    }
+
+    .airportName {
+        max-width: none;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        word-break: break-word;
+        line-height: 1.25;
+    }
+}
+
+@media (max-width: 767px) {
+    .hotelInner {
+        flex-direction: row;
+    }
+
+    .hotelImageWrap {
+        width: 84px;
+        height: 84px;
+    }
+
+    .flightBlock {
+        padding: 14px 0;
+    }
+
+    .flightLabel {
+        margin-bottom: 6px;
+    }
+
+    .airlineLogoWrap {
+        width: 34px;
+        height: 34px;
+    }
+
+    .airlineName {
+        font-size: 0.74rem;
+    }
+
+    .footerSection {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .footerRight {
+        flex-direction: column;
+        align-items: stretch;
+        margin-left: 0;
+        gap: 12px;
+    }
+
+    .priceBlock {
+        text-align: left;
+    }
+
+    .priceMain {
+        justify-content: flex-start;
+    }
+
+    .viewDetailsBtn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .hotelInner {
+        flex-direction: column;
+    }
+
+    .hotelImageWrap {
+        width: 100%;
+        height: 150px;
+    }
+
+    .flightRow {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+        gap: 8px 6px;
+    }
+
+    .airportCode {
+        font-size: 0.95rem;
+    }
+
+    .flightTime {
+        font-size: 0.9rem;
+    }
+
+    .durationPill {
+        font-size: 0.48rem;
+        padding: 3px 5px;
+    }
+
+    .flightActions {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .flightViewBtn {
+        width: 100%;
+        font-size: 0.72rem;
+        padding: 9px 10px;
+    }
+
+    .priceMain {
+        font-size: 1.3rem;
+    }
+}

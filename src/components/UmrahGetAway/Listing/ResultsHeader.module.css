@@ -1,0 +1,103 @@
+.resultsHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 0 22px;
+    flex-wrap: wrap;
+}
+
+.countBlock {
+    flex: 1;
+    min-width: 0;
+}
+
+.countTitle {
+    font-family: 'Inter', 'Inter Fallback';
+    font-size: clamp(1.2rem, 2.5vw, 1.45rem);
+    margin: 0;
+}
+
+.countBold {
+    font-weight: 700;
+    color: #0D1E3D;
+}
+
+.countItalic {
+    font-style: italic;
+    font-weight: 400;
+    color: #6B7A99;
+}
+
+.countSubtext {
+    font-size: 14px;
+    color: #6B7A99;
+    font-weight: 500;
+    margin: 2px 0 0;
+}
+
+.sortBlock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-top: 4px;
+}
+
+.sortIcon {
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+}
+
+.sortLabel {
+    font-size: 0.82rem;
+    color: #9ca3af;
+    white-space: nowrap;
+}
+
+.sortSelect :global(.mantine-Select-input) {
+    border: 1px solid #e5e7eb !important;
+    /* border-radius: 999px !important; */
+    background: #fff !important;
+    font-size: 0.84rem !important;
+    font-weight: 600 !important;
+    color: #6B7A99 !important;
+    padding: 8px 36px 8px 16px !important;
+    min-height: unset !important;
+    /* height: auto !important; */
+    cursor: pointer !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.sortSelect :global(.mantine-Select-section[data-position="right"]) {
+    display: flex !important;
+}
+
+.sortSelect :global(.mantine-Select-input:focus) {
+    border-color: #6B7A99 !important;
+}
+
+.sortSelect :global(.mantine-Select-section[data-position="right"]) {
+    color: #6B7A99;
+    pointer-events: none;
+}
+
+@media (max-width: 575px) {
+    .resultsHeader {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding: 5px 0 18px;
+    }
+
+    .sortBlock {
+        justify-content: flex-end;
+        padding-top: 0;
+    }
+
+    .sortSelect {
+        flex: 1;
+        max-width: 200px;
+    }
+}

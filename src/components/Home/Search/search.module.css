@@ -1,0 +1,722 @@
+/* ===================================
+   HERO WRAPPER WITH STATIC BACKGROUND IMAGE
+   =================================== */
+.heroWrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  background-color: #061422;
+  /* margin-bottom: 150px; */
+}
+
+.mobilesearch {
+  display: none;
+}
+
+/* Static Image Background */
+.heroCarouselBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Overlay between background image and content — deepens toward the
+   bottom so the search card reads clearly against the photo */
+.heroOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(6, 20, 34, 0.15) 0%, rgba(6, 20, 34, 0.35) 55%, rgba(6, 20, 34, 0.6) 100%);
+  z-index: 1;
+}
+
+/* Content layer on top */
+.heroContent {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  padding: 150px 20px 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroContent :global(.container) {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hero Title Block */
+.heroTitleWrap {
+  text-align: left;
+  margin-bottom: 35px;
+}
+
+/* Hero Title */
+.heroTitle {
+  font-family: var(--font-playfair, 'Playfair Display', serif), serif;
+  font-size: 66px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.15;
+  text-shadow: 2px 4px 10px rgba(0, 0, 0, 0.4);
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.heroTitleAccent {
+  color: #F5D68A;
+}
+
+.heroSubtitle {
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(219, 234, 254, 0.9);
+  opacity: 0.92;
+  max-width: 700px;
+  line-height: 1.65;
+  text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
+}
+
+/* Trust Badges */
+.trustBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.trustBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  color: #ffffff;
+  padding: 7px 16px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.trustBadge svg {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+}
+
+/* Search panel — straddles hero and next section */
+.searchPanelWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin: 15px auto 0;
+  z-index: 10;
+  top: 70px;
+  margin-bottom: -150px;
+  min-width: 0;
+  overflow: visible;
+}
+
+/* Search Tabs Wrapper */
+.searchTabsWrapper {
+  margin-bottom: 0;
+  animation: fadeIn 1.5s ease-in-out;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Hide horizontal scrollbar while keeping swipe/scroll */
+.hideTabScrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge legacy */
+}
+
+.hideTabScrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* Tab icons styling — CSS mask from public/images SVGs */
+.tabIcon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.tabIconMobile {
+  width: 28px;
+  height: 28px;
+}
+
+.tabIconUmrah {
+  -webkit-mask-image: url('/images/umrah.svg');
+  mask-image: url('/images/umrah.svg');
+}
+
+.tabIconHotel {
+  -webkit-mask-image: url('/images/hotel.svg');
+  mask-image: url('/images/hotel.svg');
+}
+
+.tabIconFlight {
+  -webkit-mask-image: url('/images/flight.svg');
+  mask-image: url('/images/flight.svg');
+}
+
+.tabIconTransfer {
+  -webkit-mask-image: url('/images/transfer.svg');
+  mask-image: url('/images/transfer.svg');
+}
+
+.tabIconActivity {
+  -webkit-mask-image: url('/images/activity.svg');
+  mask-image: url('/images/activity.svg');
+}
+
+.searchTabsWrapper :global(.nav-link svg),
+.searchTabsWrapper :global(.nav-link) .tabIcon {
+  font-size: 1.1rem;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Desktop tabs: navy inactive, white active, flush with search box */
+.searchTabsWrapper .largesearch {
+  gap: 10px !important;
+  flex-wrap: nowrap;
+}
+
+.searchTabsWrapper .largesearch :global(.nav-item) {
+  margin: 0;
+}
+
+.searchTabsWrapper .largesearch :global(.nav-link) {
+  background: rgba(27, 59, 111, 0.5) !important;
+  border: none !important;
+  color: #ffffff !important;
+  border-radius: 12px 12px 0 0 !important;
+  transition: background 0.2s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.searchTabsWrapper .largesearch :global(.nav-link:hover:not(.active)) {
+  background: #0f2a52 !important;
+}
+
+.searchTabsWrapper .largesearch :global(.nav-link.active) {
+  background: #ffffff !important;
+  color: #1B3B6F !important;
+  box-shadow: none;
+  position: relative;
+  z-index: 2;
+  padding-bottom: calc(0.7rem + 12px);
+  margin-bottom: -12px;
+}
+
+.searchTabsWrapper .largesearch :global(.nav-link:not(.active) svg),
+.searchTabsWrapper .largesearch :global(.nav-link:not(.active) svg path),
+.searchTabsWrapper .largesearch :global(.nav-link:not(.active) svg rect),
+.searchTabsWrapper .largesearch :global(.nav-link:not(.active) svg polygon),
+.searchTabsWrapper .largesearch :global(.nav-link:not(.active)) .tabIcon {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
+.searchTabsWrapper .largesearch :global(.nav-link.active svg),
+.searchTabsWrapper .largesearch :global(.nav-link.active svg path),
+.searchTabsWrapper .largesearch :global(.nav-link.active svg rect),
+.searchTabsWrapper .largesearch :global(.nav-link.active svg polygon),
+.searchTabsWrapper .largesearch :global(.nav-link.active) .tabIcon {
+  fill: #1B3B6F !important;
+  stroke: #1B3B6F !important;
+  color: #1B3B6F !important;
+}
+
+/* Mobile tabs: navy inactive, white active (matches desktop) */
+.searchTabsWrapper .mobilesearch {
+  gap: 8px !important;
+  flex-wrap: nowrap;
+}
+
+.searchTabsWrapper .mobilesearch :global(.nav-item) {
+  margin: 0;
+}
+
+.searchTabsWrapper .mobilesearch :global(.nav-link) {
+  /* background: #1B3B6F !important; */
+  border: none !important;
+  border-bottom: none !important;
+  color: #ffffff !important;
+  border-radius: 12px 12px 0 0;
+  transition: background 0.2s ease, color 0.2s ease;
+  box-shadow: none;
+}
+
+.searchTabsWrapper .mobilesearch :global(.nav-link:hover:not(.active)) {
+  background: #0f2a52 !important;
+}
+
+.searchTabsWrapper .mobilesearch :global(.nav-link.active) {
+  background: #ffffff !important;
+  color: #1B3B6F !important;
+  border-bottom: none !important;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 0px;
+}
+
+.searchTabsWrapper .mobilesearch :global(.nav-link:not(.active)) .tabLabel,
+.searchTabsWrapper .mobilesearch :global(.nav-link:not(.active)) svg,
+.searchTabsWrapper .mobilesearch :global(.nav-link:not(.active) svg path),
+.searchTabsWrapper .mobilesearch :global(.nav-link:not(.active) svg rect),
+.searchTabsWrapper .mobilesearch :global(.nav-link:not(.active) svg polygon),
+.searchTabsWrapper .mobilesearch :global(.nav-link:not(.active)) .tabIcon {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.searchTabsWrapper .mobilesearch :global(.nav-link.active) .tabLabel,
+.searchTabsWrapper .mobilesearch :global(.nav-link.active) svg,
+.searchTabsWrapper .mobilesearch :global(.nav-link.active svg path),
+.searchTabsWrapper .mobilesearch :global(.nav-link.active svg rect),
+.searchTabsWrapper .mobilesearch :global(.nav-link.active svg polygon),
+.searchTabsWrapper .mobilesearch :global(.nav-link.active) .tabIcon {
+  color: #1B3B6F !important;
+  fill: #1B3B6F !important;
+  stroke: #1B3B6F !important;
+}
+
+.searchdivider {
+  display: none;
+}
+
+/* Search Box Wrapper */
+.searchPanelWrapper :global(#searchTabsContent) {
+  margin: 0;
+}
+
+.searchPanelWrapper :global(#searchTabsContent .tab-pane) {
+  margin: 0 !important;
+}
+
+.searchBoxWrapper {
+  background-color: #ffffff;
+  border-radius: 0 24px 24px 24px;
+  padding: 10px 10px 28px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+/* Large Desktop (1400px+) */
+@media (min-width: 1400px) {
+  .heroContent {
+    padding: 200px 40px 100px;
+  }
+
+  .heroTitle {
+    font-size: 4rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.5rem;
+  }
+
+  .searchBoxWrapper {
+    padding: 10px;
+    max-width: 1400px;
+  }
+}
+
+/* Desktop (1200px - 1399px) */
+@media (max-width: 1399px) {
+  /* .heroTitle {
+    font-size: 3.2rem;
+  } */
+
+  .heroSubtitle {
+    font-size: 1.25rem;
+  }
+}
+
+/* Laptop/Tablet Large (992px - 1199px) */
+@media (max-width: 1199px) {
+  .heroContent {
+    padding: 160px 20px 70px;
+  }
+
+  .heroTitle {
+    font-size: 2.8rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.15rem;
+  }
+
+  .searchBoxWrapper {
+    padding: 10px;
+  }
+
+  /* Extra tab (Packages) can overflow — allow horizontal scroll, no scrollbar */
+  .searchTabsWrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .searchTabsWrapper::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .searchTabsWrapper .largesearch,
+  .searchTabsWrapper .mobilesearch {
+    flex-wrap: nowrap !important;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .searchTabsWrapper .largesearch :global(.nav-item),
+  .searchTabsWrapper .mobilesearch :global(.nav-item) {
+    flex: 0 0 auto;
+  }
+}
+
+/* Tablet (768px - 991px) */
+@media (max-width: 991px) {
+  .heroWrapper {
+    min-height: auto;
+    /* margin-bottom: 120px; */
+  }
+
+  .searchPanelWrapper {
+    top: 40px;
+    margin-bottom: -120px;
+  }
+
+  .heroContent {
+    padding: 140px 15px 60px;
+  }
+
+  .heroTitle {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+  }
+
+  .heroSubtitle {
+    font-size: 1.1rem;
+  }
+
+  /* .searchTabsWrapper {
+    margin-bottom: 20px;
+  } */
+
+  .searchBoxWrapper {
+    padding: 10px;
+    border-radius: 0 10px 10px 10px !important;
+  }
+}
+
+/* Mobile Large (576px - 767px) */
+@media (max-width: 767px) {
+  /* Allow Activity absolute dropdown to paint over content below (unlike portaled Popovers). */
+  .heroWrapper {
+    overflow: visible;
+    margin-bottom: 0;
+  }
+
+  .searchPanelWrapper {
+    top: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    z-index: 40;
+    overflow: visible;
+  }
+
+  .heroContent {
+    padding: 50px 15px 50px;
+  }
+
+  .heroTitleWrap {
+    text-align: center;
+    margin: 0 auto 20px;
+  }
+
+  .heroTitle {
+    align-items: center;
+  }
+
+  .heroSubtitle {
+    margin: 0 auto 16px;
+  }
+
+  .trustBadges {
+    justify-content: center;
+  }
+
+  .trustBadge {
+    /* font-size: 0.75rem; */
+    padding: 6px 12px;
+  }
+
+  .searchBoxWrapper {
+    max-width: 100%;
+    box-shadow: none;
+    z-index: 40;
+    overflow: visible;
+  }
+
+  .mobilesearch {
+    display: flex;
+  }
+
+  .largesearch {
+    display: none;
+  }
+
+  .searchdivider {
+    display: block;
+  }
+
+  .heroTitle {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+
+  .searchTabsWrapper {
+    margin-bottom: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    white-space: nowrap;
+    display: block !important;
+    border-bottom: none;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .searchTabsWrapper::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
+
+  .searchTabsWrapper :global(.nav-pills) {
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    padding: 0 0.5rem;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .searchTabsWrapper .mobilesearch :global(.nav-item) {
+    flex: 0 0 auto;
+  }
+
+  .mobileTab {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.65rem 0.55rem !important;
+    min-width: 78px !important;
+    text-align: center !important;
+    gap: 0.25rem !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  .mobileTab svg,
+  .mobileTab .tabIcon {
+    font-size: 1.5rem !important;
+    margin: 0 !important;
+  }
+
+  .tabLabel {
+    display: block !important;
+    font-size: 0.75rem !important;
+    margin-top: 0.25rem !important;
+    white-space: nowrap !important;
+    font-weight: 600;
+  }
+
+  .searchBoxWrapper {
+    padding: 0px;
+    margin: 0px;
+    border-radius: 0 16px 16px 16px;
+  }
+
+  /* Override global mediaquery underline styles for mobile search tabs */
+  .searchTabsWrapper:global(.home-search-top-wrapper) .mobilesearch :global(.nav-link) {
+    /* background: #1B3B6F !important; */
+    color: #ffffff !important;
+    border-bottom: none !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  .searchTabsWrapper:global(.home-search-top-wrapper) .mobilesearch :global(.nav-link.active) {
+    background: #ffffff !important;
+    color: #1B3B6F !important;
+    border-bottom: none !important;
+  }
+}
+
+/* Mobile Medium (480px - 575px) */
+@media (max-width: 575px) {
+  .heroContent {
+    padding: 30px 12px 15px;
+  }
+
+  .heroTitle {
+    font-size: 1.75rem;
+    margin-bottom: 8px;
+  }
+
+  .heroSubtitle {
+    font-size: 0.95rem;
+  }
+
+  /* .searchTabsWrapper {
+    margin-bottom: 15px;
+  } */
+
+  .searchTabsWrapper :global(.nav-pills) {
+    gap: 0.25rem !important;
+  }
+
+  .searchTabsWrapper :global(.nav-link) {
+    padding: 0.45rem 0.55rem !important;
+  }
+
+  .searchTabsWrapper :global(.nav-link svg),
+  .searchTabsWrapper :global(.nav-link) .tabIcon {
+    font-size: 1.25rem !important;
+  }
+
+
+}
+
+/* Mobile Small (max 479px) */
+@media (max-width: 479px) {
+  .heroContent {
+    padding: 25px 10px 10px;
+  }
+
+  .heroTitle {
+    font-size: 1.6rem;
+    line-height: 1.3;
+  }
+
+  .heroSubtitle {
+    font-size: 0.9rem;
+  }
+
+  .searchTabsWrapper :global(.nav-link) {
+    padding: 0.4rem 0.5rem !important;
+  }
+
+  .searchTabsWrapper :global(.nav-link svg),
+  .searchTabsWrapper :global(.nav-link) .tabIcon {
+    font-size: 1.2rem !important;
+  }
+
+  /* .searchTabsWrapper {
+    margin-bottom: 12px;
+  } */
+
+  .searchTabsWrapper :global(.nav-pills) {
+    gap: 0.2rem !important;
+  }
+
+  .searchBoxWrapper {
+    box-shadow: none;
+  }
+}
+
+/* Extra Small Mobile (max 375px) */
+@media (max-width: 375px) {
+  .heroContent {
+    padding: 25px 8px 15px;
+  }
+
+  .searchTabsWrapper :global(.nav-link) {
+    padding: 0.35rem 0.45rem !important;
+  }
+
+  .searchTabsWrapper :global(.nav-link svg),
+  .searchTabsWrapper :global(.nav-link) .tabIcon {
+    font-size: 1.1rem !important;
+  }
+
+  .searchTabsWrapper :global(.nav-pills) {
+    gap: 0.15rem !important;
+  }
+
+  .heroTitle {
+    font-size: 1.35rem;
+  }
+
+  .heroSubtitle {
+    font-size: 0.85rem;
+  }
+}
+
+/* ===================================
+   BACKGROUND IMAGE — RESPONSIVE OVERLAY
+   =================================== */
+@media (max-width: 767px) {
+  /* Keep the static hero photo visible on mobile too (previously hidden
+     for the old carousel), just deepen the overlay a touch more so the
+     centered title/badges stay legible over the image. */
+  .heroOverlay {
+    background: linear-gradient(180deg, rgba(6, 20, 34, 0.45) 0%, rgba(6, 20, 34, 0.55) 55%, rgba(6, 20, 34, 0.7) 100%);
+  }
+}
