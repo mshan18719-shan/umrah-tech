@@ -25,7 +25,7 @@ const UmrahGetAway = dynamic(() => import("./UmrahGetAway"));
 export default function Search() {
   const { categories, loading: loadingCategories } = usePackageCategories();
   const [isMobile, setIsMobile] = useState(true);
-  const [activeTab, setActiveTab] = useState('umrah-get-away');
+  const [activeTab, setActiveTab] = useState('hotel-tab-pane');
   const LabelsList = [
     {name : 'umrah-get-away' , label : 'Build Your Own Package in 4 Easy Steps'},
     {name : 'package-tab-pane' , label : 'Build Your Group Package in 4 Easy Steps'},
@@ -36,15 +36,27 @@ export default function Search() {
     {name : 'general-package-tab-pane' , label : 'Build Your Holiday Package in 3 Easy Steps'},
 
   ]
+  const availableTabs = [
+    'package-tab-pane',
+    'hotel-tab-pane',
+    'flight-tab-pane',
+    'transfer-tab-pane',
+    'activity-tab-pane',
+    'general-package-tab-pane',
+    'ai-tab-pane',
+  ];
   useEffect(() => {
     if (window.innerWidth > 768) {
       setIsMobile(false);
     }
 
-    // Load saved tab from localStorage
+    // Load saved tab from localStorage (fall back if old/removed tab)
     const savedTab = localStorage.getItem('selectedSearchTab');
-    if (savedTab) {
+    if (savedTab && availableTabs.includes(savedTab)) {
       setActiveTab(savedTab);
+    } else {
+      setActiveTab('hotel-tab-pane');
+      localStorage.setItem('selectedSearchTab', 'hotel-tab-pane');
     }
   }, []);
 
@@ -56,9 +68,10 @@ export default function Search() {
 
   useEffect(() => {
     const onTabRequest = (event) => {
-      const tabId = event.detail || 'umrah-get-away';
-      setActiveTab(tabId);
-      localStorage.setItem('selectedSearchTab', tabId);
+      const tabId = event.detail || 'hotel-tab-pane';
+      const nextTab = availableTabs.includes(tabId) ? tabId : 'hotel-tab-pane';
+      setActiveTab(nextTab);
+      localStorage.setItem('selectedSearchTab', nextTab);
     };
 
     window.addEventListener('home-search-tab', onTabRequest);
