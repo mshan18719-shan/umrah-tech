@@ -72,20 +72,42 @@
 }
 
 /* ── Modal shell ─────────────────────────────────────────────── */
+.modalInner {
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 12px !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+}
+
 .modalContent {
     overflow: hidden !important;
     border-radius: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 90vh !important;
+    max-height: 90dvh !important;
+    width: 100% !important;
 }
 
 .modalBody {
     padding: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
 }
 
 .modalWrapper {
     display: flex;
     flex-direction: column;
-    max-height: 90vh;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    height: 100%;
     background: #fff;
+    overflow: hidden;
 }
 
 /* ── Header ──────────────────────────────────────────────────── */
@@ -180,8 +202,11 @@
 
 /* ── Scrollable body ─────────────────────────────────────────── */
 .body {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding: 18px 20px;
     background: #fff;
 }
@@ -535,6 +560,17 @@
 }
 
 @media (max-width: 767px) {
+    .modalInner {
+        padding: 8px !important;
+        padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .modalContent {
+        max-height: 88vh !important;
+        max-height: 88dvh !important;
+        border-radius: 14px !important;
+    }
+
     .header {
         padding: 12px 14px;
     }
@@ -575,6 +611,7 @@
         align-items: stretch;
         gap: 12px;
         padding: 14px;
+        padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
     }
 
     .footerCloseBtn {

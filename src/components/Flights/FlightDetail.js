@@ -373,10 +373,13 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
                 opened={modalOpen}
                 onClose={handlemodalopenclose}
                 size={modalSize}
+                centered
                 withCloseButton={false}
                 padding={0}
                 radius="lg"
+                lockScroll
                 classNames={{
+                    inner: styles.modalInner,
                     content: styles.modalContent,
                     body: styles.modalBody,
                 }}
