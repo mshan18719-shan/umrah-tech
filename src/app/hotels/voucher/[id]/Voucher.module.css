@@ -683,10 +683,12 @@
 /* Data table */
 .tableWrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dataTable {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -701,6 +703,7 @@
   color: #9AA3B5;
   background: #FAFBFD;
   border-bottom: 1px solid #E8ECF3;
+  white-space: nowrap;
 }
 
 .dataTable tbody td {
@@ -710,6 +713,7 @@
   font-weight: 400;
   font-size: 13px;
   vertical-align: top;
+  white-space: nowrap;
 }
 
 .dataTable tbody tr:nth-child(even) td {

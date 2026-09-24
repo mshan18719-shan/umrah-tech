@@ -579,11 +579,12 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
                 adults: adult || 1,
                 children: child || 0,
                 infants: infant || 0,
-                cabinClass: CabinType || "All",
-                cabinClassTitle: CabinType === 'Y' ? 'Economy' :
-                    CabinType === 'C' ? 'Business' :
-                        CabinType === 'F' ? 'First' :
-                            CabinType === 'S' ? 'Premium Economy' : 'All',
+                cabinClass: CabinType && CabinType !== 'All' ? CabinType : "Y",
+                cabinClassTitle:
+                    CabinType === 'C' ? 'Business'
+                    : CabinType === 'F' ? 'First'
+                    : CabinType === 'S' ? 'Premium Economy'
+                    : 'Economy',
             });
 
             // Handle multi-city data from URL
@@ -610,7 +611,6 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
     }, []);
     const router = useRouter();
     const cabinClassOptions = [
-        { title: "All", value: "All" },
         { title: "Economy", value: "Y" },
         { title: "Business", value: "C" },
         { title: "First", value: "F" },
@@ -717,16 +717,69 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
         });
     };
 
+    // Multi-city helpers
+    const dayAfter = (date) => {
+        if (!date) return new Date();
+        const next = new Date(date);
+        next.setHours(0, 0, 0, 0);
+        next.setDate(next.getDate() + 1);
+        return next;
+    };
+
+    const getMultiCityMinDate = (index) => {
+        if (index <= 0) return new Date();
+        const prevDate = multiCityFlights[index - 1]?.departureDate;
+        return prevDate ? dayAfter(prevDate) : new Date();
+    };
+
     // Multi-city handlers
     const handleMultiCityChange = (index, field, value) => {
-        const updatedFlights = [...multiCityFlights];
-        updatedFlights[index][field] = value;
-        setMultiCityFlights(updatedFlights);
+        setMultiCityFlights((prev) => {
+            const updated = prev.map((flight) => ({ ...flight }));
+            updated[index] = { ...updated[index], [field]: value };
+
+            // Arrival of flight N → auto-fill departure of flight N+1 (still editable)
+            if (field === "to" && index < updated.length - 1) {
+                if (value) {
+                    updated[index + 1] = {
+                        ...updated[index + 1],
+                        from: value,
+                        // Avoid same from/to on the next leg
+                        to: updated[index + 1].to === value ? "" : updated[index + 1].to,
+                    };
+                }
+            }
+
+            // If a date moves forward/back, clear later legs that are no longer after previous
+            if (field === "departureDate") {
+                for (let i = index + 1; i < updated.length; i++) {
+                    const prevDate = updated[i - 1]?.departureDate;
+                    const currDate = updated[i]?.departureDate;
+                    if (
+                        prevDate &&
+                        currDate &&
+                        !moment(currDate).isAfter(moment(prevDate), "day")
+                    ) {
+                        updated[i] = { ...updated[i], departureDate: null };
+                    }
+                }
+            }
+
+            return updated;
+        });
     };
 
     const addMultiCityFlight = () => {
         if (multiCityFlights.length < 5) {
-            setMultiCityFlights([...multiCityFlights, { from: "", to: "", departureDate: null }]);
+            const lastFlight = multiCityFlights[multiCityFlights.length - 1];
+            setMultiCityFlights([
+                ...multiCityFlights,
+                {
+                    from: lastFlight?.to || "",
+                    to: "",
+                    departureDate: null,
+                },
+            ]);
         } else {
             notifications.show({
                 title: 'Limit Reached',
@@ -755,11 +808,24 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
 
     // Swap function for multi-city flights
     const handleMultiCitySwap = (index) => {
-        const updatedFlights = [...multiCityFlights];
-        const temp = updatedFlights[index].from;
-        updatedFlights[index].from = updatedFlights[index].to;
-        updatedFlights[index].to = temp;
-        setMultiCityFlights(updatedFlights);
+        setMultiCityFlights((prev) => {
+            const updated = prev.map((flight) => ({ ...flight }));
+            const temp = updated[index].from;
+            updated[index] = {
+                ...updated[index],
+                from: updated[index].to,
+                to: temp,
+            };
+            // Keep next leg departure in sync with this leg's new arrival
+            if (index < updated.length - 1 && updated[index].to) {
+                updated[index + 1] = {
+                    ...updated[index + 1],
+                    from: updated[index].to,
+                    to: updated[index + 1].to === updated[index].to ? "" : updated[index + 1].to,
+                };
+            }
+            return updated;
+        });
     };
 
     // Validation logic
@@ -803,6 +869,21 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
                         color: 'red'
                     });
                     return false;
+                }
+                if (i > 0) {
+                    const prevDate = multiCityFlights[i - 1]?.departureDate;
+                    if (
+                        prevDate &&
+                        !moment(flight.departureDate).isAfter(moment(prevDate), 'day')
+                    ) {
+                        notifications.show({
+                            title: 'Error',
+                            message: `Flight ${i + 1} date must be after Flight ${i} date.`,
+                            autoClose: 2500,
+                            color: 'red'
+                        });
+                        return false;
+                    }
                 }
             }
         } else {
@@ -1098,14 +1179,10 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
                 className={homeStyles.filterPill}
                 value={formData.cabinClassTitle}
                 onChange={(value) => handleChange("cabinClass", value)}
-                data={
-                    cabinClassOptions
-                        .filter((option) => option.value !== "All")
-                        .map((option) => ({
-                            value: option.title,
-                            label: option.title,
-                        }))
-                }
+                data={cabinClassOptions.map((option) => ({
+                    value: option.title,
+                    label: option.title,
+                }))}
                 aria-label="Cabin class"
             />
         </div>
@@ -1230,9 +1307,7 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
                                                     valueFormat="DD MMM YYYY"
                                                     value={flight.departureDate}
                                                     onFocus={(e) => e.target.select()}
-                                                    minDate={index > 0 && multiCityFlights[index - 1].departureDate
-                                                        ? multiCityFlights[index - 1].departureDate
-                                                        : new Date()}
+                                                    minDate={getMultiCityMinDate(index)}
                                                     onChange={(date) => handleMultiCityChange(index, "departureDate", date)}
                                                 />
                                             </div>
@@ -1404,9 +1479,7 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
                                                 valueFormat="MMM DD, ddd"
                                                 value={flight.departureDate}
                                                 onFocus={(e) => e.target.select()}
-                                                minDate={index > 0 && multiCityFlights[index - 1].departureDate
-                                                    ? multiCityFlights[index - 1].departureDate
-                                                    : new Date()}
+                                                minDate={getMultiCityMinDate(index)}
                                                 onChange={(date) => handleMultiCityChange(index, "departureDate", date)}
                                             />
                                         </div>

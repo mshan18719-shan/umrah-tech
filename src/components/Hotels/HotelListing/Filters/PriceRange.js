@@ -10,7 +10,9 @@ export default function PriceRange() {
   const [selectedValues, setSelectedValues] = useState([minPrice, maxPrice]);
 
   useEffect(() => {
-    setSelectedValues([minPrice, maxPrice]);
+    const min = Number.isFinite(Number(minPrice)) ? Number(minPrice) : 0;
+    const max = Number.isFinite(Number(maxPrice)) ? Number(maxPrice) : min;
+    setSelectedValues([min, max > min ? max : min]);
   }, [minPrice, maxPrice, resetPrice]);
 
   const handleChange = (values) => {
@@ -37,8 +39,12 @@ export default function PriceRange() {
       </div> */}
       <RangeSlider
         className="hotel-filter-slider mb-1"
-        min={minPrice}
-        max={maxPrice}
+        min={Number.isFinite(Number(minPrice)) ? Number(minPrice) : 0}
+        max={
+          Number.isFinite(Number(maxPrice)) && Number(maxPrice) > Number(minPrice)
+            ? Number(maxPrice)
+            : Number(minPrice) + 1
+        }
         color="#1B3B6F"
         value={selectedValues}
         onChange={handleChange}

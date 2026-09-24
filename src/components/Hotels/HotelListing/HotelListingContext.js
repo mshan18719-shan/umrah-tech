@@ -1,32 +1,30 @@
 "use client";
-import { useEffect } from "react";
-import { createContext, useContext, useState, useMemo } from "react";
-const HotelListContext = createContext();
+import { useEffect, useCallback, useRef, createContext, useContext, useState, useMemo } from "react";
 import { ConvertPrice } from "@/components/Currency/ConvertPrice";
 import { useCurrency } from "@/util/currency";
+
+const HotelListContext = createContext();
 
 const LANDMARKS = {
     makkah: {
         key: "makkah",
-        lat: 21.4225,
-        lng: 39.8262,
-        filterTitle: "Distance from center of Macca",
-        cardLabel: "Haram",
+        city: "makkah",
+        filterTitle: "Distance from Masjid al-Haram",
+        cardLabel: "Masjid al-Haram",
     },
     madinah: {
         key: "madinah",
-        lat: 24.4672,
-        lng: 39.6111,
-        filterTitle: "Distance from Masjid Nabawi",
-        cardLabel: "Masjid Nabawi",
+        city: "madinah",
+        filterTitle: "Distance from Al-Masjid an-Nabawi",
+        cardLabel: "Al-Masjid an-Nabawi",
     },
 };
 
 const DISTANCE_OPTIONS = [
-    { value: "0-500", label: "0 - 500 m", minKm: 0, maxKm: 0.5 },
-    { value: "500-1000", label: "500 m - 1 km", minKm: 0.5, maxKm: 1 },
-    { value: "1000-2000", label: "1 - 2 km", minKm: 1, maxKm: 2 },
-    { value: "2000+", label: "More than 2 km", minKm: 2, maxKm: Infinity },
+    { value: "0-500", label: "0–500 m", minMeters: 0, maxMeters: 500 },
+    { value: "500-1000", label: "500 m – 1 km", minMeters: 500, maxMeters: 1000 },
+    { value: "1000-2000", label: "1–2 km", minMeters: 1000, maxMeters: 2000 },
+    { value: "2000+", label: "More than 2 km", minMeters: 2000, maxMeters: Infinity },
 ];
 
 function resolveLandmark(city, place, location) {
@@ -65,34 +63,23 @@ function getHotelCoords(hotel) {
     return { lat, lng };
 }
 
-function distanceKm(lat1, lon1, lat2, lon2) {
-    const toRad = (deg) => (deg * Math.PI) / 180;
-    const R = 6371;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+function parseDistanceStringToMeters(distanceStr) {
+    if (!distanceStr) return null;
+    const match = String(distanceStr).match(/([\d.]+)\s*(m|km)/i);
+    if (!match) return null;
+    const value = parseFloat(match[1]);
+    return match[2].toLowerCase() === "km" ? Math.round(value * 1000) : Math.round(value);
 }
 
-function formatDistanceLabel(km, cardLabel) {
-    if (!Number.isFinite(km)) return "";
-    if (km < 1) {
-        return `${Math.round(km * 1000)} m from ${cardLabel}`;
-    }
-    return `${km.toFixed(2)} km from ${cardLabel}`;
-}
-
-function matchesDistanceFilter(km, selectedRanges) {
+function matchesDistanceFilter(meters, selectedRanges) {
     if (!selectedRanges.length) return true;
-    if (!Number.isFinite(km)) return false;
+    if (!Number.isFinite(meters)) return false;
     return selectedRanges.some((value) => {
         const option = DISTANCE_OPTIONS.find((o) => o.value === value);
         if (!option) return false;
-        if (option.maxKm === Infinity) return km > option.minKm;
-        if (option.minKm === 0) return km >= 0 && km <= option.maxKm;
-        return km > option.minKm && km <= option.maxKm;
+        if (option.maxMeters === Infinity) return meters > option.minMeters;
+        if (option.minMeters === 0) return meters >= 0 && meters <= option.maxMeters;
+        return meters > option.minMeters && meters <= option.maxMeters;
     });
 }
 
@@ -110,7 +97,7 @@ function dedupeHotelsByName(hotels) {
     hotels.forEach((hotel) => {
         const key = (hotel?.name || "").trim().toLowerCase();
         if (!key) {
-            byName.set(`${hotel?.id || Math.random()}`, hotel);
+            byName.set(`${hotel?.provider || ''}:${hotel?.id || Math.random()}`, hotel);
             return;
         }
 
@@ -120,9 +107,10 @@ function dedupeHotelsByName(hotels) {
             return;
         }
 
-        const existingIsCustom = existing?.provider === "custom";
-        const hotelIsCustom = hotel?.provider === "custom";
+        const existingIsCustom = String(existing?.provider || "").toLowerCase() === "custom";
+        const hotelIsCustom = String(hotel?.provider || "").toLowerCase() === "custom";
 
+        // Prefer custom over any other provider
         if (hotelIsCustom && !existingIsCustom) {
             byName.set(key, hotel);
             return;
@@ -131,6 +119,7 @@ function dedupeHotelsByName(hotels) {
             return;
         }
 
+        // Same provider type (both custom or both non-custom): keep lowest price
         if (getHotelPrice(hotel) < getHotelPrice(existing)) {
             byName.set(key, hotel);
         }
@@ -145,7 +134,7 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
     const { currency, rates } = useCurrency();
     const [star, setStar] = useState([]);
     const [hotelNames, setHotelNames] = useState([]);
-    const [sort, setSort] = useState("price-asc");
+    const [sort, setSort] = useState("recommended");
     const [meal, setMeal] = useState([]);
     const [distance, setDistance] = useState([]);
     const [minPrice, setMinPrice] = useState(0);
@@ -153,7 +142,9 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
     const [resetPrice, setResetPrice] = useState(0);
     const [priceRange, setPriceRange] = useState([0, 0]);
     const [visibleCount, setVisibleCount] = useState(10);
+    const [distanceCache, setDistanceCache] = useState({});
     const itemsPerPage = 10;
+    const prevCurrencyRef = useRef(currency);
 
     const landmark = useMemo(
         () => resolveLandmark(city, place, location),
@@ -162,72 +153,189 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
 
     useEffect(() => {
         setDistance([]);
+        setDistanceCache({});
     }, [landmark?.key]);
+
+    const fetchSingleDistance = useCallback(async ({ id, hotel, cityKey, lat, lon }) => {
+        let skip = false;
+        setDistanceCache((prev) => {
+            if (prev[id]) {
+                skip = true;
+                return prev;
+            }
+            return { ...prev, [id]: { loading: true } };
+        });
+        if (skip) return;
+
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_AI_API_URL}/api/bulk-route`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-API-Key": process.env.NEXT_PUBLIC_AI_API_TOKEN,
+                },
+                body: JSON.stringify({ hotel, city: cityKey, lat, lon }),
+            });
+            const r = await res.json();
+
+            setDistanceCache((prev) => ({
+                ...prev,
+                [id]: (r && !r.error)
+                    ? {
+                        loading: false,
+                        distance: r.distance,
+                        walking: r.walking,
+                        difficulty: r.difficulty,
+                        distanceMeters: parseDistanceStringToMeters(r.distance),
+                    }
+                    : { loading: false, error: true },
+            }));
+        } catch {
+            setDistanceCache((prev) => ({
+                ...prev,
+                [id]: { loading: false, error: true },
+            }));
+        }
+    }, []);
 
     useEffect(() => {
         if (hotels && hotels.length > 0) {
+            const currencyChanged = prevCurrencyRef.current !== currency;
+            prevCurrencyRef.current = currency;
+
             const hotelListNew = hotels.map((item) => {
-                const { newcurrency, newprice } = ConvertPrice(item.metadata?.min_price, item.metadata?.currency, currency, rates);
-                let distanceFromLandmark = null;
-                let distanceLabel = "";
-                if (landmark) {
-                    const coords = getHotelCoords(item);
-                    if (coords) {
-                        distanceFromLandmark = distanceKm(
-                            landmark.lat,
-                            landmark.lng,
-                            coords.lat,
-                            coords.lng
-                        );
-                        distanceLabel = formatDistanceLabel(
-                            distanceFromLandmark,
-                            landmark.cardLabel
-                        );
-                    }
-                }
+                const { newcurrency, newprice } = ConvertPrice(
+                    item.metadata?.min_price,
+                    item.metadata?.currency,
+                    currency,
+                    rates
+                );
+                const numericPrice = Number(newprice);
                 return {
                     ...item,
                     currency: newcurrency,
-                    price: newprice,
-                    distanceFromLandmark,
-                    distanceLabel,
+                    price: Number.isFinite(numericPrice)
+                        ? numericPrice
+                        : Number(item.metadata?.min_price) || 0,
                 };
             });
             const uniqueHotels = dedupeHotelsByName(hotelListNew);
-            const prices = uniqueHotels.map((h) => h?.price);
-            const min = Math.min(...prices);
-            const max = Math.max(...prices);
+            const prices = uniqueHotels
+                .map((h) => Number(h?.price))
+                .filter((p) => Number.isFinite(p));
+            const min = prices.length ? Math.min(...prices) : 0;
+            const max = prices.length ? Math.max(...prices) : 0;
+
+            setConvertedHotels(uniqueHotels);
+            setHotelNames([...new Set(uniqueHotels.map((h) => h.name))]);
+
+            // Streaming: expand bounds; keep user range unless it was the full previous span.
+            // Always reset when currency changes so GBP/USD don't keep a stale [0,0] / old range.
+            setPriceRange((prev) => {
+                if (currencyChanged) return [min, max];
+
+                const wasUnset = prev[0] === 0 && prev[1] === 0;
+                const wasFullRange =
+                    Number.isFinite(minPrice) &&
+                    Number.isFinite(maxPrice) &&
+                    Math.abs(prev[0] - minPrice) < 0.01 &&
+                    Math.abs(prev[1] - maxPrice) < 0.01;
+
+                if (wasUnset || wasFullRange || (minPrice === 0 && maxPrice === 0)) {
+                    return [min, max];
+                }
+                return [
+                    Math.max(min, Math.min(prev[0], max)),
+                    Math.min(max, Math.max(prev[1], min)),
+                ];
+            });
             setMinPrice(min);
             setMaxPrice(max);
-            setPriceRange([min, max]);
-            const hotelNames = [...new Set(uniqueHotels.map((h) => h.name))];
-            setHotelNames(hotelNames);
-            setConvertedHotels(uniqueHotels);
         } else {
             setConvertedHotels([]);
         }
-    }, [hotels, rates, currency, landmark]);
+    }, [hotels, rates, currency]);
+
+    // Fetch landmark distances via bulk-route (Makkah / Madinah only)
+    useEffect(() => {
+        if (!landmark || !convertedHotels.length) return;
+
+        const seen = new Set();
+        convertedHotels.forEach((hotel) => {
+            if (!hotel?.id || !hotel?.name || seen.has(hotel.id)) return;
+            seen.add(hotel.id);
+
+            const coords = getHotelCoords(hotel);
+            const address =
+                hotel?.location?.address
+                || hotel?.address
+                || hotel?.metadata?.address
+                || "";
+            const hotelLabel = [hotel.name, address].filter(Boolean).join(", ");
+
+            fetchSingleDistance({
+                id: hotel.id,
+                hotel: hotelLabel,
+                cityKey: landmark.city,
+                lat: coords?.lat ?? null,
+                lon: coords?.lng ?? null,
+            });
+        });
+    }, [convertedHotels, landmark, fetchSingleDistance]);
 
     const resetFilters = () => {
         setSearch(null);
         setStar([]);
         setMeal([]);
         setDistance([]);
-        setSort("price-asc");
+        setSort("recommended");
         setPriceRange([minPrice, maxPrice]);
         setResetPrice(resetPrice + 1);
         setVisibleCount(10);
     };
 
+    const resetPriceRange = useCallback(() => {
+        setPriceRange([minPrice, maxPrice]);
+        setResetPrice((prev) => prev + 1);
+    }, [minPrice, maxPrice]);
 
     const filteredHotels = useMemo(() => {
         let result = [...convertedHotels];
         const searchQuery = search?.trim() || "";
 
-        // Price
-        result = result.filter(
-            (h) => h.price >= priceRange[0] && h.price <= priceRange[1]
-        );
+        // Attach bulk-route distance for card display (Makkah / Madinah only)
+        if (landmark) {
+            result = result.map((h) => {
+                const dist = distanceCache[h.id];
+                if (dist && !dist.loading && !dist.error && dist.distance) {
+                    return {
+                        ...h,
+                        distanceFromLandmark: dist.distanceMeters,
+                        distanceLabel: `${dist.distance} from ${landmark.cardLabel}`,
+                    };
+                }
+                return {
+                    ...h,
+                    distanceFromLandmark: null,
+                    distanceLabel: "",
+                };
+            });
+        }
+
+        // Price — skip filter when range is unset/degenerate so cards don't vanish
+        const rangeMin = Number(priceRange[0]);
+        const rangeMax = Number(priceRange[1]);
+        const hasValidPriceRange =
+            Number.isFinite(rangeMin) &&
+            Number.isFinite(rangeMax) &&
+            !(rangeMin === 0 && rangeMax === 0);
+        if (hasValidPriceRange) {
+            result = result.filter((h) => {
+                const price = Number(h.price);
+                if (!Number.isFinite(price)) return true;
+                return price >= rangeMin && price <= rangeMax;
+            });
+        }
 
         // Search by name
         if (searchQuery) {
@@ -241,16 +349,13 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
                 const starValue = Math.round(Number(h.metadata?.stars));
                 const isNumericStar = !isNaN(starValue) && starValue >= 1 && starValue <= 5;
 
-                // If star includes 0 → allow hotels with non-numeric or out-of-range star values
                 if (star.includes(0) && (!isNumericStar)) {
                     return true;
                 }
 
-                // Otherwise, normal 1–5 filtering
                 return star.includes(starValue);
             });
         }
-
 
         // Meal
         if (meal.length > 0) {
@@ -263,11 +368,14 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
             );
         }
 
-        // Distance from landmark (Makkah / Madinah only)
+        // Distance from landmark (Makkah / Madinah only) — pass-through while loading
         if (landmark && distance.length > 0) {
-            result = result.filter((h) =>
-                matchesDistanceFilter(h.distanceFromLandmark, distance)
-            );
+            result = result.filter((h) => {
+                const dist = distanceCache[h.id];
+                if (!dist || dist.loading) return true;
+                if (dist.error) return false;
+                return matchesDistanceFilter(dist.distanceMeters, distance);
+            });
         }
 
         // Sort — sidebar name search or top search place: show all, best matches first
@@ -275,38 +383,46 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
 
         if (sort === "price-asc") {
             result.sort((a, b) => a.price - b.price);
-        }
-        else if (sort === "price-desc") {
+        } else if (sort === "price-desc") {
             result.sort((a, b) => b.price - a.price);
-        }
-        else if (sort === "name-asc") {
+        } else if (sort === "name-asc") {
             result.sort((a, b) => a.name.localeCompare(b.name));
-        }
-        else if (relevanceQuery) {
+        } else {
+            // recommended (default): name relevance → custom provider → price
             result.sort((a, b) => {
-                const scoreA = getMatchScore(relevanceQuery, a.name);
-                const scoreB = getMatchScore(relevanceQuery, b.name);
-
-                if (scoreB !== scoreA) return scoreB - scoreA;
+                if (relevanceQuery) {
+                    const scoreA = getMatchScore(relevanceQuery, a.name);
+                    const scoreB = getMatchScore(relevanceQuery, b.name);
+                    if (scoreB !== scoreA) return scoreB - scoreA;
+                }
 
                 if (a.provider === "custom" && b.provider !== "custom") return -1;
                 if (a.provider !== "custom" && b.provider === "custom") return 1;
 
-                return 0;
+                return (a.price ?? Infinity) - (b.price ?? Infinity);
             });
-        } else {
-            if (sort === "price-asc") result.sort((a, b) => a?.price - b?.price);
-            if (sort === "price-desc") result.sort((a, b) => b?.price - a?.price);
-            if (sort === "name-asc") result.sort((a, b) => a.name.localeCompare(b.name));
         }
 
         return result;
-    }, [convertedHotels, search, priceRange, star, meal, distance, sort, place, landmark, minPrice, maxPrice]);
+    }, [
+        convertedHotels,
+        search,
+        priceRange,
+        star,
+        meal,
+        distance,
+        sort,
+        place,
+        landmark,
+        distanceCache,
+        minPrice,
+        maxPrice,
+    ]);
 
-    function getMatchScore(place, hotelName) {
-        if (!place || !hotelName) return 0;
+    function getMatchScore(placeName, hotelName) {
+        if (!placeName || !hotelName) return 0;
 
-        const placeLower = place.toLowerCase().trim();
+        const placeLower = placeName.toLowerCase().trim();
         const hotelLower = hotelName.toLowerCase().trim();
 
         if (hotelLower === placeLower) return 100;
@@ -319,7 +435,7 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
         const hotelWords = hotelLower.split(/\s+/);
 
         let score = 0;
-        placeWords.forEach(word => {
+        placeWords.forEach((word) => {
             if (hotelWords.includes(word)) {
                 score += 2;
             } else if (hotelLower.includes(word)) {
@@ -329,6 +445,7 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
 
         return score;
     }
+
     useEffect(() => {
         setVisibleCount(10);
     }, [search, star, meal, distance, priceRange, sort]);
@@ -340,13 +457,14 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
     const hasMore = visibleCount < filteredHotels.length;
 
     const loadMore = () => {
-        setVisibleCount(prev => Math.min(prev + itemsPerPage, filteredHotels.length));
+        setVisibleCount((prev) => Math.min(prev + itemsPerPage, filteredHotels.length));
     };
 
     return (
         <HotelListContext.Provider
             value={{
                 hotels: visibleHotels,
+                filteredHotels,
                 totalHotels: filteredHotels.length,
                 setSearch,
                 setPriceRange,
@@ -363,12 +481,18 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
                 star,
                 meal,
                 distance,
+                distances: distance,
+                setDistances: setDistance,
                 distanceOptions: DISTANCE_OPTIONS,
                 landmark,
+                showDistance: Boolean(landmark),
+                distanceLandmarkLabel: landmark ? `from ${landmark.cardLabel}` : '',
+                distanceCache,
                 search,
                 priceRange,
                 hotelNames,
                 resetPrice,
+                resetPriceRange,
                 resetFilters,
             }}
         >

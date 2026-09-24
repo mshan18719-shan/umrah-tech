@@ -2,6 +2,7 @@
 import styles from "./Invoice.module.css";
 import moment from "moment";
 import Image from "next/image";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import HotelInvoiceLoader from "@/components/Loader/HotelInvoiceLoader";
@@ -17,6 +18,8 @@ import {
   FaPrint,
   FaDownload,
   FaRedoAlt,
+  FaHome,
+  FaFileInvoice,
 } from "react-icons/fa";
 import { FiCheckCircle } from "react-icons/fi";
 
@@ -129,41 +132,78 @@ export default function Page() {
 
   const cancelCards = useMemo(() => {
     const cards = [];
-    voucherDetail?.rooms_details?.forEach((item) => {
-      item?.rates?.forEach((rate) => {
-        if (rate?.rateComments === "refundable" && rate?.cancellationPolicies?.length) {
-          rate.cancellationPolicies.forEach((policy) => {
-            const from = moment.utc(policy.from);
-            const hours = Math.max(
-              from.diff(moment(), "hours"),
-              from.diff(moment(voucherDetail?.check_in), "hours")
-            );
-            cards.push({
-              when: from.isValid()
-                ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
-                : "CANCELLATION",
-              amount: `${currency} ${convertToCustomerCurrency(policy.amount)}`,
-              desc: "Fixed cancellation charge",
-            });
-          });
-        } else if (rate) {
-          cards.push({
-            when: "NON-REFUNDABLE",
-            amount: "100%",
-            desc: "Of total booking value",
-            nonRefundable: true,
-          });
+    const displayCurrency = currency;
+
+    const pushPolicy = (policy, roomName = "") => {
+      if (!policy) return;
+      const from = moment(policy.from || policy.from_date || policy.start_date);
+      const amountVal = policy.amount ?? policy.original_amount ?? policy.penalty_amount;
+      if (amountVal == null && !from.isValid()) return;
+      cards.push({
+        when: from.isValid()
+          ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+          : "CANCELLATION",
+        amount: `${displayCurrency} ${convertToCustomerCurrency(amountVal || 0)}`.trim(),
+        desc: roomName
+          ? `${roomName} — Fixed cancellation charge`
+          : "Fixed cancellation charge",
+      });
+    };
+
+    const topLevel =
+      voucherDetail?.cancellation_policies ||
+      voucherDetail?.cancellationPolicies ||
+      [];
+
+    if (Array.isArray(topLevel) && topLevel.length) {
+      topLevel.forEach((roomPolicy) => {
+        const roomName =
+          roomPolicy?.name ||
+          roomPolicy?.room_name ||
+          roomPolicy?.roomName ||
+          "";
+        const policies =
+          roomPolicy?.policies ||
+          roomPolicy?.cancellationPolicies ||
+          roomPolicy?.cancellation_policies ||
+          null;
+
+        if (Array.isArray(policies) && policies.length) {
+          policies.forEach((policy) => pushPolicy(policy, roomName));
+        } else if (roomPolicy?.amount != null || roomPolicy?.from) {
+          pushPolicy(roomPolicy, roomName);
         }
       });
-    });
-    // de-dupe by when+amount
+    }
+
+    if (!cards.length) {
+      voucherDetail?.rooms_details?.forEach((item) => {
+        item?.rates?.forEach((rate) => {
+          const policies =
+            rate?.cancellationPolicies ||
+            rate?.cancellation_policies ||
+            [];
+          if (Array.isArray(policies) && policies.length) {
+            policies.forEach((policy) =>
+              pushPolicy(policy, item?.name || rate?.boardName || "")
+            );
+          }
+        });
+      });
+    }
+
     const seen = new Set();
-    return cards.filter((c) => {
-      const key = `${c.when}-${c.amount}`;
+    const unique = cards.filter((c) => {
+      const key = `${c.when}-${c.amount}-${c.desc}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+
+    if (!unique.length) {
+      return [{ nonRefundable: true }];
+    }
+    return unique;
   }, [voucherDetail, currency]);
 
   const roomLabel =
@@ -194,6 +234,15 @@ export default function Page() {
                 Invoice preview — {invoiceNo}
               </span>
               <div className={styles.previewActions}>
+                <Link
+                  href={`/hotels/voucher/${invoiceNo}`}
+                  className={styles.linkChip}
+                >
+                  <FaFileInvoice size={12} /> Voucher
+                </Link>
+                <Link href="/" className={styles.linkChip}>
+                  <FaHome size={12} /> Home
+                </Link>
                 <button
                   type="button"
                   className={styles.btnPrint}
@@ -587,30 +636,13 @@ export default function Page() {
                     </table>
                   </div>
                   <div className={styles.totals}>
-                    <div className={styles.totalsRow}>
-                      <span>Subtotal</span>
-                      <strong>
-                        {currency} {Number(grandTotal).toFixed(2)}
-                      </strong>
-                    </div>
                     <div className={styles.grandTotal}>
                       <span>GRAND TOTAL</span>
                       <strong>
                         {currency} {Number(grandTotal).toFixed(2)}
                       </strong>
                     </div>
-                    {/* <div className={styles.totalsRow}>
-                      <span>Amount Paid</span>
-                      <strong>
-                        {currency} {Number(amountPaid).toFixed(2)}
-                      </strong>
-                    </div>
-                    <div className={styles.remainingBar}>
-                      <span>Remaining Balance</span>
-                      <strong>
-                        {currency} {Number(remaining).toFixed(2)}
-                      </strong>
-                    </div> */}
+                    <p className={styles.taxNote}>VAT and Taxes included</p>
                   </div>
                 </section>
 

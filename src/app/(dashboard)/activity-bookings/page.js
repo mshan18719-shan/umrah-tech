@@ -118,7 +118,7 @@ export default function ActivityBookingsPage() {
 
       if (!data?.success && data?.message?.toLowerCase().includes("otp")) {
         router.push(
-          `/verify-otp?email=${encodeURIComponent(session?.user?.email || "")}`
+          "/login"
         );
         return;
       }
@@ -437,7 +437,7 @@ export default function ActivityBookingsPage() {
                       <span className="hb-amount-label">Total Amount</span>
                       <div className="hb-amount">
                         {booking?.customer_currency || ""}{" "}
-                        {booking?.customer_total ?? "-"}
+                        {booking?.grand_total ?? booking?.customer_total ?? "-"}
                       </div>
                       <div className={`hb-status hb-status-${tone}`}>
                         Payment:{" "}

@@ -7,7 +7,7 @@ import { IoLocationSharp } from 'react-icons/io5';
 import { useHotelList } from './HotelListingContext';
 import { useSearchParams } from "next/navigation";
 import moment from 'moment';
-import { FaHome, FaStar } from 'react-icons/fa';
+import { FaCheck, FaHome, FaStar } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 
 const normalizeImageSrc = (raw) => {
@@ -32,6 +32,23 @@ const makingSlug = (name) => {
 const ProviderShortNames = (encodedProvider) => {
   if (!encodedProvider) return '';
   return encodeProvider(encodedProvider).toLowerCase();
+};
+
+/** Same rule as HotelMap: free cancel if any rate has policies whose dates are all still in the future. */
+const hasFreeCancellation = (hotel) => {
+  if (!hotel?.rooms?.length) return false;
+  const now = moment.utc();
+  for (const room of hotel.rooms) {
+    for (const rate of room?.rates || []) {
+      const policies = rate?.cancellation_policies;
+      if (!Array.isArray(policies) || policies.length === 0) continue;
+      const allDatesInFuture = policies.every(
+        (policy) => policy?.from && moment.utc(policy.from).isAfter(now)
+      );
+      if (allDatesInFuture) return true;
+    }
+  }
+  return false;
 };
 
 function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
@@ -89,6 +106,7 @@ function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
   const visibleAmenities = facilities.slice(0, 3);
   const moreAmenities = Math.max(facilities.length - visibleAmenities.length, 0);
   const nightsLabel = daysDiff > 1 ? `${daysDiff} nights` : `${daysDiff || 1} night`;
+  const freeCancel = hasFreeCancellation(item);
 
   return (
     <div className="col-12 col-md-6 mb-3">
@@ -162,6 +180,12 @@ function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
               </p>
             )}
 
+            {freeCancel && (
+              <span className="htc-card__cancel">
+                <FaCheck size={10} aria-hidden="true" /> Free Cancellation
+              </span>
+            )}
+
             {detail ? (
               <ul className="htc-card__amenities">
                 {visibleAmenities.map((amenity, i) => (
@@ -210,7 +234,7 @@ function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
 
 export default function HotelCard({ isLoading }) {
   const searchParams = useSearchParams();
-  const { hotels } = useHotelList();
+  const { hotels, filteredHotels } = useHotelList();
   const check_in = searchParams.get("checkIn");
   const check_out = searchParams.get("checkOut");
   const daysDiff = moment(check_out).diff(moment(check_in), 'days');
@@ -228,12 +252,12 @@ export default function HotelCard({ isLoading }) {
       <div className="row g-3" id='top_hotel'>
         {hotels.map((item, index) => (
           <HotelCardItem
-            key={item.id || index}
+            key={`${item.provider || 'p'}-${item.id || index}`}
             item={item}
             check_in={check_in}
             check_out={check_out}
             daysDiff={daysDiff}
-            allHotels={hotels}
+            allHotels={filteredHotels?.length ? filteredHotels : hotels}
           />
         ))}
       </div>

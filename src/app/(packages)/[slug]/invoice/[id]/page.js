@@ -836,15 +836,6 @@ export default function Page() {
                     <strong>{currency} {voucherDetail.total_discount}</strong>
                   </div>
                 )}
-                <div className={styles.totalsRow}>
-                  <span>Subtotal</span>
-                  <strong>
-                    {currency}{' '}
-                    {voucherDetail?.customer_total_after_discount === 0
-                      ? voucherDetail?.grand_total_after_discount
-                      : voucherDetail?.customer_total_after_discount}
-                  </strong>
-                </div>
                 <div className={styles.grandTotal}>
                   <span>GRAND TOTAL</span>
                   <strong>
@@ -854,57 +845,9 @@ export default function Page() {
                       : voucherDetail?.grand_total_after_discount}
                   </strong>
                 </div>
-                {/* <div className={styles.totalsRow}>
-                  <span>Amount Paid</span>
-                  <strong>{currency} {Number(amountPaid).toFixed(2)}</strong>
-                </div>
-                <div className={styles.remainingBar}>
-                  <span>Remaining Balance</span>
-                  <strong>{currency} {Number(remaining).toFixed(2)}</strong>
-                </div> */}
+                <p className={styles.taxNote}>VAT and Taxes included</p>
               </div>
-              <p className={styles.noteText} style={{ textAlign: 'right', marginTop: 8 }}>
-                Included VAT and Taxes
-              </p>
             </section>
-
-            {/* Cancellation */}
-            {voucherDetail?.packageDetails?.cancellation_policy && (
-              <section className={styles.section}>
-                <div className={styles.sectionHead}>
-                  <div className={styles.sectionHeadLeft}>
-                    <span className={styles.sectionIcon}><IoWarningOutline size={13} /></span>
-                    <h3 className={styles.sectionTitle}>Cancellation Policy</h3>
-                  </div>
-                </div>
-                {voucherDetail.packageDetails.cancellation_policy.cancel_policy === 'refundable'
-                  && !!voucherDetail.packageDetails.cancellation_policy.cancellation_policies?.length ? (
-                  <div className={styles.cancelGrid}>
-                    {voucherDetail.packageDetails.cancellation_policy.cancellation_policies.map((policy, i) => (
-                      <div key={i} className={styles.cancelCard}>
-                        <span className={styles.cancelWhen}>
-                          {policy.time_duration} HRS BEFORE
-                        </span>
-                        <p className={styles.cancelAmount}>
-                          {policy.type === 'percentage'
-                            ? `${policy.value}%`
-                            : `${currency} ${convertToCustomerCurrency(policy.value)}`}
-                        </p>
-                        <p className={styles.cancelDesc}>
-                          {policy.type === 'percentage'
-                            ? 'Percentage cancellation charge'
-                            : 'Fixed cancellation charge'}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.cancelFull}>
-                    This booking is non-refundable. No refund will be issued for cancellations.
-                  </div>
-                )}
-              </section>
-            )}
 
             {/* Important info */}
             <section className={styles.section}>

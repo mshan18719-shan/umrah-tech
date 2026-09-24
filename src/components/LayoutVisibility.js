@@ -5,12 +5,14 @@ import Footer from "@/components/Footer/Footer";
 import IslamicHeader from "./Header/IslamicHeader";
 
 export default function LayoutVisibility({ children }) {
-  const pathname = usePathname();
-  // get last part of url
-  const lastSegment = pathname?.split("/")
+  const pathname = usePathname() || "";
 
-  // hide layout on voucher & invoice pages
-  const hideLayout = lastSegment && (lastSegment.includes("voucher") || lastSegment.includes("invoice"));
+  // Hide chrome on voucher & invoice pages (must match SSR + client)
+  const hideLayout =
+    pathname.includes("/voucher/") ||
+    pathname.includes("/invoice/") ||
+    pathname.endsWith("/voucher") ||
+    pathname.endsWith("/invoice");
 
   return (
     <>

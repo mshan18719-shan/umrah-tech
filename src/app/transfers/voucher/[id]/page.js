@@ -36,6 +36,7 @@ export default function Page() {
 
   const fetchDetails = async () => {
     setIsLoading(true);
+    setErrorMessage("");
     try {
       const responses = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/transfers/booking/details`,
@@ -46,15 +47,18 @@ export default function Page() {
         }
       );
       const res = await responses.json();
-      setIsLoading(false);
-      if (res.success) {
-        setVoucherDetail(res?.data);
+      if (res.success && res?.data) {
+        setVoucherDetail(res.data);
       } else {
-        setErrorMessage(res?.message);
+        setVoucherDetail({});
+        setErrorMessage(res?.message || "Failed to load voucher details");
       }
     } catch (err) {
-      setIsLoading(false);
       console.error("Error fetching transfer details:", err);
+      setVoucherDetail({});
+      setErrorMessage("Failed to load voucher details");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,16 +68,16 @@ export default function Page() {
   }
 
   function convertToCustomerCurrency(price) {
-    if (!price || !voucherDetail.pricing?.supplier_to_display_rate)
+    if (!price || !voucherDetail?.pricing?.supplier_to_display_rate)
       return Number(price || 0).toFixed(2);
     if (
-      voucherDetail.pricing?.supplier_currency ===
-      voucherDetail.pricing?.display_currency
+      voucherDetail?.pricing?.supplier_currency ===
+      voucherDetail?.pricing?.display_currency
     ) {
       return Number(price).toFixed(2);
     }
     return (
-      Number(price) * Number(voucherDetail.pricing.supplier_to_display_rate)
+      Number(price) * Number(voucherDetail?.pricing?.supplier_to_display_rate)
     ).toFixed(2);
   }
 
@@ -92,19 +96,65 @@ export default function Page() {
 
   const cancelCards = useMemo(() => {
     const policy = voucherDetail?.cancellation_policies;
-    const currency =
+    const displayCurrency =
       voucherDetail?.pricing?.display_currency ||
       voucherDetail?.pricing?.currency ||
       "";
-    if (!policy) return [];
-    if (policy.cancel_policy !== "refundable") {
+    const topLevelCancel = String(
+      voucherDetail?.cancel_policy ||
+        policy?.cancel_policy ||
+        policy?.cancelPolicy ||
+        ""
+    ).toLowerCase();
+
+    if (!policy && !topLevelCancel) return [{ nonRefundable: true }];
+
+    if (Array.isArray(policy)) {
+      if (!policy.length) {
+        return topLevelCancel === "refundable"
+          ? []
+          : [{ nonRefundable: true }];
+      }
+      return policy.slice(0, 3).map((p, idx) => {
+        const from = moment(p?.from);
+        return {
+          when: from.isValid()
+            ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+            : `${72 - idx * 24} HRS BEFORE`,
+          amount: `${displayCurrency} ${convertToCustomerCurrency(p?.amount)}`,
+          desc: "Fixed cancellation charge",
+        };
+      });
+    }
+
+    const cancelPolicy = String(
+      policy?.cancel_policy || policy?.cancelPolicy || topLevelCancel || ""
+    ).toLowerCase();
+
+    if (
+      !cancelPolicy ||
+      cancelPolicy === "non-refundable" ||
+      cancelPolicy === "non_refundable" ||
+      cancelPolicy !== "refundable"
+    ) {
       return [{ nonRefundable: true }];
     }
-    return (policy.policies || []).slice(0, 3).map((p, idx) => ({
-      when: `${72 - idx * 24} HRS BEFORE`,
-      amount: `${currency} ${convertToCustomerCurrency(p.amount)}`,
-      desc: "Fixed cancellation charge",
-    }));
+
+    const policies = policy?.policies || policy?.cancellation_policies || [];
+    if (!Array.isArray(policies) || !policies.length) {
+      return [];
+    }
+
+    return policies.slice(0, 3).map((p, idx) => {
+      const from = moment(p?.from);
+      return {
+        when: from.isValid()
+          ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+          : `${72 - idx * 24} HRS BEFORE`,
+        amount: `${displayCurrency} ${convertToCustomerCurrency(p?.amount)}`,
+        desc: "Fixed cancellation charge",
+      };
+    });
   }, [voucherDetail]);
 
   const paymentStatus = (voucherDetail?.payment_status || "").toLowerCase();
@@ -421,23 +471,54 @@ export default function Page() {
                         <tbody>
                           <tr>
                             <td style={{ fontWeight: 700 }}>
-                              {capitalize(voucherDetail?.transfer?.vehicle_name)}{" "}
+                              {capitalize(voucherDetail?.transfer?.vehicle_name) ||
+                                capitalize(voucherDetail?.vehicle_details?.category) ||
+                                "Transfer"}{" "}
                               × {voucherDetail?.booked_qty || 1}
                             </td>
                             <td>
-                              {capitalize(voucherDetail?.transfer?.trip_type)}
+                              {capitalize(voucherDetail?.transfer?.trip_type) ||
+                                capitalize(
+                                  voucherDetail?.booking_criteria?.transfer_type
+                                ) ||
+                                "—"}
                             </td>
                             <td>
                               {voucherDetail?.vehicle_details
-                                ?.passenger_capacity || "N/A"}
+                                ?.passenger_capacity || "—"}
                             </td>
                             <td>
                               {voucherDetail?.vehicle_details
-                                ?.luggage_capacity || "N/A"}
+                                ?.luggage_capacity || "—"}
                             </td>
                           </tr>
                         </tbody>
                       </table>
+                    </div>
+                    <div className={styles.bookingGrid} style={{ marginTop: 12 }}>
+                      <div>
+                        <span className={styles.fieldLabel}>Exact Pickup</span>
+                        <div className={styles.fieldValue}>
+                          {voucherDetail?.exact_pickup_point ||
+                            voucherDetail?.booking_criteria?.pickup_location ||
+                            "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <span className={styles.fieldLabel}>Exact Dropoff</span>
+                        <div className={styles.fieldValue}>
+                          {voucherDetail?.exact_dropoff_point ||
+                            voucherDetail?.booking_criteria?.dropoff_location ||
+                            "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <span className={styles.fieldLabel}>Category</span>
+                        <div className={styles.fieldValue}>
+                          {capitalize(voucherDetail?.vehicle_details?.category) ||
+                            "—"}
+                        </div>
+                      </div>
                     </div>
                     {(voucherDetail?.flight_number ||
                       voucherDetail?.special_request) && (
@@ -452,8 +533,7 @@ export default function Page() {
                             " · "}
                           {voucherDetail?.special_request && (
                             <>
-                              <FaMapMarkerAlt size={11} /> Route: {pickupLabel} →{" "}
-                              {dropoffLabel}
+                              Special request: {voucherDetail.special_request}
                             </>
                           )}
                         </p>

@@ -13,12 +13,28 @@ import { FaXTwitter } from "react-icons/fa6";
 import moment from "moment";
 import { MdOutlinePhone } from "react-icons/md";
 
+const DASHBOARD_PREFIXES = [
+    "/dashboard",
+    "/hotel-bookings",
+    "/transfer-bookings",
+    "/activity-bookings",
+    "/flight-bookings",
+    "/package-bookings",
+    "/account-statement",
+    "/my-payments",
+    "/make-payments",
+];
+
 export default function IslamicHeader() {
     const pathname = usePathname();
     const { categories: packageCategoryList } = usePackageCategories();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isPackagesDropdownOpen, setIsPackagesDropdownOpen] = useState(false);
     const [isMobilePackagesOpen, setIsMobilePackagesOpen] = useState(false);
+
+    const isDashboard = DASHBOARD_PREFIXES.some(
+        (prefix) => pathname === prefix || pathname?.startsWith(`${prefix}/`)
+    );
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -195,9 +211,11 @@ export default function IslamicHeader() {
                                 </a> */}
                                 <CurrencySelector width='w-auto' />
                             </div>
-                            <Link href="/login" className={styles.islamicBookNowBtn}>
-                                My Bookings
-                            </Link>
+                            {!isDashboard && (
+                                <Link href="/login" className={styles.islamicBookNowBtn}>
+                                    My Bookings
+                                </Link>
+                            )}
                         </div>
 
                         {/* Mobile Menu Toggle */}
@@ -309,9 +327,11 @@ export default function IslamicHeader() {
                             <span className={styles.islamicMobileCurrencyLabel}>Currency</span>
                             <CurrencySelector width={styles.islamicMobileCurrencySelect} />
                         </div>
-                        <Link href="/login" className={styles.islamicBookNowBtn} onClick={closeMobileMenu}>
-                            My Bookings
-                        </Link>
+                        {!isDashboard && (
+                            <Link href="/login" className={styles.islamicBookNowBtn} onClick={closeMobileMenu}>
+                                My Bookings
+                            </Link>
+                        )}
                         <a href="/" className={styles.islamicMobileCallBtn} onClick={closeMobileMenu}>
                             <FaPhoneAlt size={14} />
                             0121 777 2522

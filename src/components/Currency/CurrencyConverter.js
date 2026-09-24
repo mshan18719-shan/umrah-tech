@@ -1,10 +1,9 @@
 export const CurrencyConverter = (amount, from, to, rates) => {
-  if (!rates[from] || !rates[to]) return amount;
-  const baseAmount = amount / rates[from]; // Convert to base (USD)
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return 0;
+  if (!rates?.[from] || !rates?.[to]) return numericAmount;
+  const baseAmount = numericAmount / rates[from];
   const targetAmount = baseAmount * rates[to];
-  if (targetAmount % 2 === 0) {
-    return targetAmount
-  } else {
-    return targetAmount.toFixed(2)
-  }
+  // Always return a number (toFixed returns a string and breaks price filters)
+  return Math.round(targetAmount * 100) / 100;
 };

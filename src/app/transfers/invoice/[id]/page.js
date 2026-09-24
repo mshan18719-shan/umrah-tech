@@ -35,6 +35,7 @@ export default function Page() {
 
   const fetchDetails = async () => {
     setIsLoading(true);
+    setErrorMessage("");
     try {
       const responses = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/transfers/booking/details`,
@@ -45,15 +46,18 @@ export default function Page() {
         }
       );
       const res = await responses.json();
-      setIsLoading(false);
-      if (res.success) {
-        setInvoiceDetail(res?.data);
+      if (res.success && res?.data) {
+        setInvoiceDetail(res.data);
       } else {
-        setErrorMessage(res?.message);
+        setInvoiceDetail({});
+        setErrorMessage(res?.message || "Failed to load invoice details");
       }
     } catch (err) {
-      setIsLoading(false);
       console.error("Error fetching transfer details:", err);
+      setInvoiceDetail({});
+      setErrorMessage("Failed to load invoice details");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,16 +68,16 @@ export default function Page() {
   }
 
   function convertToCustomerCurrency(price) {
-    if (!price || !invoiceDetail.pricing?.supplier_to_display_rate)
+    if (!price || !invoiceDetail?.pricing?.supplier_to_display_rate)
       return Number(price || 0).toFixed(2);
     if (
-      invoiceDetail.pricing?.supplier_currency ===
-      invoiceDetail.pricing?.display_currency
+      invoiceDetail?.pricing?.supplier_currency ===
+      invoiceDetail?.pricing?.display_currency
     ) {
       return Number(price).toFixed(2);
     }
     const convertedPrice =
-      Number(price) * Number(invoiceDetail.pricing?.supplier_to_display_rate);
+      Number(price) * Number(invoiceDetail?.pricing?.supplier_to_display_rate);
     return convertedPrice.toFixed(2);
   }
 
@@ -88,10 +92,16 @@ export default function Page() {
   const handlePrint = () => window.print();
 
   const currency =
-    invoiceDetail?.pricing?.currency ||
     invoiceDetail?.pricing?.display_currency ||
+    invoiceDetail?.pricing?.currency ||
     "";
-  const grandTotal = Number(invoiceDetail?.pricing?.amount_after_exchange || 0);
+  const grandTotal = Number(
+    invoiceDetail?.pricing?.amount_after_exchange ||
+      invoiceDetail?.pricing?.amount ||
+      invoiceDetail?.pricing?.original_amount ||
+      invoiceDetail?.pricing?.booking_amount ||
+      0
+  );
   const paymentStatus = (invoiceDetail?.payment_status || "").toLowerCase();
   const amountPaid =
     paymentStatus === "paid" || paymentStatus === "completed"
@@ -163,22 +173,67 @@ export default function Page() {
 
   const cancelCards = useMemo(() => {
     const policy = invoiceDetail?.cancellation_policies;
-    if (!policy) return [];
-    if (policy.cancel_policy !== "refundable") {
+    const displayCurrency =
+      invoiceDetail?.pricing?.display_currency || currency || "";
+    const topLevelCancel = String(
+      invoiceDetail?.cancel_policy ||
+        policy?.cancel_policy ||
+        policy?.cancelPolicy ||
+        ""
+    ).toLowerCase();
+
+    if (!policy && !topLevelCancel) return [{ nonRefundable: true }];
+
+    // Array shape (same as transfer checkout listing)
+    if (Array.isArray(policy)) {
+      if (!policy.length) {
+        return topLevelCancel === "refundable"
+          ? []
+          : [{ nonRefundable: true }];
+      }
+      return policy.map((p) => {
+        const from = moment(p?.from);
+        return {
+          when: from.isValid()
+            ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+            : "CANCELLATION",
+          amount: `${displayCurrency} ${convertToCustomerCurrency(p?.amount)}`,
+          desc: "Fixed cancellation charge",
+        };
+      });
+    }
+
+    const cancelPolicy = String(
+      policy?.cancel_policy || policy?.cancelPolicy || topLevelCancel || ""
+    ).toLowerCase();
+
+    if (!cancelPolicy || cancelPolicy === "non-refundable" || cancelPolicy === "non_refundable") {
       return [{ nonRefundable: true }];
     }
-    return (policy.policies || []).map((p) => ({
-      when: `FROM ${moment(p.from).format("MMM DD, YYYY").toUpperCase()}`,
-      amount: `${invoiceDetail?.pricing?.display_currency || currency} ${convertToCustomerCurrency(p.amount)}`,
-      desc: "Fixed cancellation charge",
-    }));
+
+    if (cancelPolicy !== "refundable") {
+      return [{ nonRefundable: true }];
+    }
+
+    const policies = policy?.policies || policy?.cancellation_policies || [];
+    if (!Array.isArray(policies) || !policies.length) {
+      return [];
+    }
+
+    return policies.map((p) => {
+      const from = moment(p?.from);
+      return {
+        when: from.isValid()
+          ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+          : "CANCELLATION",
+        amount: `${displayCurrency} ${convertToCustomerCurrency(p?.amount)}`,
+        desc: "Fixed cancellation charge",
+      };
+    });
   }, [invoiceDetail, currency]);
 
   const qty = Number(invoiceDetail?.booked_qty || 1);
-  const unitRate = PerTransferPrice(
-    invoiceDetail?.pricing?.amount_after_exchange,
-    qty
-  );
+  const unitRate = PerTransferPrice(grandTotal, qty);
 
   const locationPairs = useMemo(() => {
     const pairs = [];
@@ -311,7 +366,7 @@ export default function Page() {
                         {paymentStatus === "paid" ||
                           paymentStatus === "completed"
                           ? "PAID"
-                          : (voucherDetail?.payment_status || "PENDING").toUpperCase()}
+                          : (invoiceDetail?.payment_status || "PENDING").toUpperCase()}
                       </span>
                     </div>
                   </div>
@@ -406,6 +461,7 @@ export default function Page() {
                       <span className={styles.fieldLabel}>Service</span>
                       <h4 className={styles.serviceName}>
                         {capitalize(invoiceDetail?.transfer?.vehicle_name) ||
+                          capitalize(invoiceDetail?.vehicle_details?.category) ||
                           capitalize(
                             invoiceDetail?.booking_criteria?.transfer_type
                           ) ||
@@ -413,41 +469,81 @@ export default function Page() {
                       </h4>
                       <div className={styles.routeLine}>
                         <FaMapMarkerAlt size={14} />
-                            <span>
-                              {pickupLabel} → {dropoffLabel}
-                            </span>
-                        <span> {pickupWhen} → {dropoffWhen}</span>
+                        <span>
+                          {pickupLabel} → {dropoffLabel}
+                        </span>
                       </div>
-                      {invoiceDetail?.special_request && (
+                      {pickupWhen && pickupWhen !== "—" ? (
+                        <p className={styles.serviceNote}>Pickup: {pickupWhen}</p>
+                      ) : null}
+                      {dropoffWhen ? (
+                        <p className={styles.serviceNote}>Dropoff: {dropoffWhen}</p>
+                      ) : null}
+                      {invoiceDetail?.special_request ? (
                         <p className={styles.serviceNote}>
                           Special request: {invoiceDetail.special_request}
                         </p>
-                      )}
-                      {invoiceDetail?.flight_number && (
+                      ) : null}
+                      {invoiceDetail?.flight_number ? (
                         <p className={styles.serviceNote}>
                           Flight Number: {invoiceDetail.flight_number}
                         </p>
-                      )}
+                      ) : null}
                       <div className={styles.vehicleChips}>
                         <span className={styles.chip}>
                           Qty: {invoiceDetail?.booked_qty || 1}
                         </span>
                         <span className={styles.chip}>
                           {capitalize(invoiceDetail?.transfer?.trip_type) ||
+                            capitalize(
+                              invoiceDetail?.booking_criteria?.transfer_type
+                            ) ||
                             "Transfer"}
                         </span>
-                        {invoiceDetail?.vehicle_details?.passenger_capacity && (
+                        <span className={styles.chip}>
+                          Pax:{" "}
+                          {invoiceDetail?.vehicle_details?.passenger_capacity ||
+                            "—"}
+                        </span>
+                        <span className={styles.chip}>
+                          Luggage:{" "}
+                          {invoiceDetail?.vehicle_details?.luggage_capacity ||
+                            "—"}
+                        </span>
+                        {invoiceDetail?.vehicle_details?.category ? (
                           <span className={styles.chip}>
-                            Pax:{" "}
-                            {invoiceDetail.vehicle_details.passenger_capacity}
+                            Category:{" "}
+                            {capitalize(invoiceDetail.vehicle_details.category)}
                           </span>
-                        )}
-                        {invoiceDetail?.vehicle_details?.luggage_capacity && (
-                          <span className={styles.chip}>
-                            Luggage:{" "}
-                            {invoiceDetail.vehicle_details.luggage_capacity}
-                          </span>
-                        )}
+                        ) : null}
+                      </div>
+                      <div className={styles.fieldGrid} style={{ marginTop: 14 }}>
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Exact Pickup</span>
+                          <div className={styles.fieldValue}>
+                            {invoiceDetail?.exact_pickup_point ||
+                              invoiceDetail?.booking_criteria?.pickup_location ||
+                              "—"}
+                          </div>
+                        </div>
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Exact Dropoff</span>
+                          <div className={styles.fieldValue}>
+                            {invoiceDetail?.exact_dropoff_point ||
+                              invoiceDetail?.booking_criteria?.dropoff_location ||
+                              "—"}
+                          </div>
+                        </div>
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Pickup Date</span>
+                          <div className={styles.fieldValue}>{pickupWhen || "—"}</div>
+                        </div>
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Dropoff Date</span>
+                          <div className={styles.fieldValue}>
+                            {dropoffWhen || "—"}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     {locationPairs.length > 1 ? null : (
@@ -616,11 +712,14 @@ export default function Page() {
                         <tr>
                           <td>
                             {capitalize(invoiceDetail?.transfer?.vehicle_name) ||
+                              capitalize(invoiceDetail?.vehicle_details?.category) ||
                               "Transfer"}{" "}
                             —{" "}
-                            {capitalize(
-                              invoiceDetail?.booking_criteria?.transfer_type
-                            ) || "Service"}
+                            {capitalize(invoiceDetail?.transfer?.trip_type) ||
+                              capitalize(
+                                invoiceDetail?.booking_criteria?.transfer_type
+                              ) ||
+                              "Service"}
                           </td>
                           <td>{qty}</td>
                           <td>
@@ -634,30 +733,13 @@ export default function Page() {
                     </table>
                   </div>
                   <div className={styles.totals}>
-                    <div className={styles.totalsRow}>
-                      <span>Subtotal</span>
-                      <strong>
-                        {currency} {Number(grandTotal).toFixed(2)}
-                      </strong>
-                    </div>
                     <div className={styles.grandTotal}>
                       <span>GRAND TOTAL</span>
                       <strong>
                         {currency} {Number(grandTotal).toFixed(2)}
                       </strong>
                     </div>
-                    {/* <div className={styles.totalsRow}>
-                      <span>Amount Paid</span>
-                      <strong>
-                        {currency} {Number(amountPaid).toFixed(2)}
-                      </strong>
-                    </div>
-                    <div className={styles.remainingBar}>
-                      <span>Remaining Balance</span>
-                      <strong>
-                        {currency} {Number(remaining).toFixed(2)}
-                      </strong>
-                    </div> */}
+                    <p className={styles.taxNote}>VAT and Taxes included</p>
                   </div>
                 </section>
 
@@ -673,26 +755,26 @@ export default function Page() {
                       </h3>
                     </div>
                   </div>
-                  {cancelCards.length === 0 ? (
-                    <div className={styles.cancelFull}>
-                      Cancellation terms apply as per transfer policy.
-                    </div>
-                  ) : cancelCards[0]?.nonRefundable ? (
-                    <div className={styles.cancelFull}>
-                      This transfer is non-refundable. No refund will be issued
-                      in case of cancellation.
-                    </div>
-                  ) : (
-                    <div className={styles.cancelGrid}>
-                      {cancelCards.map((c, i) => (
+                  <div className={styles.cancelGrid}>
+                    {cancelCards.length === 0 ? (
+                      <div className={styles.cancelFull}>
+                        Cancellation terms apply as per transfer policy.
+                      </div>
+                    ) : cancelCards[0]?.nonRefundable ? (
+                      <div className={styles.cancelFull}>
+                        This transfer is non-refundable. No refund will be
+                        issued in case of cancellation.
+                      </div>
+                    ) : (
+                      cancelCards.map((c, i) => (
                         <div key={i} className={styles.cancelCard}>
                           <span className={styles.cancelWhen}>{c.when}</span>
                           <p className={styles.cancelAmount}>{c.amount}</p>
                           <p className={styles.cancelDesc}>{c.desc}</p>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      ))
+                    )}
+                  </div>
                 </section>
 
                 {/* Important */}

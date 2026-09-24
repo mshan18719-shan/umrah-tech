@@ -967,54 +967,10 @@ export default function Page() {
                   </section>
                 )}
 
-                {/* 08 Cancellation */}
-                {voucherDetail?.packageDetails?.cancellation_policy && (
-                  <section className={styles.section}>
-                    <div className={styles.sectionTitleRow}>
-                      <span className={styles.sectionNum}>08</span>
-                      <span className={styles.sectionIcon}>
-                        <IoWarningOutline size={13} />
-                      </span>
-                      <h3 className={styles.sectionTitle}>Cancellation Policy</h3>
-                    </div>
-                    {voucherDetail.packageDetails.cancellation_policy
-                      .cancel_policy === 'refundable' &&
-                      !!voucherDetail.packageDetails.cancellation_policy
-                        .cancellation_policies?.length ? (
-                      <div className={styles.cancelGrid}>
-                        {voucherDetail.packageDetails.cancellation_policy.cancellation_policies.map(
-                          (policy, i) => (
-                            <div key={i} className={styles.cancelCard}>
-                              <span className={styles.cancelWhen}>
-                                {policy.time_duration} HRS BEFORE
-                              </span>
-                              <p className={styles.cancelAmount}>
-                                {policy.type === 'percentage'
-                                  ? `${policy.value}%`
-                                  : `${currency} ${convertToCustomerCurrency(policy.value)}`}
-                              </p>
-                              <p className={styles.cancelDesc}>
-                                {policy.type === 'percentage'
-                                  ? 'Percentage cancellation charge'
-                                  : 'Fixed cancellation charge'}
-                              </p>
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    ) : (
-                      <div className={styles.cancelFull}>
-                        This booking is non-refundable. No refund will be issued
-                        for cancellations.
-                      </div>
-                    )}
-                  </section>
-                )}
-
-                {/* 09 Special Request & Important Info */}
+                {/* Special Request & Important Info */}
                 <section className={styles.section}>
                   <div className={styles.sectionTitleRow}>
-                    <span className={styles.sectionNum}>09</span>
+                    <span className={styles.sectionNum}>08</span>
                     <span className={styles.sectionIcon}><FaCheckCircle size={11} /></span>
                     <h3 className={styles.sectionTitle}>
                       Special Request &amp; Important Info

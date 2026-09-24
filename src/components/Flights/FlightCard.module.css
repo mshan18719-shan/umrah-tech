@@ -355,6 +355,13 @@
     transform: translateY(0);
 }
 
+.selectBtn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none;
+    box-shadow: none;
+}
+
 .emptyState {
     text-align: center;
     padding: 2.5rem 1rem;

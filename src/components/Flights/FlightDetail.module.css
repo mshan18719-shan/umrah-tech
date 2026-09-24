@@ -414,7 +414,7 @@
 /* ── Info pills ──────────────────────────────────────────────── */
 .infoPills {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
 
@@ -440,10 +440,49 @@
     opacity: 0.95;
 }
 
+/* ── Baggage list ────────────────────────────────────────────── */
+.baggageList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.baggageItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f4f7fc;
+    border: 1px solid #e5ebf5;
+}
+
+.baggageIcon {
+    color: #1B3B6F;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+
+.baggageLabel {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #1B3B6F;
+    min-width: 52px;
+    flex-shrink: 0;
+}
+
+.baggageText {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #374151;
+    line-height: 1.35;
+}
+
 /* ── Penalties ───────────────────────────────────────────────── */
-.penaltiesSection {
-    margin-top: 20px;
-    padding-top: 16px;
+.legPolicies {
+    margin-top: 14px;
+    padding-top: 14px;
     border-top: 1px dashed #d4deef;
 }
 
@@ -454,40 +493,61 @@
     margin: 0 0 12px;
 }
 
-.penaltiesGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+.passengerPolicyList {
+    display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
-.penaltyCard {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+.passengerPolicyCard {
     background: #f8fafc;
     border: 1px solid #e5ebf5;
     border-radius: 10px;
     padding: 12px;
 }
 
-.penaltyIcon {
-    color: #c0392b;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-    margin-top: 2px;
+.passengerPolicyHeader {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #0d1e3d;
+    margin-bottom: 8px;
 }
 
-.penaltyLabel {
-    font-size: 0.75rem;
-    font-weight: 700;
+.policyRows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.policyRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.policyRowLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
     color: #374151;
-    display: block;
-    margin-bottom: 4px;
+    min-width: 0;
 }
 
-.penaltyText {
-    font-size: 0.75rem;
-    line-height: 1.5;
+.policyRowIcon {
+    color: #c0392b;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.policyValue {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: right;
+    line-height: 1.4;
+    flex-shrink: 0;
 }
 
 .textSuccess {
@@ -599,11 +659,17 @@
     }
 
     .infoPills {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
     }
 
-    .penaltiesGrid {
-        grid-template-columns: 1fr;
+    .policyRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .policyValue {
+        text-align: left;
     }
 
     .footer {

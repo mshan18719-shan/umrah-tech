@@ -61,7 +61,23 @@ export function useDropdownScrollLock(isOpen, focusRef, scrollContainerRef) {
             window.scrollTo({ top: targetY, left: 0, behavior: 'instant' });
         };
 
+        const focusSearchInput = () => {
+            const input = focusRef?.current;
+            if (!input || typeof input.focus !== 'function') return;
+            input.focus({ preventScroll: true });
+            restoreScroll();
+        };
+
         restoreScroll();
+
+        // Popover / portal content may mount one frame after open
+        const rafId = requestAnimationFrame(() => {
+            focusSearchInput();
+            // Second pass for Mantine Popover portal timing
+            setTimeout(focusSearchInput, 0);
+        });
+
+        return () => cancelAnimationFrame(rafId);
     }, [isOpen, focusRef, scrollContainerRef]);
 
     return {

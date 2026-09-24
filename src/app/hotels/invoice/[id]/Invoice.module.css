@@ -641,10 +641,12 @@
 
 .priceTableWrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .priceTable {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   margin-bottom: 16px;
 }
@@ -658,6 +660,7 @@
   color: #9AA3B5;
   padding: 8px 10px 12px;
   border-bottom: 1px solid #E8ECF3;
+  white-space: nowrap;
 }
 
 .priceTable th:nth-child(2),
@@ -676,6 +679,7 @@
   color: #1a2332;
   border-bottom: 1px solid #F0F3F8;
   vertical-align: top;
+  white-space: nowrap;
 }
 
 .totals {
@@ -720,6 +724,15 @@
   font-size: 16px;
   font-weight: 800;
   color: #fff;
+}
+
+.taxNote {
+  margin: 8px 4px 0;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6B7280;
+  letter-spacing: 0.2px;
 }
 
 .remainingBar {

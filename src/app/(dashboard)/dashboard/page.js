@@ -52,7 +52,7 @@ export default function page() {
       const data = await response.json();
 
       if (!data?.success && data?.message?.toLowerCase().includes('otp')) {
-        router.push(`/verify-otp?email=${encodeURIComponent(session?.user?.email || '')}`);
+        router.push("/login");
         return;
       }
 

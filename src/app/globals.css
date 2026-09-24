@@ -1021,8 +1021,7 @@ a {
     margin: 0;
 }
 
-.hotel-detail-about__text--truncated,
-.hotel-detail-about__html--truncated {
+.hotel-detail-about__text--truncated {
     display: -webkit-box;
     -webkit-line-clamp: 4;
     line-clamp: 4;
@@ -1031,6 +1030,14 @@ a {
     overflow: hidden;
     text-overflow: ellipsis;
     max-height: calc(1.75em * 4);
+}
+
+/* Block HTML (headings/paragraphs) — height clip keeps structure readable */
+.hotel-detail-about__html--truncated {
+    display: block;
+    max-height: calc(1.75em * 5.5);
+    overflow: hidden;
+    position: relative;
 }
 
 .hotel-detail-about__html :is(h2, h3, h4) {
@@ -2247,6 +2254,16 @@ a {
     color: #29ABD8;
 }
 
+.hotel-card .htc-card__cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 0 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: #1f7a5a;
+}
+
 .hotel-card .htc-card__amenities {
     list-style: none;
     margin: 0 0 0.9rem;
@@ -3034,7 +3051,7 @@ a {
     }
 
     .flight-listing-page--tall-search .flight-listing-results {
-        padding-top: 1.25rem;
+        padding-top: 0.75rem;
     }
 }
 
@@ -3044,7 +3061,7 @@ a {
     }
 
     .flight-listing-page--tall-search .flight-listing-results {
-        padding-top: 0.75rem;
+        padding-top: 0.5rem;
     }
 }
 
@@ -3617,6 +3634,7 @@ a {
 .hotel-filter-search-wrap .mantine-Autocomplete-input,
 .hotel-filter-search-wrap .mantine-Input-input {
     padding-left: 2.15rem !important;
+    padding-right: 2.25rem !important;
 }
 
 .hotel-filter-sidebar .form-select,

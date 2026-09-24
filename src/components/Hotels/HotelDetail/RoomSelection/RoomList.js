@@ -27,6 +27,71 @@ const getMinRate = (room) => {
     }, null);
 };
 
+const isHotelstonProvider = (provider) =>
+    String(provider || "").toLowerCase() === "hotelston";
+
+/** Parse rate.metadata whether object or JSON string */
+const getRateMetadata = (rate) => {
+    const meta = rate?.metadata;
+    if (meta == null) return null;
+    if (typeof meta === "string") {
+        try {
+            return JSON.parse(meta);
+        } catch {
+            return null;
+        }
+    }
+    return typeof meta === "object" ? meta : null;
+};
+
+/**
+ * Hotelston: seq_no is on rate.metadata (sibling of search_request),
+ * sometimes on the rate / room itself or inside search_request.
+ */
+const getRateSeqNo = (rate, room) => {
+    const meta = getRateMetadata(rate);
+    const roomMeta = getRateMetadata(room);
+    const raw =
+        meta?.seq_no ??
+        meta?.search_request?.seq_no ??
+        meta?.search_request?.rooms?.[0]?.seq_no ??
+        rate?.seq_no ??
+        rate?.search_request?.seq_no ??
+        rate?.search_request?.rooms?.[0]?.seq_no ??
+        room?.seq_no ??
+        roomMeta?.seq_no;
+    if (raw === 0 || raw === "0") return 0;
+    if (raw == null || raw === "") return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+};
+
+/** Resolve seq for a selected entry, falling back to rate lookup in roomList */
+const resolveSelectedSeqNo = (selected, rooms) => {
+    if (!selected) return null;
+    if (selected.seqNo === 0 || selected.seqNo === "0") return 0;
+    if (selected.seqNo != null && selected.seqNo !== "") {
+        const n = Number(selected.seqNo);
+        if (Number.isFinite(n)) return n;
+    }
+    for (const room of rooms || []) {
+        const rate = room?.rates?.find((rt) => rt.rate_key === selected.ratekey);
+        if (rate) return getRateSeqNo(rate, room);
+    }
+    return null;
+};
+
+const collectHotelstonSeqNos = (rooms) => {
+    const seqs = new Set();
+    (rooms || []).forEach((room) => {
+        (room?.rates || []).forEach((rate) => {
+            const seq = getRateSeqNo(rate, room);
+            if (seq != null) seqs.add(seq);
+        });
+    });
+    return seqs;
+};
+
 export default function RoomList({ hotelDetail, isPackageMode, isEditMode, totalNights: totalNightsProp }) {
     const { selectedData } = useHolidayPackageStore();
     const [selectedRooms, setSelectedRooms] = useState([]);
@@ -101,6 +166,9 @@ export default function RoomList({ hotelDetail, isPackageMode, isEditMode, total
                         age: Number(c?.age ?? c),
                     }))
                     : [],
+                ...(isHotelstonProvider(hotelDetail?.provider) && getRateSeqNo(minRate) != null
+                    ? { seqNo: Number(getRateSeqNo(minRate)) }
+                    : {}),
             }] : []);
         }
         if (isEditMode) {
@@ -110,28 +178,135 @@ export default function RoomList({ hotelDetail, isPackageMode, isEditMode, total
         setFilteredRoomData(hotelDetail?.rooms || []);
     }, [hotelDetail, isPackageMode, isEditMode, selectedData]);
 
-    const handleSelectToggle = (roomid, selectedId, rate) => {
-        const isSelected = selectedRooms.find((r) => r.ratekey === selectedId);
-        const searchRoom = rate?.metadata?.search_request?.rooms?.[0];
+    const isHotelston = isHotelstonProvider(hotelDetail?.provider);
 
-        if (isSelected) {
-            setSelectedRooms(selectedRooms.filter((r) => r.ratekey !== selectedId));
-        } else {
-            setSelectedRooms([...selectedRooms, {
-                roomId: roomid,
-                ratekey: selectedId,
-                qty: 1,
-                roomTypeId: rate?.metadata?.room_type_id || '',
-                boardTypeId: rate?.metadata?.board_type_id || '',
-                adults: searchRoom?.adults ?? rate?.adults ?? 2,
-                children: Array.isArray(searchRoom?.children)
-                    ? searchRoom.children.map((c) => ({ age: Number(c?.age ?? c) }))
-                    : [],
-            }]);
+    const hotelstonRequiredSeqCount = React.useMemo(() => {
+        if (!isHotelston) return 0;
+        const fromRooms = collectHotelstonSeqNos(roomData);
+        if (fromRooms.size > 0) return fromRooms.size;
+        try {
+            const searchRooms = JSON.parse(localStorage.getItem('searchRoomSelection') || '[]');
+            if (Array.isArray(searchRooms) && searchRooms.length > 0) return searchRooms.length;
+        } catch {
+            /* ignore */
+        }
+        return 1;
+    }, [isHotelston, roomData]);
+
+    const readSearchRoomSelection = () => {
+        try {
+            const raw = JSON.parse(localStorage.getItem('searchRoomSelection') || '[]');
+            return Array.isArray(raw) ? raw : [];
+        } catch {
+            return [];
         }
     };
 
+    /** Occupancy for this offer: match search room by seq_no (not always rooms[0]) */
+    const resolveOccupancyForSeq = (seqNo, rate) => {
+        const meta = getRateMetadata(rate);
+        const searchRooms = readSearchRoomSelection();
+        const idx = seqNo == null || seqNo === '' || !Number.isFinite(Number(seqNo))
+            ? 0
+            : Number(seqNo);
+
+        const fromSearch = searchRooms[idx];
+        if (fromSearch) {
+            const children = Array.isArray(fromSearch.children)
+                ? fromSearch.children
+                    .map((c) => {
+                        if (c != null && typeof c === 'object' && 'age' in c) {
+                            return { age: Number(c.age) };
+                        }
+                        const age = Number(c);
+                        return Number.isFinite(age) ? { age } : null;
+                    })
+                    .filter(Boolean)
+                : [];
+            return {
+                adults: Number(fromSearch.adults) || 1,
+                children,
+            };
+        }
+
+        const apiRoom = meta?.search_request?.rooms?.[idx]
+            ?? meta?.search_request?.rooms?.[0]
+            ?? rate?.metadata?.search_request?.rooms?.[idx]
+            ?? rate?.metadata?.search_request?.rooms?.[0];
+
+        if (apiRoom) {
+            const children = Array.isArray(apiRoom.children)
+                ? apiRoom.children
+                    .map((c) => {
+                        if (c != null && typeof c === 'object' && 'age' in c) {
+                            return { age: Number(c.age) };
+                        }
+                        const age = Number(c);
+                        return Number.isFinite(age) ? { age } : null;
+                    })
+                    .filter(Boolean)
+                : [];
+            return {
+                adults: Number(apiRoom.adults) || Number(rate?.adults) || 2,
+                children,
+            };
+        }
+
+        return {
+            adults: Number(rate?.adults) || 2,
+            children: [],
+        };
+    };
+
+    const handleSelectToggle = (roomid, selectedId, rate, room) => {
+        const isSelected = selectedRooms.find((r) => r.ratekey === selectedId);
+        const meta = getRateMetadata(rate);
+        const seqNo = getRateSeqNo(rate, room);
+        const occupancy = resolveOccupancyForSeq(seqNo, rate);
+
+        if (isSelected) {
+            setSelectedRooms(selectedRooms.filter((r) => r.ratekey !== selectedId));
+            return;
+        }
+
+        // Hotelston: only one selectable offer per seq_no (same id + different seq stays OK)
+        if (isHotelston && seqNo != null) {
+            const seqAlreadyTaken = selectedRooms.some((r) => {
+                if (r.ratekey === selectedId) return false;
+                const existingSeq = resolveSelectedSeqNo(r, roomData);
+                return existingSeq != null && Number(existingSeq) === Number(seqNo);
+            });
+            if (seqAlreadyTaken) return;
+        }
+
+        const nextSelection = {
+            roomId: roomid,
+            ratekey: selectedId,
+            qty: 1,
+            roomTypeId: meta?.room_type_id || rate?.metadata?.room_type_id || '',
+            boardTypeId: meta?.board_type_id || rate?.metadata?.board_type_id || '',
+            adults: occupancy.adults,
+            children: occupancy.children,
+            ...(isHotelston && seqNo != null ? { seqNo: Number(seqNo) } : {}),
+        };
+
+        if (isHotelston && seqNo != null) {
+            setSelectedRooms([
+                ...selectedRooms.filter((r) => {
+                    const existingSeq = resolveSelectedSeqNo(r, roomData);
+                    return existingSeq == null || Number(existingSeq) !== Number(seqNo);
+                }),
+                nextSelection,
+            ]);
+            return;
+        }
+
+        // Hotelston without readable seq: still allow select, but don't mix with locked logic
+        setSelectedRooms([...selectedRooms, nextSelection]);
+    };
+
     const handleQuantityChange = (rateKey, quantity) => {
+        if (isHotelston) return;
         const updatedRooms = selectedRooms.map((room) => {
             if (room.ratekey === rateKey) {
                 return { ...room, qty: quantity };
@@ -143,6 +318,18 @@ export default function RoomList({ hotelDetail, isPackageMode, isEditMode, total
 
     const isRoomSelected = (selectedId) => {
         return selectedRooms.some((r) => r.ratekey === selectedId);
+    };
+
+    /** Hotelston: disable Reserve when another room for the same seq_no is already chosen */
+    const isHotelstonSeqLocked = (rate, rateKey, room) => {
+        if (!isHotelston) return false;
+        const seqNo = getRateSeqNo(rate, room);
+        if (seqNo == null) return false;
+        if (isRoomSelected(rateKey)) return false;
+        return selectedRooms.some((r) => {
+            const existingSeq = resolveSelectedSeqNo(r, roomData);
+            return existingSeq != null && Number(existingSeq) === Number(seqNo);
+        });
     };
 
     const availableFilters = React.useMemo(() => {
@@ -487,7 +674,7 @@ export default function RoomList({ hotelDetail, isPackageMode, isEditMode, total
                                         minRate.board_name.toLowerCase().includes('bb')
                                     );
                                     return (
-                                        <article key={`preview-${room?.id || index}`} className={styles.roomTypeCard}>
+                                        <article key={`preview-${room?.id}-${minRate?.rate_key || index}`} className={styles.roomTypeCard}>
                                             <div className={styles.roomTypeCardImageWrap}>
                                                 <Image
                                                     className={styles.roomTypeCardImage}
@@ -558,8 +745,17 @@ export default function RoomList({ hotelDetail, isPackageMode, isEditMode, total
                                                                 {!isRoomSelected(minRate.rate_key) && (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => handleSelectToggle(room?.id, minRate.rate_key, minRate)}
+                                                                        onClick={() => {
+                                                                            if (isHotelstonSeqLocked(minRate, minRate.rate_key, room)) return;
+                                                                            handleSelectToggle(room?.id, minRate.rate_key, minRate, room);
+                                                                        }}
                                                                         className={styles.roomTypeCardBtn}
+                                                                        disabled={isHotelstonSeqLocked(minRate, minRate.rate_key, room)}
+                                                                        title={
+                                                                            isHotelstonSeqLocked(minRate, minRate.rate_key, room)
+                                                                                ? 'A room for this guest group is already selected'
+                                                                                : undefined
+                                                                        }
                                                                     >
                                                                         Reserve
                                                                     </button>
@@ -569,28 +765,30 @@ export default function RoomList({ hotelDetail, isPackageMode, isEditMode, total
 
                                                         {isRoomSelected(minRate.rate_key) && (
                                                             <div className={styles.roomTypeSelectedActions}>
-                                                                <Select
-                                                                    className={styles.qtySelect}
-                                                                    value={
-                                                                        String(
-                                                                            selectedRooms.find(r => r.ratekey === minRate.rate_key)?.qty || 1
-                                                                        )
-                                                                    }
-                                                                    onChange={(value) =>
-                                                                        handleQuantityChange(minRate.rate_key, Number(value))
-                                                                    }
-                                                                    data={Array.from(
-                                                                        { length: Math.max(Number(minRate?.allotment) || 1, 1) },
-                                                                        (_, i) => ({
-                                                                            value: String(i + 1),
-                                                                            label: `${i + 1}`,
-                                                                        })
-                                                                    )}
-                                                                    placeholder="1"
-                                                                />
+                                                                {!isHotelston && (
+                                                                    <Select
+                                                                        className={styles.qtySelect}
+                                                                        value={
+                                                                            String(
+                                                                                selectedRooms.find(r => r.ratekey === minRate.rate_key)?.qty || 1
+                                                                            )
+                                                                        }
+                                                                        onChange={(value) =>
+                                                                            handleQuantityChange(minRate.rate_key, Number(value))
+                                                                        }
+                                                                        data={Array.from(
+                                                                            { length: Math.max(Number(minRate?.allotment) || 1, 1) },
+                                                                            (_, i) => ({
+                                                                                value: String(i + 1),
+                                                                                label: `${i + 1}`,
+                                                                            })
+                                                                        )}
+                                                                        placeholder="1"
+                                                                    />
+                                                                )}
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => handleSelectToggle(room?.id, minRate.rate_key, minRate)}
+                                                                    onClick={() => handleSelectToggle(room?.id, minRate.rate_key, minRate, room)}
                                                                     className={styles.roomTypeCardBtnOutline}
                                                                 >
                                                                     <CiTrash className={styles.removeRoomIcon} aria-hidden />
@@ -627,6 +825,7 @@ export default function RoomList({ hotelDetail, isPackageMode, isEditMode, total
                                 roomList={roomData}
                                 detail={hotelDetail}
                                 variant="sidebar"
+                                hotelstonRequiredCount={hotelstonRequiredSeqCount}
                             />
                         </aside>
                     </div>

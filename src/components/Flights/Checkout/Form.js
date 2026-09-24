@@ -15,6 +15,91 @@ import { isValidPhoneNumber } from 'libphonenumber-js';
 import { getPassengerCount, getPassengerLabel } from './flightHelpers';
 import styles from './Form.module.css';
 
+const NAME_MAX = 35;
+const EMAIL_MAX = 200;
+
+/** Mr/Master → male; Mrs/Miss/Ms → female; Dr (and empty) → null (manual). */
+function genderFromTitle(title) {
+    const t = String(title || '').trim().toUpperCase();
+    if (t === 'MR' || t === 'MSTR' || t === 'MASTER') return 'male';
+    if (t === 'MRS' || t === 'MISS' || t === 'MS') return 'female';
+    return null;
+}
+
+const normalizeName = (value) =>
+    String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const fullNameKey = (first, last) => {
+    const f = normalizeName(first);
+    const l = normalizeName(last);
+    if (!f || !l) return '';
+    return `${f}|${l}`;
+};
+
+function computeNameErrors(leadFirst, leadLast, guests, { requireFilled = false } = {}) {
+    const leadErrors = {};
+    const guestErrors = guests.map(() => ({}));
+
+    const lf = String(leadFirst || '').trim();
+    const ll = String(leadLast || '').trim();
+    const leadKey = fullNameKey(lf, ll);
+
+    if (requireFilled && !lf) {
+        leadErrors.firstName = 'First name is required';
+    } else if (lf.length > NAME_MAX) {
+        leadErrors.firstName = `First name must be ${NAME_MAX} characters or fewer`;
+    }
+
+    if (requireFilled && !ll) {
+        leadErrors.lastName = 'Last name is required';
+    } else if (ll.length > NAME_MAX) {
+        leadErrors.lastName = `Last name must be ${NAME_MAX} characters or fewer`;
+    }
+
+    if (lf && ll && normalizeName(lf) === normalizeName(ll)) {
+        leadErrors.lastName = 'First name and last name cannot be the same';
+    }
+
+    const guestKeys = guests.map((g) => fullNameKey(g.firstName, g.lastName));
+
+    guests.forEach((guest, index) => {
+        const gf = String(guest.firstName || '').trim();
+        const gl = String(guest.lastName || '').trim();
+        const gKey = guestKeys[index];
+        const ge = guestErrors[index];
+
+        if (requireFilled && !gf) {
+            ge.firstName = 'First name is required';
+        } else if (gf.length > NAME_MAX) {
+            ge.firstName = `First name must be ${NAME_MAX} characters or fewer`;
+        }
+
+        if (requireFilled && !gl) {
+            ge.lastName = 'Last name is required';
+        } else if (gl.length > NAME_MAX) {
+            ge.lastName = `Last name must be ${NAME_MAX} characters or fewer`;
+        }
+
+        if (gf && gl && normalizeName(gf) === normalizeName(gl)) {
+            ge.lastName = 'First name and last name cannot be the same';
+        }
+
+        if (gKey) {
+            if (leadKey && gKey === leadKey) {
+                ge.firstName = 'Name cannot match the lead passenger';
+                ge.lastName = 'Name cannot match the lead passenger';
+                if (!leadErrors.firstName) leadErrors.firstName = 'Name cannot match another traveler';
+                if (!leadErrors.lastName) leadErrors.lastName = 'Name cannot match another traveler';
+            } else if (guestKeys.some((key, i) => i !== index && key && key === gKey)) {
+                ge.firstName = 'Guest name cannot match another traveler';
+                ge.lastName = 'Guest name cannot match another traveler';
+            }
+        }
+    });
+
+    return { leadErrors, guestErrors };
+}
+
 export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) {
     // console.log('flightdata in checkout form', flightdata);
     const { currency, rates } = useCurrency();
@@ -34,8 +119,9 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         country: '',
         phoneCode: '',
         phone: '',
-        // passportNumber: '',
-        // passportExpiry: '',
+        documentType: '',
+        documentNumber: '',
+        documentExpiry: null,
         type: 'adult'
     });
     const [errors, setErrors] = useState({});
@@ -55,7 +141,55 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         code: item.idd?.root && item.idd?.suffixes?.length
             ? item.idd.root + item.idd.suffixes[0]
             : item.idd?.root,
+        cca2: item.cca2 || '',
     }));
+
+    const formatBookingDate = (value) => {
+        if (!value) return '';
+        if (value instanceof Date && !Number.isNaN(value.getTime())) {
+            const year = value.getFullYear();
+            const month = String(value.getMonth() + 1).padStart(2, '0');
+            const day = String(value.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        if (typeof value === 'string') {
+            if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+            const parsed = new Date(value);
+            if (!Number.isNaN(parsed.getTime())) return formatBookingDate(parsed);
+        }
+        return String(value);
+    };
+
+    const getBookingTripType = (flight) => {
+        const airType = (flight?.search_criteria?.AirTripType || '').toString();
+        const tripType = (flight?.trip_type || '').toString().toLowerCase().replace(/[_\s-]/g, '');
+
+        if (airType === 'MultiCity' || tripType === 'multicity') return 'multi_city';
+        if (airType === 'OneWay' || tripType === 'oneway') return 'one_way';
+        if (airType === 'Return' || tripType === 'return' || tripType === 'roundtrip') return 'return';
+        return 'one_way';
+    };
+
+    const getCountryCode = (countryName) => {
+        if (!countryName) return '';
+        const match = countryOptions.find((c) => c.value === countryName);
+        return match?.cca2 || '';
+    };
+
+    const buildPassengerPayload = (passenger) => ({
+        type: passenger.type || 'adult',
+        title: (passenger.title || '').toLowerCase(),
+        firstName: passenger.firstName,
+        lastName: passenger.lastName,
+        dateOfBirth: formatBookingDate(passenger.dob),
+        gender: passenger.gender === 'male' ? 'm' : 'f',
+        email: passenger.email,
+        phone: `${passenger.phoneCode || ''}${passenger.phone || ''}`,
+        nationality: getCountryCode(passenger.country),
+        cardType: passenger.documentType || '',
+        cardNum: passenger.documentNumber || '',
+        cardExpiredDate: formatBookingDate(passenger.documentExpiry),
+    });
 
     useEffect(() => {
         if (flightdata?.search_criteria) {
@@ -80,8 +214,9 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                         country: '',
                         phoneCode: '',
                         phone: '',
-                        // passportNumber: '',
-                        // passportExpiry: ''
+                        documentType: '',
+                        documentNumber: '',
+                        documentExpiry: null,
                     });
                 }
             }
@@ -101,8 +236,9 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                         country: '',
                         phoneCode: '',
                         phone: '',
-                        // passportNumber: '',
-                        // passportExpiry: ''
+                        documentType: '',
+                        documentNumber: '',
+                        documentExpiry: null,
                     });
                 }
             }
@@ -122,8 +258,9 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                         phoneCode: '',
                         email: '',
                         phone: '',
-                        // passportNumber: '',
-                        // passportExpiry: ''
+                        documentType: '',
+                        documentNumber: '',
+                        documentExpiry: null,
                     });
                 }
             }
@@ -175,13 +312,41 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         return re.test(email);
     };
 
+    const getFieldLabel = (name) => {
+        const labels = {
+            documentType: 'Document type',
+            documentNumber: 'Document number',
+            documentExpiry: 'Document expiry',
+            firstName: 'First name',
+            lastName: 'Last name',
+            dob: 'Date of birth',
+        };
+        return labels[name] || name.replace(/([A-Z])/g, ' $1').trim();
+    };
+
     const validateField = (name, value, isLeadPassenger = true, passengerData = null) => {
-        if (!value || value.trim() === '') {
-            return `${name.replace(/([A-Z])/g, ' $1').trim()} is required`;
+        const isEmpty =
+            value == null
+            || value === ''
+            || (typeof value === 'string' && value.trim() === '');
+
+        if (isEmpty) {
+            return `${getFieldLabel(name)} is required`;
         }
 
-        if (name === 'email' && isLeadPassenger && !validateEmail(value)) {
-            return 'Please enter a valid email address';
+        if (name === 'firstName' || name === 'lastName') {
+            if (String(value).trim().length > NAME_MAX) {
+                return `${getFieldLabel(name)} must be ${NAME_MAX} characters or fewer`;
+            }
+        }
+
+        if (name === 'email') {
+            if (String(value).length > EMAIL_MAX) {
+                return `Email must be ${EMAIL_MAX} characters or fewer`;
+            }
+            if (!validateEmail(value)) {
+                return 'Please enter a valid email address';
+            }
         }
 
         if (name === 'phone') {
@@ -196,27 +361,90 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
             }
         }
 
-        if (name === 'passportNumber' && value.length < 6) {
-            return 'Passport number must be at least 6 characters';
+        if ((name === 'passportNumber' || name === 'documentNumber') && String(value).trim().length < 6) {
+            return 'Document number must be at least 6 characters';
+        }
+
+        if (name === 'documentExpiry') {
+            const expiryDate = value instanceof Date ? value : new Date(value);
+            if (Number.isNaN(expiryDate.getTime())) {
+                return 'Please enter a valid document expiry date';
+            }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (expiryDate < today) {
+                return 'Document expiry must be a future date';
+            }
         }
 
         return '';
+    };
+
+    const syncLiveNameValidation = (nextLead, nextPassengers) => {
+        const { leadErrors, guestErrors } = computeNameErrors(
+            nextLead.firstName,
+            nextLead.lastName,
+            nextPassengers,
+            { requireFilled: false }
+        );
+
+        setErrors((prev) => {
+            const next = { ...prev };
+            delete next.lead_firstName;
+            delete next.lead_lastName;
+            nextPassengers.forEach((p) => {
+                delete next[`passenger_${p.id}_firstName`];
+                delete next[`passenger_${p.id}_lastName`];
+            });
+
+            if (leadErrors.firstName) next.lead_firstName = leadErrors.firstName;
+            if (leadErrors.lastName) next.lead_lastName = leadErrors.lastName;
+
+            nextPassengers.forEach((p, index) => {
+                const ge = guestErrors[index] || {};
+                if (ge.firstName) next[`passenger_${p.id}_firstName`] = ge.firstName;
+                if (ge.lastName) next[`passenger_${p.id}_lastName`] = ge.lastName;
+            });
+
+            return next;
+        });
     };
 
     const handleLeadPassengerChange = (field, value) => {
         // Only allow alphabets and spaces for name fields
         let finalValue = value;
         if (field === 'firstName' || field === 'lastName') {
-            finalValue = value.replace(/[^a-zA-Z\s]/g, '');
+            finalValue = value.replace(/[^a-zA-Z\s]/g, '').slice(0, NAME_MAX);
+        }
+        if (field === 'email') {
+            finalValue = String(value).slice(0, EMAIL_MAX);
         }
 
-        setLeadPassenger(prev => ({ ...prev, [field]: finalValue }));
+        if (field === 'gender' && genderFromTitle(leadPassenger.title)) {
+            return;
+        }
+
+        const nextLead = { ...leadPassenger, [field]: finalValue };
+        if (field === 'title') {
+            const autoGender = genderFromTitle(finalValue);
+            if (autoGender) nextLead.gender = autoGender;
+        }
+
+        setLeadPassenger(nextLead);
+
+        if (field === 'firstName' || field === 'lastName') {
+            syncLiveNameValidation(nextLead, passengers);
+            return;
+        }
 
         // Clear error for this field
         if (errors[`lead_${field}`]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors[`lead_${field}`];
+                if (field === 'title' && nextLead.gender) {
+                    delete newErrors.lead_gender;
+                }
                 return newErrors;
             });
         }
@@ -260,18 +488,40 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
             finalValue = value.replace(/[^0-9]/g, '');
         } else if (field === 'firstName' || field === 'lastName') {
             // Only allow alphabets and spaces for name fields
-            finalValue = value.replace(/[^a-zA-Z\s]/g, '');
+            finalValue = value.replace(/[^a-zA-Z\s]/g, '').slice(0, NAME_MAX);
+        } else if (field === 'email') {
+            finalValue = String(value).slice(0, EMAIL_MAX);
         }
 
-        setPassengers(prev => prev.map(p =>
-            p.id === id ? { ...p, [field]: finalValue } : p
-        ));
+        const current = passengers.find((p) => p.id === id);
+        if (field === 'gender' && genderFromTitle(current?.title)) {
+            return;
+        }
+
+        const nextPassengers = passengers.map(p => {
+            if (p.id !== id) return p;
+            const updated = { ...p, [field]: finalValue };
+            if (field === 'title') {
+                const autoGender = genderFromTitle(finalValue);
+                if (autoGender) updated.gender = autoGender;
+            }
+            return updated;
+        });
+        setPassengers(nextPassengers);
+
+        if (field === 'firstName' || field === 'lastName') {
+            syncLiveNameValidation(leadPassenger, nextPassengers);
+            return;
+        }
 
         // Clear error for this field
         if (errors[`passenger_${id}_${field}`]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors[`passenger_${id}_${field}`];
+                if (field === 'title') {
+                    delete newErrors[`passenger_${id}_gender`];
+                }
                 return newErrors;
             });
         }
@@ -296,8 +546,13 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         const newErrors = {};
 
         // Validate lead passenger
-        const leadFields = ['title', 'firstName', 'lastName', 'email', 'dob', 'gender', 'country', 'phone'];
+        const leadFields = [
+            'title', 'firstName', 'lastName', 'email', 'dob', 'gender', 'country', 'phone',
+            'documentType', 'documentNumber', 'documentExpiry',
+        ];
         leadFields.forEach(field => {
+            // Skip generic name required — handled by computeNameErrors for richer messages
+            if (field === 'firstName' || field === 'lastName') return;
             const error = validateField(field, leadPassenger[field], true);
             if (error) {
                 newErrors[`lead_${field}`] = error;
@@ -306,13 +561,31 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
 
         // Validate other passengers
         passengers.forEach(passenger => {
-            const passengerFields = ['title', 'firstName', 'lastName', 'gender', 'dob', 'country', 'email', 'phone'];
+            const passengerFields = [
+                'title', 'firstName', 'lastName', 'gender', 'dob', 'country', 'email', 'phone',
+                'documentType', 'documentNumber', 'documentExpiry',
+            ];
             passengerFields.forEach(field => {
+                if (field === 'firstName' || field === 'lastName') return;
                 const error = validateField(field, passenger[field], false, passenger);
                 if (error) {
                     newErrors[`passenger_${passenger.id}_${field}`] = error;
                 }
             });
+        });
+
+        const { leadErrors, guestErrors } = computeNameErrors(
+            leadPassenger.firstName,
+            leadPassenger.lastName,
+            passengers,
+            { requireFilled: true }
+        );
+        if (leadErrors.firstName) newErrors.lead_firstName = leadErrors.firstName;
+        if (leadErrors.lastName) newErrors.lead_lastName = leadErrors.lastName;
+        passengers.forEach((p, index) => {
+            const ge = guestErrors[index] || {};
+            if (ge.firstName) newErrors[`passenger_${p.id}_firstName`] = ge.firstName;
+            if (ge.lastName) newErrors[`passenger_${p.id}_lastName`] = ge.lastName;
         });
 
         // Validate terms
@@ -356,45 +629,25 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
             }
 
             // Create passengers array with lead passenger at index 0
-            const passengersArray = [];
+            const passengersArray = [
+                buildPassengerPayload(leadPassenger),
+                ...passengers.map((passenger) => buildPassengerPayload(passenger)),
+            ];
 
-            // Add lead passenger first (index 0)
-            passengersArray.push({
-                type: leadPassenger.type || "adult",
-                title: leadPassenger.title.toLowerCase(),
-                firstName: leadPassenger.firstName,
-                lastName: leadPassenger.lastName,
-                dateOfBirth: leadPassenger.dob,
-                gender: leadPassenger.gender === 'male' ? 'm' : 'f',
-                email: leadPassenger.email,
-                phone: `${leadPassenger.phoneCode}${leadPassenger.phone}`
-            });
-
-            // Add other passengers
-            passengers.forEach(passenger => {
-                passengersArray.push({
-                    type: passenger.type,
-                    title: passenger.title.toLowerCase(),
-                    firstName: passenger.firstName,
-                    lastName: passenger.lastName,
-                    dateOfBirth: passenger.dob,
-                    gender: passenger.gender === 'male' ? 'm' : 'f',
-                    email: passenger.email,
-                    phone: `${passenger.phoneCode}${passenger.phone}`
-                });
-            });
-
+            const rawTag = flightdata?.tag ?? flightdata?.fare_tag ?? null;
             const request = {
-                booking_type: "hold",
+                provider: flightdata?.provider,
+                booking_type: 'hold',
+                trip_type: getBookingTripType(flightdata),
                 currency_uuid: currencyKey,
-                trip_type: flightdata?.search_criteria?.AirTripType === 'MultiCity' ? 'multi_city' : (flightdata?.search_criteria?.AirTripType === 'OneWay' ? 'one_way' : 'return'),
-                provider: flightdata.provider,
-                offer_id: flightdata.id,
-                passengers: passengersArray,
-                grand_total: grandTotal,
+                offer_id: flightdata?.id,
                 customer_currency: customerCurrency,
                 customer_exchange_rate: customerExchangeRate,
                 customer_amount: customerTotalAfterDiscount,
+                passengers: passengersArray,
+                tag: rawTag == null || rawTag === '' ? '' : String(rawTag),
+                segments: flightdata?.segments || [],
+                pricing: flightdata?.pricing || {},
             };
             try {
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/flights/booking`, {
@@ -581,6 +834,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                 onChange={(e) => handleLeadPassengerChange('firstName', e.target.value)}
                                 className={`${styles.input} ${errors.lead_firstName ? `is-invalid ${styles.inputError}` : ''}`}
                                 placeholder="First Name"
+                                maxLength={35}
                             />
                             {errors.lead_firstName && <p className={styles.errorText}>{errors.lead_firstName}</p>}
                         </div>
@@ -596,6 +850,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                 onChange={(e) => handleLeadPassengerChange('lastName', e.target.value)}
                                 className={`${styles.input} ${errors.lead_lastName ? `is-invalid ${styles.inputError}` : ''}`}
                                 placeholder="Last Name"
+                                maxLength={35}
                             />
                             {errors.lead_lastName && <p className={styles.errorText}>{errors.lead_lastName}</p>}
                         </div>
@@ -611,6 +866,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                 onChange={(e) => handleLeadPassengerChange('email', e.target.value)}
                                 className={`${styles.input} ${errors.lead_email ? `is-invalid ${styles.inputError}` : ''}`}
                                 placeholder="you@example.com"
+                                maxLength={200}
                             />
                             {errors.lead_email && <p className={styles.errorText}>{errors.lead_email}</p>}
                         </div>
@@ -644,6 +900,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                         value="male"
                                         checked={leadPassenger.gender === 'male'}
                                         onChange={(e) => handleLeadPassengerChange('gender', e.target.value)}
+                                        disabled={!!genderFromTitle(leadPassenger.title)}
                                     />
                                     Male
                                 </label>
@@ -656,6 +913,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                         value="female"
                                         checked={leadPassenger.gender === 'female'}
                                         onChange={(e) => handleLeadPassengerChange('gender', e.target.value)}
+                                        disabled={!!genderFromTitle(leadPassenger.title)}
                                     />
                                     Female
                                 </label>
@@ -703,6 +961,56 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                             </div>
                             {errors.lead_phone && <p className={styles.errorText}>{errors.lead_phone}</p>}
                         </div>
+
+                        <div className={styles.fieldGroup}>
+                            <label htmlFor="leadDocumentType" className={styles.label}>
+                                Document Type <span className={styles.required}>*</span>
+                            </label>
+                            <select
+                                id="leadDocumentType"
+                                value={leadPassenger.documentType}
+                                onChange={(e) => handleLeadPassengerChange('documentType', e.target.value)}
+                                className={`${styles.select} ${errors.lead_documentType ? `is-invalid ${styles.inputError}` : ''}`}
+                            >
+                                <option value="">Select</option>
+                                <option value="P">Passport</option>
+                                <option value="N">ID Card</option>
+                                <option value="O">Other</option>
+                            </select>
+                            {errors.lead_documentType && <p className={styles.errorText}>{errors.lead_documentType}</p>}
+                        </div>
+
+                        <div className={styles.fieldGroup}>
+                            <label htmlFor="leadDocumentNumber" className={styles.label}>
+                                Document Number <span className={styles.required}>*</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="leadDocumentNumber"
+                                value={leadPassenger.documentNumber}
+                                onChange={(e) => handleLeadPassengerChange('documentNumber', e.target.value)}
+                                className={`${styles.input} ${errors.lead_documentNumber ? `is-invalid ${styles.inputError}` : ''}`}
+                                placeholder="Document number"
+                                autoComplete="off"
+                            />
+                            {errors.lead_documentNumber && <p className={styles.errorText}>{errors.lead_documentNumber}</p>}
+                        </div>
+
+                        <div className={styles.fieldGroup}>
+                            <label htmlFor="leadDocumentExpiry" className={styles.label}>
+                                Document Expiry <span className={styles.required}>*</span>
+                            </label>
+                            <DateInput
+                                id="leadDocumentExpiry"
+                                minDate={new Date()}
+                                placeholder="Document expiry"
+                                clearable="true"
+                                error={errors.lead_documentExpiry}
+                                value={leadPassenger.documentExpiry}
+                                onChange={(date) => handleLeadPassengerChange('documentExpiry', date)}
+                                classNames={{ root: styles.dateInput }}
+                            />
+                        </div>
                     </div>
 
                     <p className={styles.sectionNote}>
@@ -745,7 +1053,6 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                             <option value="MISS">Miss</option>
                                             <option value="MS">Ms</option>
                                             <option value="DR">Dr</option>
-                                            <option value="MSTR">Master</option>
                                         </select>
                                         {errors[`passenger_${passenger.id}_title`] && (
                                             <p className={styles.errorText}>{errors[`passenger_${passenger.id}_title`]}</p>
@@ -761,6 +1068,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                             value={passenger.firstName}
                                             onChange={(e) => handlePassengerChange(passenger.id, 'firstName', e.target.value)}
                                             placeholder="First Name"
+                                            maxLength={35}
                                             className={`${styles.input} ${errors[`passenger_${passenger.id}_firstName`] ? `is-invalid ${styles.inputError}` : ''}`}
                                         />
                                         {errors[`passenger_${passenger.id}_firstName`] && (
@@ -777,6 +1085,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                             value={passenger.lastName}
                                             onChange={(e) => handlePassengerChange(passenger.id, 'lastName', e.target.value)}
                                             placeholder="Last Name"
+                                            maxLength={35}
                                             className={`${styles.input} ${errors[`passenger_${passenger.id}_lastName`] ? `is-invalid ${styles.inputError}` : ''}`}
                                         />
                                         {errors[`passenger_${passenger.id}_lastName`] && (
@@ -808,6 +1117,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                             value={passenger.email}
                                             onChange={(e) => handlePassengerChange(passenger.id, 'email', e.target.value)}
                                             placeholder="Email"
+                                            maxLength={200}
                                             className={`${styles.input} ${errors[`passenger_${passenger.id}_email`] ? `is-invalid ${styles.inputError}` : ''}`}
                                         />
                                         {errors[`passenger_${passenger.id}_email`] && (
@@ -829,6 +1139,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                                     value="male"
                                                     checked={passenger.gender === 'male'}
                                                     onChange={(e) => handlePassengerChange(passenger.id, 'gender', e.target.value)}
+                                                    disabled={!!genderFromTitle(passenger.title)}
                                                 />
                                                 Male
                                             </label>
@@ -841,6 +1152,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                                     value="female"
                                                     checked={passenger.gender === 'female'}
                                                     onChange={(e) => handlePassengerChange(passenger.id, 'gender', e.target.value)}
+                                                    disabled={!!genderFromTitle(passenger.title)}
                                                 />
                                                 Female
                                             </label>
@@ -888,6 +1200,57 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                                         {errors[`passenger_${passenger.id}_phone`] && (
                                             <p className={styles.errorText}>{errors[`passenger_${passenger.id}_phone`]}</p>
                                         )}
+                                    </div>
+
+                                    <div className={styles.fieldGroup}>
+                                        <label className={styles.label}>
+                                            Document Type <span className={styles.required}>*</span>
+                                        </label>
+                                        <select
+                                            value={passenger.documentType}
+                                            onChange={(e) => handlePassengerChange(passenger.id, 'documentType', e.target.value)}
+                                            className={`${styles.select} ${errors[`passenger_${passenger.id}_documentType`] ? `is-invalid ${styles.inputError}` : ''}`}
+                                        >
+                                            <option value="">Select</option>
+                                            <option value="P">Passport</option>
+                                            <option value="N">ID Card</option>
+                                            <option value="O">Other</option>
+                                        </select>
+                                        {errors[`passenger_${passenger.id}_documentType`] && (
+                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_documentType`]}</p>
+                                        )}
+                                    </div>
+
+                                    <div className={styles.fieldGroup}>
+                                        <label className={styles.label}>
+                                            Document Number <span className={styles.required}>*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={passenger.documentNumber}
+                                            onChange={(e) => handlePassengerChange(passenger.id, 'documentNumber', e.target.value)}
+                                            placeholder="Document number"
+                                            autoComplete="off"
+                                            className={`${styles.input} ${errors[`passenger_${passenger.id}_documentNumber`] ? `is-invalid ${styles.inputError}` : ''}`}
+                                        />
+                                        {errors[`passenger_${passenger.id}_documentNumber`] && (
+                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_documentNumber`]}</p>
+                                        )}
+                                    </div>
+
+                                    <div className={styles.fieldGroup}>
+                                        <label className={styles.label}>
+                                            Document Expiry <span className={styles.required}>*</span>
+                                        </label>
+                                        <DateInput
+                                            minDate={new Date()}
+                                            placeholder="Document expiry"
+                                            clearable="true"
+                                            error={errors[`passenger_${passenger.id}_documentExpiry`]}
+                                            value={passenger.documentExpiry}
+                                            onChange={(date) => handlePassengerChange(passenger.id, 'documentExpiry', date)}
+                                            classNames={{ root: styles.dateInput }}
+                                        />
                                     </div>
                                 </div>
                             </div>

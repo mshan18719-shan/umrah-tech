@@ -115,6 +115,8 @@ export default function GalleryImages({ imageList, type, hotelName, address, sta
         lockScroll
         trapFocus
         centered
+        withinPortal
+        zIndex={12000}
         overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
         opened={modalOpen}
         onClose={handlemodalopenclose}
@@ -163,6 +165,7 @@ export default function GalleryImages({ imageList, type, hotelName, address, sta
         close={() => setBasicExampleOpen(false)}
         slides={imageList.map((img) => ({ src: normalizeImageSrc(img?.url) }))}
         index={currentIndex}
+        styles={{ root: { zIndex: 13000 } }}
       />
     </div>
   )

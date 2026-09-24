@@ -205,8 +205,26 @@ select.input:focus {
   align-items: center;
   gap: 0.4rem;
   font-size: 0.9rem;
-  color: #374151;
+  color: #0D1E3D;
   cursor: pointer;
+}
+
+.radioInput {
+  width: 16px;
+  height: 16px;
+  accent-color: #1B3B6F;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.radioInput:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.radioLabel:has(.radioInput:disabled) {
+  cursor: not-allowed;
+  opacity: 0.85;
 }
 
 .hint {

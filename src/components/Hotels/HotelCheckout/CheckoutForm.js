@@ -16,6 +16,83 @@ import Link from "next/link";
 import moment from "moment";
 import { ConvertPrice } from "@/components/Currency/ConvertPrice";
 
+const NAME_MAX = 35;
+const EMAIL_MAX = 200;
+
+const normalizeName = (value) =>
+    String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const fullNameKey = (first, last) => {
+    const f = normalizeName(first);
+    const l = normalizeName(last);
+    if (!f || !l) return '';
+    return `${f}|${l}`;
+};
+
+function computeNameErrors(leadFirst, leadLast, guests, { requireFilled = false } = {}) {
+    const leadErrors = {};
+    const guestErrors = guests.map(() => ({}));
+
+    const lf = String(leadFirst || '').trim();
+    const ll = String(leadLast || '').trim();
+    const leadKey = fullNameKey(lf, ll);
+
+    if (requireFilled && !lf) {
+        leadErrors.firstName = 'First name is required.';
+    } else if (lf.length > NAME_MAX) {
+        leadErrors.firstName = `First name must be ${NAME_MAX} characters or fewer.`;
+    }
+
+    if (requireFilled && !ll) {
+        leadErrors.lastName = 'Last name is required.';
+    } else if (ll.length > NAME_MAX) {
+        leadErrors.lastName = `Last name must be ${NAME_MAX} characters or fewer.`;
+    }
+
+    if (lf && ll && normalizeName(lf) === normalizeName(ll)) {
+        leadErrors.lastName = 'First name and last name cannot be the same.';
+    }
+
+    const guestKeys = guests.map((g) => fullNameKey(g.firstName, g.lastName));
+
+    guests.forEach((guest, index) => {
+        const gf = String(guest.firstName || '').trim();
+        const gl = String(guest.lastName || '').trim();
+        const gKey = guestKeys[index];
+        const ge = guestErrors[index];
+
+        if (requireFilled && !gf) {
+            ge.firstName = 'First name is required';
+        } else if (gf.length > NAME_MAX) {
+            ge.firstName = `First name must be ${NAME_MAX} characters or fewer`;
+        }
+
+        if (requireFilled && !gl) {
+            ge.lastName = 'Last name is required';
+        } else if (gl.length > NAME_MAX) {
+            ge.lastName = `Last name must be ${NAME_MAX} characters or fewer`;
+        }
+
+        if (gf && gl && normalizeName(gf) === normalizeName(gl)) {
+            ge.lastName = 'First name and last name cannot be the same';
+        }
+
+        if (gKey) {
+            if (leadKey && gKey === leadKey) {
+                ge.firstName = 'Name cannot match the lead passenger';
+                ge.lastName = 'Name cannot match the lead passenger';
+                if (!leadErrors.firstName) leadErrors.firstName = 'Name cannot match another traveler';
+                if (!leadErrors.lastName) leadErrors.lastName = 'Name cannot match another traveler';
+            } else if (guestKeys.some((key, i) => i !== index && key && key === gKey)) {
+                ge.firstName = 'Guest name cannot match another traveler';
+                ge.lastName = 'Guest name cannot match another traveler';
+            }
+        }
+    });
+
+    return { leadErrors, guestErrors };
+}
+
 export default function CheckoutForm({
     data,
     currency,
@@ -62,16 +139,19 @@ export default function CheckoutForm({
 
     useEffect(() => {
         try {
-            const stored = localStorage.getItem('searchRoomSelection');
-            if (!stored) {
-                setChildrenAges([]);
-                return;
+            let rooms = [];
+            if (Array.isArray(data?.search_rooms) && data.search_rooms.length > 0) {
+                rooms = data.search_rooms;
+            } else if (Array.isArray(data?.selected_occupancy) && data.selected_occupancy.length > 0) {
+                rooms = data.selected_occupancy;
+            } else {
+                const stored = localStorage.getItem('searchRoomSelection');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) rooms = parsed;
+                }
             }
-            const rooms = JSON.parse(stored);
-            if (!Array.isArray(rooms)) {
-                setChildrenAges([]);
-                return;
-            }
+
             const ages = rooms.flatMap((room) => {
                 if (!Array.isArray(room?.children)) return [];
                 return room.children
@@ -82,7 +162,7 @@ export default function CheckoutForm({
         } catch {
             setChildrenAges([]);
         }
-    }, []);
+    }, [data?.search_rooms, data?.selected_occupancy]);
 
     useEffect(() => {
         const callCurrencyAPI = async () => {
@@ -159,12 +239,55 @@ export default function CheckoutForm({
     const [errors, setErrors] = useState({});
 
     // ---- Handle field change ----
+    const syncLiveNameValidation = (nextForm, nextGuests) => {
+        const { leadErrors, guestErrors } = computeNameErrors(
+            nextForm.firstName,
+            nextForm.lastName,
+            nextGuests,
+            { requireFilled: false }
+        );
+
+        setErrors((prev) => {
+            const next = { ...prev };
+            if (leadErrors.firstName) next.firstName = leadErrors.firstName;
+            else delete next.firstName;
+            if (leadErrors.lastName) next.lastName = leadErrors.lastName;
+            else delete next.lastName;
+            return next;
+        });
+
+        setOtherGuestError(
+            nextGuests.map((_, index) => {
+                const live = guestErrors[index] || {};
+                return {
+                    ...(live.firstName ? { firstName: live.firstName } : {}),
+                    ...(live.lastName ? { lastName: live.lastName } : {}),
+                };
+            })
+        );
+    };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData({
+        const nextValue = type === "checkbox" ? checked : value;
+        const nextForm = {
             ...formData,
-            [name]: type === "checkbox" ? checked : value,
-        });
+            [name]: nextValue,
+        };
+        setFormData(nextForm);
+
+        if (name === 'firstName' || name === 'lastName') {
+            syncLiveNameValidation(nextForm, otherGuestDetail);
+            return;
+        }
+
+        if (name === 'email' && String(nextValue).length > EMAIL_MAX) {
+            setErrors((prev) => ({
+                ...prev,
+                email: `Email must be ${EMAIL_MAX} characters or fewer.`,
+            }));
+            return;
+        }
 
         if (errors[name]) {
             setErrors((prev) => {
@@ -195,13 +318,21 @@ export default function CheckoutForm({
     // ---- Validation ----
     const validateForm = () => {
         const newErrors = {};
-        const otherGuestErrors = [];
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!formData.title) newErrors.title = "Please select a title.";
-        if (!formData.firstName) newErrors.firstName = "First name is required.";
-        if (!formData.lastName) newErrors.lastName = "Last name is required.";
+
+        const { leadErrors, guestErrors: otherGuestErrors } = computeNameErrors(
+            formData.firstName,
+            formData.lastName,
+            otherGuestDetail,
+            { requireFilled: true }
+        );
+        Object.assign(newErrors, leadErrors);
+
         if (!formData.email) {
             newErrors.email = "Email is required.";
+        } else if (String(formData.email).length > EMAIL_MAX) {
+            newErrors.email = `Email must be ${EMAIL_MAX} characters or fewer.`;
         } else if (emailRegex.test(formData.email) === false) {
             newErrors.email = "Please enter a valid email address.";
         }
@@ -211,20 +342,8 @@ export default function CheckoutForm({
         // if (!formData.expiry) newErrors.expiry = "Expiry date is required.";
         // if (!formData.cvv) newErrors.cvv = "CVV is required.";
         if (!formData.terms) newErrors.terms = "You must agree to terms.";
-        if (otherGuestDetail.length > 0) {
-            otherGuestDetail.forEach((guest, index) => {
-                const guestErrors = {};
-                if (!guest.firstName.trim()) {
-                    guestErrors.firstName = "First name is required";
-                }
-                if (!guest.lastName.trim()) {
-                    guestErrors.lastName = "Last name is required";
-                }
-                otherGuestErrors[index] = guestErrors;
-            });
 
-            setOtherGuestError(otherGuestErrors);
-        }
+        setOtherGuestError(otherGuestErrors);
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0 && otherGuestErrors.every(err => Object.keys(err).length === 0);
     };
@@ -393,16 +512,22 @@ export default function CheckoutForm({
     const handleGuestRemove = (index) => {
         const updatedGuests = otherGuestDetail.filter((_, i) => i !== index);
         setOtherGuestDetail(updatedGuests);
+        syncLiveNameValidation(formData, updatedGuests);
     };
     const handleGuestChange = (e, index) => {
         const { name, value } = e.target;
         const updatedGuests = [...otherGuestDetail];
-        updatedGuests[index][name] = value;
+        updatedGuests[index] = { ...updatedGuests[index], [name]: value };
         setOtherGuestDetail(updatedGuests);
+
+        if (name === 'firstName' || name === 'lastName') {
+            syncLiveNameValidation(formData, updatedGuests);
+            return;
+        }
 
         const updatedErrors = [...otherGuestError];
         if (updatedErrors[index]?.[name]) {
-            updatedErrors[index][name] = "";
+            updatedErrors[index] = { ...updatedErrors[index], [name]: "" };
             setOtherGuestError(updatedErrors);
         }
     };
@@ -485,6 +610,7 @@ export default function CheckoutForm({
                             className={`form-control ${errors.firstName ? "is-invalid" : ""}`}
                             placeholder="First Name"
                             autoComplete="off"
+                            maxLength={35}
                         />
                         {errors.firstName && (
                             <div className="invalid-feedback">{errors.firstName}</div>
@@ -501,6 +627,7 @@ export default function CheckoutForm({
                             className={`form-control ${errors.lastName ? "is-invalid" : ""}`}
                             placeholder="Last Name"
                             autoComplete="off"
+                            maxLength={35}
                         />
                         {errors.lastName && (
                             <div className="invalid-feedback">{errors.lastName}</div>
@@ -517,6 +644,7 @@ export default function CheckoutForm({
                             className={`form-control ${errors.email ? "is-invalid" : ""}`}
                             placeholder="you@example.com"
                             autoComplete="off"
+                            maxLength={200}
                         />
                         {errors.email && (
                             <div className="invalid-feedback">{errors.email}</div>
@@ -647,6 +775,7 @@ export default function CheckoutForm({
                                     onChange={(e) => handleGuestChange(e, index)}
                                     value={item.firstName}
                                     placeholder="First Name"
+                                    maxLength={35}
                                     className={`form-control ${otherGuestError[index]?.firstName ? "is-invalid" : ""}`}
                                 />
                                 {otherGuestError[index]?.firstName && (
@@ -661,6 +790,7 @@ export default function CheckoutForm({
                                     onChange={(e) => handleGuestChange(e, index)}
                                     value={item.lastName}
                                     placeholder="Last Name"
+                                    maxLength={35}
                                     className={`form-control ${otherGuestError[index]?.lastName ? "is-invalid" : ""}`}
                                 />
                                 {otherGuestError[index]?.lastName && (

@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useMemo } from "react";
 const FlightContext = createContext();
 import { useCurrency } from "@/util/currency";
 import { getOutboundLegTimes, getSlotForHour } from "./Filters/flightTimeSlots";
+import { groupSegments } from "./Checkout/flightHelpers";
 
 // Helper function to calculate total duration including layovers for a set of segments
 const calculateTotalDuration = (segments) => {
@@ -26,54 +27,7 @@ const calculateTotalDuration = (segments) => {
 
 // Helper function to group flight segments into legs based on trip type
 const getFlightLegs = (flight) => {
-    if (!flight.segments || flight.segments.length === 0) {
-        return [];
-    }
-
-    if (flight.trip_type === 'return') {
-        // Split segments in half for return flights
-        const midpoint = Math.ceil(flight.segments.length / 2);
-        return [
-            { segments: flight.segments.slice(0, midpoint) },
-            { segments: flight.segments.slice(midpoint) }
-        ];
-    } else if (flight.trip_type === 'multicity') {
-        // Group segments by legs based on search criteria
-        const legs = flight.search_criteria?.legs || [];
-        if (legs.length === 0) {
-            // Fallback: treat all segments as one leg
-            return [{ segments: flight.segments }];
-        }
-
-        const groupedLegs = [];
-        let currentSegmentIndex = 0;
-
-        legs.forEach((leg) => {
-            const legSegments = [];
-            const destination = leg.destination;
-
-            // Collect all segments that belong to this leg
-            while (currentSegmentIndex < flight.segments.length) {
-                const segment = flight.segments[currentSegmentIndex];
-                legSegments.push(segment);
-                currentSegmentIndex++;
-
-                // Check if we've reached the final destination for this leg
-                if (segment.arrival.airport_code === destination) {
-                    break;
-                }
-            }
-
-            if (legSegments.length > 0) {
-                groupedLegs.push({ segments: legSegments });
-            }
-        });
-
-        return groupedLegs;
-    }
-
-    // One-way flight: all segments are one leg
-    return [{ segments: flight.segments }];
+    return groupSegments(flight).map((group) => ({ segments: group.segments }));
 };
 
 // Helper function to get maximum leg duration for a flight (including layovers)

@@ -577,6 +577,7 @@
   font-size: 11px;
   font-weight: 700;
   color: #1B3B6F;
+  white-space: nowrap;
 }
 
 .typeBadgeAccent {
@@ -684,16 +685,19 @@
 /* Data table */
 .tableWrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 
 .dataTable {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: auto;
 }
 
 .dataTable thead th {
-  text-align: left;
   padding: 10px 14px;
   font-size: 10px;
   font-weight: 700;
@@ -702,6 +706,12 @@
   color: #9AA3B5;
   background: #FAFBFD;
   border-bottom: 1px solid #E8ECF3;
+  white-space: nowrap;
+}
+
+.dataTable thead th:first-child,
+.dataTable tbody td:first-child {
+  text-align: left;
 }
 
 .dataTable tbody td {
@@ -709,6 +719,7 @@
   border-bottom: 1px solid #F0F3F8;
   color: #1a2332;
   vertical-align: top;
+  white-space: nowrap;
 }
 
 .dataTable tbody tr:nth-child(even) td {
@@ -1130,6 +1141,7 @@
   letter-spacing: 0.4px;
   background: #E8F0FE;
   color: #1B3B6F;
+  white-space: nowrap;
 }
 
 .typeBadgeChild {
@@ -1276,9 +1288,12 @@
 /* Package extras */
 .addressRow {
   display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
   gap: 8px;
   margin-top: 12px;
   font-size: 13px;
+  text-align: right;
 }
 
 .addressLabel {
@@ -1321,7 +1336,7 @@
 
 .dataTable.textCenter th:nth-child(n+4),
 .dataTable.textCenter td:nth-child(n+4) {
-  text-align: center;
+  text-align: right;
 }
 
 .invoBadge{

@@ -1,6 +1,6 @@
 ﻿'use client';
 import Link from "next/link";
-import React, { useState, useEffect, use, useMemo } from "react";
+import React, { useState, useEffect, useLayoutEffect, use, useMemo, useRef } from "react";
 import { BiCategory, BiPhone } from "react-icons/bi";
 import PackageGalleryImages from "@/components/Package/Detail/PackageGalleryImages";
 import { BsHeadset, BsWhatsapp } from "react-icons/bs";
@@ -14,9 +14,6 @@ import PackageHotelDetail from "@/components/Package/Detail/PackageHotelDetail";
 import PackageFlightDetail from "@/components/Package/Detail/PackageFlightDetail";
 import { GiPassport, GiMedal } from "react-icons/gi";
 import styles from "./PackageDetail.module.css";
-
-/** ~3–4 lines of body text; shorter copy needs no Read more */
-const DESC_PREVIEW_CHARS = 260;
 
 const hasHtmlTags = (text) => /<\/?[a-z][\s\S]*>/i.test(text || '');
 
@@ -64,6 +61,8 @@ export default function page({ params }) {
     const [loading, setLoading] = useState(true);
     const [currentURL, setCurrentURL] = useState("");
     const [descExpanded, setDescExpanded] = useState(false);
+    const [needsReadMore, setNeedsReadMore] = useState(false);
+    const descTextRef = useRef(null);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -111,12 +110,44 @@ export default function page({ params }) {
         return PackageDetail.description;
     }, [PackageDetail?.description, isHtmlDescription]);
 
-    const needsReadMore = plainDescription.length > DESC_PREVIEW_CHARS;
-    const shouldClampDescription = needsReadMore && !descExpanded;
+    const needsReadMoreCandidate =
+        Boolean(PackageDetail?.description || plainDescription);
 
     useEffect(() => {
         setDescExpanded(false);
+        // Do not clear needsReadMore here — useLayoutEffect measures after paint;
+        // clearing in useEffect races and hides the button permanently.
     }, [PackageDetail?.description, slug]);
+
+    // Only show Read more when clamped content actually overflows
+    useLayoutEffect(() => {
+        if (!needsReadMoreCandidate || loading) {
+            setNeedsReadMore(false);
+            return;
+        }
+        if (descExpanded) return;
+
+        const measure = () => {
+            const el = descTextRef.current;
+            if (!el) return;
+            // +2px tolerance for subpixel rounding
+            setNeedsReadMore(el.scrollHeight > el.clientHeight + 2);
+        };
+
+        measure();
+        // Remeasure next frame (fonts / nested HTML margins can settle late)
+        const raf = requestAnimationFrame(() => {
+            measure();
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [
+        PackageDetail?.description,
+        plainDescription,
+        descExpanded,
+        isHtmlDescription,
+        needsReadMoreCandidate,
+        loading,
+    ]);
 
     if (loading) {
         return <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
@@ -330,18 +361,22 @@ export default function page({ params }) {
                 <div className={styles.descriptionBlock}>
                     {(PackageDetail?.description || plainDescription) && (
                         <>
-                            {isHtmlDescription && descExpanded ? (
+                            {isHtmlDescription ? (
                                 <div
-                                    className={styles.descriptionContent}
+                                    ref={descTextRef}
+                                    className={`${styles.descriptionContent}${
+                                        !descExpanded ? ` ${styles.descriptionClampedHtml}` : ''
+                                    }`}
                                     dangerouslySetInnerHTML={{ __html: PackageDetail.description }}
                                 />
                             ) : (
                                 <p
+                                    ref={descTextRef}
                                     className={`${styles.descriptionContent}${
-                                        shouldClampDescription ? ` ${styles.descriptionClamped}` : ''
+                                        !descExpanded ? ` ${styles.descriptionClamped}` : ''
                                     }`}
                                 >
-                                    {isHtmlDescription ? plainDescription : PackageDetail.description}
+                                    {PackageDetail.description}
                                 </p>
                             )}
                             {needsReadMore && (

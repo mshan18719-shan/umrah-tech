@@ -19,6 +19,91 @@ import Autocomplete from 'react-google-autocomplete';
 import { FaUsers, FaCreditCard, FaUniversity } from 'react-icons/fa';
 import styles from './GuestForm.module.css';
 
+const NAME_MAX = 35;
+const EMAIL_MAX = 200;
+
+/** Mr/Master → male; Mrs/Miss/Ms → female; Dr (and empty) → null (manual). */
+function genderFromTitle(title) {
+  const t = String(title || '').trim().toUpperCase();
+  if (t === 'MR' || t === 'MSTR' || t === 'MASTER') return 'male';
+  if (t === 'MRS' || t === 'MISS' || t === 'MS') return 'female';
+  return null;
+}
+
+const normalizeName = (value) =>
+  String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const fullNameKey = (first, last) => {
+  const f = normalizeName(first);
+  const l = normalizeName(last);
+  if (!f || !l) return '';
+  return `${f}|${l}`;
+};
+
+function computeNameErrors(leadFirst, leadLast, guests, { requireFilled = false } = {}) {
+  const leadErrors = {};
+  const guestErrors = guests.map(() => ({}));
+
+  const lf = String(leadFirst || '').trim();
+  const ll = String(leadLast || '').trim();
+  const leadKey = fullNameKey(lf, ll);
+
+  if (requireFilled && !lf) {
+    leadErrors.firstName = 'First name is required.';
+  } else if (lf.length > NAME_MAX) {
+    leadErrors.firstName = `First name must be ${NAME_MAX} characters or fewer.`;
+  }
+
+  if (requireFilled && !ll) {
+    leadErrors.lastName = 'Last name is required.';
+  } else if (ll.length > NAME_MAX) {
+    leadErrors.lastName = `Last name must be ${NAME_MAX} characters or fewer.`;
+  }
+
+  if (lf && ll && normalizeName(lf) === normalizeName(ll)) {
+    leadErrors.lastName = 'First name and last name cannot be the same.';
+  }
+
+  const guestKeys = guests.map((g) => fullNameKey(g.firstName, g.lastName));
+
+  guests.forEach((guest, index) => {
+    const gf = String(guest.firstName || '').trim();
+    const gl = String(guest.lastName || '').trim();
+    const gKey = guestKeys[index];
+    const ge = guestErrors[index];
+
+    if (requireFilled && !gf) {
+      ge.firstName = 'First name is required';
+    } else if (gf.length > NAME_MAX) {
+      ge.firstName = `First name must be ${NAME_MAX} characters or fewer`;
+    }
+
+    if (requireFilled && !gl) {
+      ge.lastName = 'Last name is required';
+    } else if (gl.length > NAME_MAX) {
+      ge.lastName = `Last name must be ${NAME_MAX} characters or fewer`;
+    }
+
+    if (gf && gl && normalizeName(gf) === normalizeName(gl)) {
+      ge.lastName = 'First name and last name cannot be the same';
+    }
+
+    if (gKey) {
+      if (leadKey && gKey === leadKey) {
+        ge.firstName = 'Name cannot match the lead passenger';
+        ge.lastName = 'Name cannot match the lead passenger';
+        if (!leadErrors.firstName) leadErrors.firstName = 'Name cannot match another traveler';
+        if (!leadErrors.lastName) leadErrors.lastName = 'Name cannot match another traveler';
+      } else if (guestKeys.some((key, i) => i !== index && key && key === gKey)) {
+        ge.firstName = 'Guest name cannot match another traveler';
+        ge.lastName = 'Guest name cannot match another traveler';
+      }
+    }
+  });
+
+  return { leadErrors, guestErrors };
+}
+
 const GuestForm = forwardRef(function GuestForm(
   {
     packageDetail,
@@ -86,12 +171,66 @@ const GuestForm = forwardRef(function GuestForm(
         : item.idd?.root,
   }));
 
+  const syncLiveNameValidation = (nextForm, nextGuests) => {
+    const { leadErrors, guestErrors } = computeNameErrors(
+      nextForm.firstName,
+      nextForm.lastName,
+      nextGuests,
+      { requireFilled: false }
+    );
+
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (leadErrors.firstName) next.firstName = leadErrors.firstName;
+      else delete next.firstName;
+      if (leadErrors.lastName) next.lastName = leadErrors.lastName;
+      else delete next.lastName;
+      return next;
+    });
+
+    setOtherGuestError(
+      nextGuests.map((_, index) => {
+        const live = guestErrors[index] || {};
+        return {
+          ...(live.firstName ? { firstName: live.firstName } : {}),
+          ...(live.lastName ? { lastName: live.lastName } : {}),
+        };
+      })
+    );
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const nextValue = type === 'checkbox' ? checked : value;
+
+    if (name === 'gender' && genderFromTitle(formData.title)) {
+      return;
+    }
+
+    const nextForm = {
       ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
+      [name]: nextValue,
+    };
+
+    if (name === 'title') {
+      const autoGender = genderFromTitle(nextValue);
+      if (autoGender) nextForm.gender = autoGender;
+    }
+
+    setFormData(nextForm);
+
+    if (name === 'firstName' || name === 'lastName') {
+      syncLiveNameValidation(nextForm, otherGuestDetail);
+      return;
+    }
+
+    if (name === 'email' && String(nextValue).length > EMAIL_MAX) {
+      setErrors((prev) => ({
+        ...prev,
+        email: `Email must be ${EMAIL_MAX} characters or fewer.`,
+      }));
+      return;
+    }
 
     if (errors[name]) {
       setErrors((prev) => {
@@ -169,13 +308,21 @@ const GuestForm = forwardRef(function GuestForm(
 
   const validateForm = () => {
     const newErrors = {};
-    const otherGuestErrors = [];
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.title) newErrors.title = 'Please select a title.';
-    if (!formData.firstName) newErrors.firstName = 'First name is required.';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required.';
+
+    const { leadErrors, guestErrors: otherGuestErrors } = computeNameErrors(
+      formData.firstName,
+      formData.lastName,
+      otherGuestDetail,
+      { requireFilled: true }
+    );
+    Object.assign(newErrors, leadErrors);
+
     if (!formData.email) {
       newErrors.email = 'Email is required.';
+    } else if (String(formData.email).length > EMAIL_MAX) {
+      newErrors.email = `Email must be ${EMAIL_MAX} characters or fewer.`;
     } else if (emailRegex.test(formData.email) === false) {
       newErrors.email = 'Please enter a valid email address.';
     }
@@ -189,15 +336,8 @@ const GuestForm = forwardRef(function GuestForm(
     if (!formData.country) newErrors.country = 'Please select a country.';
     if (!formData.address) newErrors.address = 'Address is required.';
     if (!formData.terms) newErrors.terms = 'You must agree to terms.';
-    if (otherGuestDetail.length > 0) {
-      otherGuestDetail.forEach((guest, index) => {
-        const guestErrors = {};
-        if (!guest.firstName.trim()) guestErrors.firstName = 'First name is required';
-        if (!guest.lastName.trim()) guestErrors.lastName = 'Last name is required';
-        otherGuestErrors[index] = guestErrors;
-      });
-      setOtherGuestError(otherGuestErrors);
-    }
+
+    setOtherGuestError(otherGuestErrors);
     setErrors(newErrors);
     return (
       Object.keys(newErrors).length === 0 &&
@@ -232,7 +372,9 @@ const GuestForm = forwardRef(function GuestForm(
   };
 
   const handleGuestRemove = (index) => {
-    setOtherGuestDetail(otherGuestDetail.filter((_, i) => i !== index));
+    const updatedGuests = otherGuestDetail.filter((_, i) => i !== index);
+    setOtherGuestDetail(updatedGuests);
+    syncLiveNameValidation(formData, updatedGuests);
   };
 
   const handleGuestChange = (e, index) => {
@@ -240,11 +382,17 @@ const GuestForm = forwardRef(function GuestForm(
     const value = e.target.value;
     if (field.startsWith('gender_')) field = 'gender';
     const updatedGuests = [...otherGuestDetail];
-    updatedGuests[index][field] = value;
+    updatedGuests[index] = { ...updatedGuests[index], [field]: value };
     setOtherGuestDetail(updatedGuests);
+
+    if (field === 'firstName' || field === 'lastName') {
+      syncLiveNameValidation(formData, updatedGuests);
+      return;
+    }
+
     const updatedErrors = [...otherGuestError];
     if (updatedErrors[index]?.[field]) {
-      updatedErrors[index][field] = '';
+      updatedErrors[index] = { ...updatedErrors[index], [field]: '' };
       setOtherGuestError(updatedErrors);
     }
   };
@@ -525,6 +673,7 @@ const GuestForm = forwardRef(function GuestForm(
               className={`${styles.input} ${errors.firstName ? styles.invalid : ''}`}
               placeholder="First Name"
               autoComplete="given-name"
+              maxLength={35}
             />
             {errors.firstName && (
               <div className={styles.error}>{errors.firstName}</div>
@@ -544,6 +693,7 @@ const GuestForm = forwardRef(function GuestForm(
               className={`${styles.input} ${errors.lastName ? styles.invalid : ''}`}
               placeholder="Last Name"
               autoComplete="family-name"
+              maxLength={35}
             />
             {errors.lastName && (
               <div className={styles.error}>{errors.lastName}</div>
@@ -563,6 +713,7 @@ const GuestForm = forwardRef(function GuestForm(
               className={`${styles.input} ${errors.email ? styles.invalid : ''}`}
               placeholder="Email Address"
               autoComplete="email"
+              maxLength={200}
             />
             {errors.email && <div className={styles.error}>{errors.email}</div>}
           </div>
@@ -646,8 +797,10 @@ const GuestForm = forwardRef(function GuestForm(
                   type="radio"
                   name="gender"
                   value="male"
+                  className={styles.radioInput}
                   checked={formData.gender === 'male'}
                   onChange={handleChange}
+                  disabled={!!genderFromTitle(formData.title)}
                 />
                 Male
               </label>
@@ -656,8 +809,10 @@ const GuestForm = forwardRef(function GuestForm(
                   type="radio"
                   name="gender"
                   value="female"
+                  className={styles.radioInput}
                   checked={formData.gender === 'female'}
                   onChange={handleChange}
+                  disabled={!!genderFromTitle(formData.title)}
                 />
                 Female
               </label>
@@ -713,6 +868,7 @@ const GuestForm = forwardRef(function GuestForm(
                   onChange={(e) => handleGuestChange(e, index)}
                   value={item.firstName}
                   placeholder="First Name"
+                  maxLength={35}
                   className={`${styles.input} ${otherGuestError[index]?.firstName ? styles.invalid : ''
                     }`}
                 />
@@ -730,6 +886,7 @@ const GuestForm = forwardRef(function GuestForm(
                   onChange={(e) => handleGuestChange(e, index)}
                   value={item.lastName}
                   placeholder="Last Name"
+                  maxLength={35}
                   className={`${styles.input} ${otherGuestError[index]?.lastName ? styles.invalid : ''
                     }`}
                 />
@@ -745,6 +902,7 @@ const GuestForm = forwardRef(function GuestForm(
                   <label className={styles.radioLabel}>
                     <input
                       type="radio"
+                      className={styles.radioInput}
                       checked={item.gender === 'male'}
                       onChange={(e) => handleGuestChange(e, index)}
                       name={`gender_${index}`}
@@ -755,6 +913,7 @@ const GuestForm = forwardRef(function GuestForm(
                   <label className={styles.radioLabel}>
                     <input
                       type="radio"
+                      className={styles.radioInput}
                       checked={item.gender === 'female'}
                       onChange={(e) => handleGuestChange(e, index)}
                       name={`gender_${index}`}

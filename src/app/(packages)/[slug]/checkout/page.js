@@ -260,12 +260,12 @@ export default function PackageCheckoutPage() {
                 </div>
               )}
 
-              <div className={styles.summaryRow}>
+              {/* <div className={styles.summaryRow}>
                 <span>Subtotal</span>
                 <strong>
                   <PriceDisplay price={grandTotal} currency={packageDetail?.currency_code} />
                 </strong>
-              </div>
+              </div> */}
 
               <div className={styles.totalRow}>
                 <span>Total</span>

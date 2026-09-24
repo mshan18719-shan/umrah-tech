@@ -29,11 +29,15 @@ import heroStyles from './FlightListingHero.module.css';
 function getFlightRouteLabel(searchParams) {
     const airTripType = searchParams.get('AirTripType');
     if (airTripType === 'MultiCity') {
-        const firstFrom = searchParams.get('flight1_from');
-        const firstTo = searchParams.get('flight1_to');
-        if (firstFrom && firstTo) {
-            return `${firstFrom} → ${firstTo}`;
+        const parts = [];
+        let index = 1;
+        while (searchParams.get(`flight${index}_from`)) {
+            const from = searchParams.get(`flight${index}_from`);
+            const to = searchParams.get(`flight${index}_to`);
+            if (from && to) parts.push(`${from} → ${to}`);
+            index++;
         }
+        if (parts.length) return parts.join(' · ');
         return 'Multi-city';
     }
     const from = searchParams.get('DepartureCode');
@@ -135,23 +139,42 @@ export default function FlightListingPage() {
     );
     const filterSentinelRef = useRef(null);
     const searchPanelRef = useRef(null);
+    const heroSectionRef = useRef(null);
+    const isMultiCity = searchParams.get('AirTripType') === 'MultiCity';
 
-    // Multi-city (and other tall) search forms need in-flow layout so they
-    // don't cover the filters / results under the absolute hero panel.
+    // Keep search half-on-image; for tall/multi-city grow hero height + bottom
+    // margin with the form so it never covers navbar or results.
     useEffect(() => {
         const panel = searchPanelRef.current;
-        if (!panel || typeof ResizeObserver === 'undefined') return;
+        const section = heroSectionRef.current;
+        if (!panel || typeof ResizeObserver === 'undefined') return undefined;
 
         const syncTallSearch = () => {
-            const height = panel.getBoundingClientRect().height;
-            setIsTallSearch(height > 220);
+            const height = panel.getBoundingClientRect().height || 0;
+            const tall = isMultiCity || height > 220;
+            setIsTallSearch(tall);
+
+            if (!section) return;
+
+            if (tall && height > 0) {
+                const overhang = Math.ceil(height * 0.48) + 28;
+                const imageHeight = Math.max(300, Math.ceil(height * 0.58 + 160));
+                section.style.setProperty('--hero-image-height', `${imageHeight}px`);
+                section.style.setProperty('--hero-margin-bottom', `${overhang}px`);
+            } else {
+                section.style.removeProperty('--hero-image-height');
+                section.style.removeProperty('--hero-margin-bottom');
+            }
         };
 
-        syncTallSearch();
+        const rafId = requestAnimationFrame(syncTallSearch);
         const observer = new ResizeObserver(syncTallSearch);
         observer.observe(panel);
-        return () => observer.disconnect();
-    }, [packageSearch]);
+        return () => {
+            cancelAnimationFrame(rafId);
+            observer.disconnect();
+        };
+    }, [packageSearch, isMultiCity, searchParams]);
 
     useEffect(() => {
         async function getFlights() {
@@ -228,8 +251,35 @@ export default function FlightListingPage() {
                 setIsLoading(false)
                 // console.log("Flight search response:", response);
                 if (response.success) {
-                    // Use Duffel response directly
-                    setFlightList(response?.data?.flights || []);
+                    // Ensure each offer carries trip type + legs so listing/cards can split multicity
+                    const normalizedTripType =
+                        airTripType === 'MultiCity'
+                            ? 'multicity'
+                            : airTripType === 'Return'
+                                ? 'return'
+                                : 'oneway';
+                    const flights = (response?.data?.flights || []).map((flight) => ({
+                        ...flight,
+                        trip_type:
+                            airTripType === 'MultiCity'
+                                ? 'multicity'
+                                : airTripType === 'Return'
+                                    ? (flight.trip_type || 'return')
+                                    : (flight.trip_type || normalizedTripType),
+                        tag: flight.tag ?? flight.fare_tag ?? '',
+                        search_criteria: {
+                            ...(flight.search_criteria || {}),
+                            AirTripType: flight.search_criteria?.AirTripType || airTripType,
+                            adult: Number(flight.search_criteria?.adult ?? params.adult) || 1,
+                            child: Number(flight.search_criteria?.child ?? params.child) || 0,
+                            infant: Number(flight.search_criteria?.infant ?? params.infant) || 0,
+                            legs:
+                                (flight.search_criteria?.legs?.length
+                                    ? flight.search_criteria.legs
+                                    : legs),
+                        },
+                    }));
+                    setFlightList(flights);
                 }
             } catch (error) {
                 setIsLoading(false)
@@ -260,12 +310,13 @@ export default function FlightListingPage() {
         return () => window.removeEventListener('scroll', onScroll);
     }, [isLoading]);
     return (
-        <div className={`flight-listing-page${isTallSearch ? ' flight-listing-page--tall-search' : ''}`}>
+        <div className={`flight-listing-page${(isTallSearch || isMultiCity) ? ' flight-listing-page--tall-search' : ''}`}>
             <PackageModeBanner serviceName="flight" />
             <FlightProvider flights={flightList} infiniteScroll>
                 {/* Desktop: hero image + overlapping search */}
                 <div
-                    className={`${heroStyles.heroSection} ${isTallSearch ? heroStyles.heroSectionTall : ''} d-none d-md-block`}
+                    ref={heroSectionRef}
+                    className={`${heroStyles.heroSection} ${(isTallSearch || isMultiCity) ? heroStyles.heroSectionTall : ''} d-none d-md-block`}
                 >
                     <div className={heroStyles.heroImageWrap}>
                         <Image
@@ -379,9 +430,9 @@ export default function FlightListingPage() {
                             <button onClick={() => setActiveDrawer('layover')} className="filter-pill">
                                 Layover Time <span className="arrow"><LiaAngleDownSolid /></span>
                             </button>
-                            <button onClick={() => setActiveDrawer('flightType')} className="filter-pill">
+                            {/* <button onClick={() => setActiveDrawer('flightType')} className="filter-pill">
                                 Cabin <span className="arrow"><LiaAngleDownSolid /></span>
-                            </button>
+                            </button> */}
                         </div>
                         <FlightResultsTopBar searchParams={searchParams} />
                         <div className='row'>
@@ -414,9 +465,9 @@ export default function FlightListingPage() {
                                     <div className="hotel-filter-panel">
                                         <LayoverTime />
                                     </div>
-                                    <div className="hotel-filter-panel">
+                                    {/* <div className="hotel-filter-panel">
                                         <FlightClass />
-                                    </div>
+                                    </div> */}
                                 </div>
 
                                 <FilterDrawer

@@ -720,6 +720,15 @@
      font-weight: 800;
      color: #fff;
    }
+
+   .taxNote {
+     margin: 8px 4px 0;
+     text-align: right;
+     font-size: 11px;
+     font-weight: 500;
+     color: #6B7280;
+     letter-spacing: 0.2px;
+   }
    
    .remainingBar {
      display: flex;

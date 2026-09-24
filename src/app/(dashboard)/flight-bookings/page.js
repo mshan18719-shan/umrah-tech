@@ -7,11 +7,9 @@ import {
   FaPlane,
   FaEye,
   FaDownload,
-  FaMapMarkerAlt,
   FaUsers,
   FaCheckCircle,
   FaChevronDown,
-  FaArrowRight,
   FaSearch,
 } from "react-icons/fa";
 import { FiFileText, FiCalendar } from "react-icons/fi";
@@ -20,6 +18,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import CancelBookingModal from "@/dashboard_components/CancelBookingModal/CancelBookingModal";
+import { groupSegments } from "@/components/Flights/Checkout/flightHelpers";
 
 const statusLabel = (status) => {
   const st = (status || "").toLowerCase();
@@ -34,6 +33,72 @@ const statusTone = (status) => {
   if (st === "tentative" || st === "pending") return "pending";
   return "default";
 };
+
+function getEndpointCode(endpoint) {
+  if (!endpoint) return "";
+  if (typeof endpoint === "string") return endpoint.toUpperCase();
+  return (
+    endpoint?.airport_code ||
+    endpoint?.iata_code ||
+    endpoint?.code ||
+    ""
+  )
+    .toString()
+    .toUpperCase();
+}
+
+function getRouteTitle(booking) {
+  const segments = booking?.segments || [];
+  const flightLike = {
+    trip_type: booking?.flight_details?.trip_type || booking?.trip_type,
+    segments,
+    search_criteria:
+      booking?.search_criteria ||
+      booking?.flight_details?.search_criteria ||
+      {},
+  };
+
+  const groups = groupSegments(flightLike).filter((g) => g?.segments?.length);
+  if (groups.length > 1) {
+    return groups
+      .map((group) => {
+        const first = group.segments[0];
+        const last = group.segments[group.segments.length - 1];
+        const from =
+          getEndpointCode(first?.departure) ||
+          getEndpointCode(first?.origin) ||
+          getEndpointCode(first?.departure_code) ||
+          "—";
+        const to =
+          getEndpointCode(last?.arrival) ||
+          getEndpointCode(last?.destination) ||
+          getEndpointCode(last?.arrival_code) ||
+          "—";
+        return `${from} to ${to}`;
+      })
+      .join(" / ");
+  }
+
+  if (segments.length) {
+    const first = segments[0];
+    const last = segments[segments.length - 1];
+    const from =
+      getEndpointCode(first?.departure) ||
+      getEndpointCode(first?.departure_code) ||
+      booking?.flight_details?.departure_code ||
+      "—";
+    const to =
+      getEndpointCode(last?.arrival) ||
+      getEndpointCode(last?.arrival_code) ||
+      booking?.flight_details?.arrival_code ||
+      "—";
+    return `${from} to ${to}`;
+  }
+
+  const dep = booking?.flight_details?.departure_code || "—";
+  const arr = booking?.flight_details?.arrival_code || "—";
+  return `${dep} to ${arr}`;
+}
 
 function canCancelFlightBooking(booking) {
   const departureDate =
@@ -60,6 +125,39 @@ function getFlightDateValue(booking) {
     booking?.segments?.[0]?.departure_date ||
     null
   );
+}
+
+function toMomentDate(value) {
+  if (!value) return null;
+  if (moment.isMoment(value) && value.isValid()) return value;
+  if (typeof value?.toDate === "function") {
+    const fromDayjs = moment(value.toDate());
+    if (fromDayjs.isValid()) return fromDayjs;
+  }
+  if (value instanceof Date) {
+    const fromDate = moment(value);
+    return fromDate.isValid() ? fromDate : null;
+  }
+  const parsed = moment(value);
+  return parsed.isValid() ? parsed : null;
+}
+
+function formatFilterDate(value) {
+  const m = toMomentDate(value);
+  return m ? m.format("MMM DD, YYYY") : null;
+}
+
+function formatTripTypeLabel(tripType) {
+  const t = String(tripType || "")
+    .toLowerCase()
+    .replace(/[_\s-]+/g, "");
+  if (t === "oneway") return "One Way";
+  if (t === "return" || t === "roundtrip") return "Return";
+  if (t === "multicity") return "Multi City";
+  if (!tripType || tripType === "—") return "—";
+  return String(tripType)
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function FlightBookingsPage() {
@@ -102,9 +200,7 @@ export default function FlightBookingsPage() {
       );
       const data = await response.json();
       if (!data?.success && data?.message?.toLowerCase().includes("otp")) {
-        router.push(
-          `/verify-otp?email=${encodeURIComponent(session?.user?.email || "")}`
-        );
+        router.push("/login");
         return;
       }
       setBookings(Array.isArray(data?.data) ? data.data : []);
@@ -170,18 +266,13 @@ export default function FlightBookingsPage() {
 
       if (dateRange[0] || dateRange[1]) {
         const departureDateRaw = getFlightDateValue(booking);
-        if (!departureDateRaw || !moment(departureDateRaw).isValid())
+        const departureMoment = toMomentDate(departureDateRaw);
+        if (!departureMoment) return false;
+        const rangeStart = toMomentDate(dateRange[0]);
+        const rangeEnd = toMomentDate(dateRange[1]);
+        if (rangeStart && departureMoment.isBefore(rangeStart, "day"))
           return false;
-        const departureMoment = moment(departureDateRaw);
-        if (
-          dateRange[0] &&
-          departureMoment.isBefore(moment(dateRange[0]), "day")
-        )
-          return false;
-        if (
-          dateRange[1] &&
-          departureMoment.isAfter(moment(dateRange[1]), "day")
-        )
+        if (rangeEnd && departureMoment.isAfter(rangeEnd, "day"))
           return false;
       }
 
@@ -199,12 +290,12 @@ export default function FlightBookingsPage() {
     activePage * PAGE_SIZE
   );
 
-  const dateButtonLabel =
-    dateRange[0] || dateRange[1]
-      ? `${dateRange[0] ? moment(dateRange[0]).format("MMM DD, YYYY") : "Any"} - ${
-          dateRange[1] ? moment(dateRange[1]).format("MMM DD, YYYY") : "Any"
-        }`
-      : "Departure Date Range";
+  const hasDateFilter = Boolean(dateRange[0] || dateRange[1]);
+  const dateButtonLabel = hasDateFilter
+    ? `${formatFilterDate(dateRange[0]) || "Any"} - ${
+        formatFilterDate(dateRange[1]) || "Any"
+      }`
+    : "Departure Date Range";
 
   return (
     <div className="hb-page">
@@ -257,7 +348,7 @@ export default function FlightBookingsPage() {
               <Menu.Target>
                 <button
                   type="button"
-                  className="hb-date-btn"
+                  className={`hb-date-btn${hasDateFilter ? " hb-date-btn-active" : ""}`}
                   onClick={() => setDateMenuOpened((o) => !o)}
                 >
                   <FiCalendar size={13} />
@@ -267,6 +358,17 @@ export default function FlightBookingsPage() {
               </Menu.Target>
               <Menu.Dropdown>
                 <div style={{ padding: "10px 12px" }}>
+                  <p
+                    style={{
+                      margin: "0 0 8px",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      color: "#1B3B6F",
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    Filter by departure date
+                  </p>
                   <DatePicker
                     type="range"
                     value={dateRange}
@@ -275,8 +377,18 @@ export default function FlightBookingsPage() {
                     allowSingleDateInRange
                   />
                 </div>
-                {dateRange[0] && dateRange[1] && (
+                {hasDateFilter && (
                   <div className="hb-date-clear-wrapper">
+                    <p
+                      style={{
+                        margin: "0 0 8px",
+                        fontSize: "0.8rem",
+                        color: "#5b6577",
+                        textAlign: "center",
+                      }}
+                    >
+                      Selected: {dateButtonLabel}
+                    </p>
                     <button
                       type="button"
                       className="hb-date-clear-btn"
@@ -341,27 +453,14 @@ export default function FlightBookingsPage() {
             paginatedBookings.map((booking, index) => {
               const st = booking?.booking_status?.toLowerCase();
               const tone = statusTone(st);
-              const segLength = booking?.segments?.length || 0;
-              const lastflight = segLength
-                ? booking.segments[segLength - 1]
-                : null;
-              const depCode = booking?.flight_details?.departure_code || "—";
-              const arrCode = booking?.flight_details?.arrival_code ||
-                "—";
+              const routeTitle = getRouteTitle(booking);
               const passengers = Array.isArray(booking?.passenger_details)
                 ? booking.passenger_details.length
                 : null;
               const lead = booking?.passenger_details?.[0];
-              const airline =
-                booking?.flight_details?.airline_name ||
-                booking?.flight_details?.airline ||
-                booking?.segments?.[0]?.airline_name ||
-                "—";
-                const tripType = booking?.flight_details?.trip_type || "—";
-              const location =
-                booking?.flight_details?.departure_city ||
-                booking?.flight_details?.from_city ||
-                `${depCode} → ${arrCode}`;
+              const tripType = formatTripTypeLabel(
+                booking?.flight_details?.trip_type
+              );
               const dateValue = booking?.flight_details?.departure_date
                 ? moment(booking.flight_details.departure_date).format(
                   "MMM DD, YYYY"
@@ -380,13 +479,7 @@ export default function FlightBookingsPage() {
                         <FaPlane size={16} />
                       </div>
                       <div>
-                        <h6 className="hb-hotel-name">
-                          {depCode} <FaArrowRight size={11} /> {arrCode}
-                        </h6>
-                        {/* <p className="hb-hotel-location">
-                          <FaMapMarkerAlt size={11} />
-                          <span>{location}</span>
-                        </p> */}
+                        <h6 className="hb-hotel-name">{routeTitle}</h6>
                       </div>
                     </div>
                     <div className={`hb-status hb-status-${tone}`}>

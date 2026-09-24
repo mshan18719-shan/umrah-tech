@@ -73,19 +73,73 @@ export default function Page() {
   }
 
   const getTotalPassengers = () => {
-    const parts = [];
     const adults = Number(voucherDetail?.adults || 0);
     const children = Number(voucherDetail?.children || 0);
+    const parts = [];
     if (adults > 0) parts.push(`${adults} Adult${adults !== 1 ? "s" : ""}`);
     if (children > 0)
       parts.push(`${children} Child${children !== 1 ? "ren" : ""}`);
     return parts.join(", ") || "—";
   };
 
+  const formatGuestName = (guest) => {
+    if (!guest) return "";
+    return `${guest.first_name || guest.firstName || ""} ${guest.last_name || guest.lastName || ""}`.trim();
+  };
+
+  const guestSlots = useMemo(() => {
+    const adultsBooked = Number(voucherDetail?.adults || 0);
+    const childrenBooked = Number(voucherDetail?.children || 0);
+    const additionalAdults =
+      voucherDetail?.other_passengers?.additional_adults || [];
+    const childrenDetails =
+      voucherDetail?.other_passengers?.children_details || [];
+
+    const adultGuests = [];
+    const extraAdultSlots = Math.max(
+      Math.max(0, adultsBooked - 1),
+      additionalAdults.length
+    );
+    for (let i = 0; i < extraAdultSlots; i++) {
+      const guest = additionalAdults[i];
+      const name = formatGuestName(guest);
+      adultGuests.push({
+        key: `adult-${i}`,
+        label: `Adult ${i + 2}`,
+        value: name
+          ? `${name}${guest?.gender ? ` · ${capitalize(guest.gender)}` : ""}`
+          : "Details not provided",
+      });
+    }
+
+    const childGuests = [];
+    const childSlots = Math.max(childrenBooked, childrenDetails.length);
+    for (let i = 0; i < childSlots; i++) {
+      const guest = childrenDetails[i];
+      const name = formatGuestName(guest);
+      childGuests.push({
+        key: `child-${i}`,
+        label: `Child ${i + 1}`,
+        value: name
+          ? `${name}${guest?.gender ? ` · ${capitalize(guest.gender)}` : ""}`
+          : "Details not provided",
+      });
+    }
+
+    return { adultGuests, childGuests };
+  }, [voucherDetail]);
+
   const handlePrint = () => window.print();
 
-  const currency = voucherDetail?.customer_currency || "";
-  const grandTotal = Number(voucherDetail?.customer_total || 0);
+  const currency =
+    voucherDetail?.currency_code ||
+    voucherDetail?.currency_symbol ||
+    voucherDetail?.currency ||
+    voucherDetail?.client_currency ||
+    "";
+  const grandTotal = Number(
+    voucherDetail?.grand_total ?? voucherDetail?.customer_total ?? 0
+  );
   const paymentStatus = (voucherDetail?.payment_status || "").toLowerCase();
   const amountPaid =
     paymentStatus === "paid" || paymentStatus === "completed"
@@ -139,30 +193,38 @@ export default function Page() {
   }, [voucherDetail, currency]);
 
   const priceRows = useMemo(() => {
+    const formatMoney = (price) => Number(price || 0).toFixed(2);
     const rows = [
       {
         description: `Activity — ${voucherDetail?.activity?.title || "Activity"} (Adult)`,
         qty: Number(voucherDetail?.adults || 0),
-        rate: convertToCustomerCurrency(voucherDetail?.activity?.sale_price),
-        total: convertToCustomerCurrency(voucherDetail?.adult_price),
+        rate: formatMoney(voucherDetail?.activity?.sale_price),
+        total: formatMoney(voucherDetail?.adult_price),
       },
     ];
     if (Number(voucherDetail?.children) > 0) {
+      const childQty = Number(voucherDetail?.children || 0);
+      const childUnit = Number(voucherDetail?.activity?.child_sale_price || 0);
+      const childPriceField = Number(voucherDetail?.child_price || 0);
+      const childTotal =
+        childPriceField > 0 &&
+        childUnit > 0 &&
+        childPriceField === childUnit
+          ? childUnit * childQty
+          : childPriceField || childUnit * childQty;
       rows.push({
         description: `Activity — ${voucherDetail?.activity?.title || "Activity"} (Child)`,
-        qty: Number(voucherDetail?.children || 0),
-        rate: convertToCustomerCurrency(
-          voucherDetail?.activity?.child_sale_price
-        ),
-        total: convertToCustomerCurrency(voucherDetail?.child_price),
+        qty: childQty,
+        rate: formatMoney(childUnit || (childQty ? childTotal / childQty : 0)),
+        total: formatMoney(childTotal),
       });
     }
     (voucherDetail?.additional_services || []).forEach((item) => {
       rows.push({
         description: item.name,
         qty: item.quantity,
-        rate: convertToCustomerCurrency(item?.price),
-        total: convertToCustomerCurrency(item?.total),
+        rate: formatMoney(item?.price),
+        total: formatMoney(item?.total),
       });
     });
     return rows;
@@ -446,21 +508,21 @@ export default function Page() {
                         <span className={styles.fieldLabel}>Adults</span>
                         <div className={styles.fieldValue}>
                           {voucherDetail?.adults || 0}
-                          {Number(voucherDetail?.children) > 0
-                            ? ` · ${voucherDetail.children} Child${Number(voucherDetail.children) !== 1 ? "ren" : ""
-                            }`
-                            : ""}
+                        </div>
+                      </div>
+                      <div className={styles.field}>
+                        <span className={styles.fieldLabel}>Children</span>
+                        <div className={styles.fieldValue}>
+                          {voucherDetail?.children || 0}
                         </div>
                       </div>
                     </div>
                   </div>
                 </section>
 
-                {/* Other passengers */}
-                {(voucherDetail?.other_passengers?.additional_adults?.length >
-                  0 ||
-                  voucherDetail?.other_passengers?.children_details?.length >
-                  0) && (
+                {/* Guests — pad slots to match booked counts */}
+                {(guestSlots.adultGuests.length > 0 ||
+                  guestSlots.childGuests.length > 0) && (
                     <section className={styles.section}>
                       <div className={styles.sectionHead}>
                         <div className={styles.sectionHeadLeft}>
@@ -469,39 +531,32 @@ export default function Page() {
                           </span>
                           <h3 className={styles.sectionTitle}>Guests</h3>
                         </div>
+                        <span className={styles.sectionRight}>
+                          {getTotalPassengers()}
+                        </span>
                       </div>
                       <div className={styles.card}>
                         <div className={styles.fieldGrid}>
-                          {voucherDetail?.other_passengers?.additional_adults?.map(
-                            (adult, index) => (
-                              <div key={`a-${index}`} className={styles.field}>
-                                <span className={styles.fieldLabel}>
-                                  Adult {index + 2}
-                                </span>
-                                <div className={styles.fieldValue}>
-                                  {adult.first_name} {adult.last_name}
-                                  {adult.gender
-                                    ? ` · ${capitalize(adult.gender)}`
-                                    : ""}
-                                </div>
+                          {guestSlots.adultGuests.map((guest) => (
+                            <div key={guest.key} className={styles.field}>
+                              <span className={styles.fieldLabel}>
+                                {guest.label}
+                              </span>
+                              <div className={styles.fieldValue}>
+                                {guest.value}
                               </div>
-                            )
-                          )}
-                          {voucherDetail?.other_passengers?.children_details?.map(
-                            (child, index) => (
-                              <div key={`c-${index}`} className={styles.field}>
-                                <span className={styles.fieldLabel}>
-                                  Child {index + 1}
-                                </span>
-                                <div className={styles.fieldValue}>
-                                  {child.first_name} {child.last_name}
-                                  {child.gender
-                                    ? ` · ${capitalize(child.gender)}`
-                                    : ""}
-                                </div>
+                            </div>
+                          ))}
+                          {guestSlots.childGuests.map((guest) => (
+                            <div key={guest.key} className={styles.field}>
+                              <span className={styles.fieldLabel}>
+                                {guest.label}
+                              </span>
+                              <div className={styles.fieldValue}>
+                                {guest.value}
                               </div>
-                            )
-                          )}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </section>
@@ -544,30 +599,13 @@ export default function Page() {
                     </table>
                   </div>
                   <div className={styles.totals}>
-                    <div className={styles.totalsRow}>
-                      <span>Subtotal</span>
-                      <strong>
-                        {currency} {Number(grandTotal).toFixed(2)}
-                      </strong>
-                    </div>
                     <div className={styles.grandTotal}>
                       <span>GRAND TOTAL</span>
                       <strong>
                         {currency} {Number(grandTotal).toFixed(2)}
                       </strong>
                     </div>
-                    {/* <div className={styles.totalsRow}>
-                      <span>Amount Paid</span>
-                      <strong>
-                        {currency} {Number(amountPaid).toFixed(2)}
-                      </strong>
-                    </div>
-                    <div className={styles.remainingBar}>
-                      <span>Remaining Balance</span>
-                      <strong>
-                        {currency} {Number(remaining).toFixed(2)}
-                      </strong>
-                    </div> */}
+                    <p className={styles.taxNote}>VAT and Taxes included</p>
                   </div>
                 </section>
 

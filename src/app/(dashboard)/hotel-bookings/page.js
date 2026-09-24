@@ -106,7 +106,7 @@ export default function HotelBookingsPage() {
       const data = await response.json();
       if (!data?.success && data?.message?.toLowerCase().includes("otp")) {
         router.push(
-          `/verify-otp?email=${encodeURIComponent(session?.user?.email || "")}`
+          "/login"
         );
         return;
       }

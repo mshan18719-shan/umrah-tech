@@ -644,6 +644,32 @@
   margin-bottom: 0;
 }
 
+.descriptionContent :global(h2),
+.descriptionContent :global(h3),
+.descriptionContent :global(h4) {
+  margin: 1.25rem 0 0.55rem;
+  color: #0d1e3d;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.descriptionContent :global(h2):first-child,
+.descriptionContent :global(h3):first-child,
+.descriptionContent :global(h4):first-child {
+  margin-top: 0;
+}
+
+.descriptionContent :global(ul),
+.descriptionContent :global(ol) {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.descriptionContent :global(li) {
+  margin-bottom: 0.35rem;
+}
+
 .descriptionClamped {
   display: -webkit-box;
   -webkit-line-clamp: 4;
@@ -652,6 +678,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-height: calc(1.7em * 4);
+}
+
+/* Block HTML (headings/paragraphs) — height clip keeps structure readable */
+.descriptionClampedHtml {
+  display: block;
+  max-height: 9.35em; /* ~5.5 lines at 1.7 line-height */
+  overflow: hidden;
+  position: relative;
 }
 
 .viewMoreBtn {

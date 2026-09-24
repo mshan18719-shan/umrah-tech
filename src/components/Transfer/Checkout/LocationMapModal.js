@@ -1,7 +1,7 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Modal } from '@mantine/core';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { notifications } from '@mantine/notifications';
 
 const mapContainerStyle = {
@@ -14,37 +14,67 @@ const defaultCenter = {
     lng: -0.1278
 };
 
-export default function LocationMapModal({ 
-    isOpen, 
-    onClose, 
-    onSelectLocation, 
+const DEFAULT_BOUND_RADIUS_KM = 100;
+
+function toNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
+function distanceKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export default function LocationMapModal({
+    isOpen,
+    onClose,
+    onSelectLocation,
     initialLocation,
     locationdata,
-    title = "Select Location"
+    title = "Select Location",
+    boundLat = null,
+    boundLng = null,
+    boundLabel = '',
+    boundRadiusKm = DEFAULT_BOUND_RADIUS_KM,
 }) {
     // Helper to check if coordinate is valid
     const isValidCoord = (val) => val && val !== 'null' && val !== null && !isNaN(parseFloat(val));
-    
-    const [fromLocation, setFromLocation] = useState(() => {
+
+    const centerLat = toNumber(boundLat);
+    const centerLng = toNumber(boundLng);
+    const hasBounds = centerLat != null && centerLng != null;
+    const cityLabel = boundLabel || 'the selected city';
+
+    const [fromLocation] = useState(() => {
         const lat = isValidCoord(locationdata?.fromLat) ? parseFloat(locationdata.fromLat) : null;
         const lng = isValidCoord(locationdata?.fromLng) ? parseFloat(locationdata.fromLng) : null;
         return { lat, lng };
     });
-    
-    const [toLocation, setToLocation] = useState(() => {
-        let lat = isValidCoord(locationdata?.toLat) 
-            ? parseFloat(locationdata.toLat) 
+
+    const [toLocation] = useState(() => {
+        let lat = isValidCoord(locationdata?.toLat)
+            ? parseFloat(locationdata.toLat)
             : (isValidCoord(locationdata?.fromLat) ? parseFloat(locationdata.fromLat) : null);
-        let lng = isValidCoord(locationdata?.toLng) 
-            ? parseFloat(locationdata.toLng) 
+        let lng = isValidCoord(locationdata?.toLng)
+            ? parseFloat(locationdata.toLng)
             : (isValidCoord(locationdata?.fromLng) ? parseFloat(locationdata.fromLng) : null);
         return { lat, lng };
     });
-    
+
     const [selectedPosition, setSelectedPosition] = useState(null);
     const [address, setAddress] = useState('');
     const [center, setCenter] = useState(() => {
-        // Try to use fromLocation first, then defaultCenter
+        if (hasBounds) {
+            return { lat: centerLat, lng: centerLng };
+        }
         if (isValidCoord(locationdata?.fromLat) && isValidCoord(locationdata?.fromLng)) {
             return {
                 lat: parseFloat(locationdata.fromLat),
@@ -55,6 +85,21 @@ export default function LocationMapModal({
     });
     const [isLoadingAddress, setIsLoadingAddress] = useState(false);
     const mapRef = useRef(null);
+
+    const isWithinBound = (lat, lng) => {
+        if (!hasBounds) return true;
+        if (lat == null || lng == null) return false;
+        return distanceKm(centerLat, centerLng, Number(lat), Number(lng)) <= boundRadiusKm;
+    };
+
+    const rejectOutOfBound = () => {
+        notifications.show({
+            title: 'Outside search area',
+            message: `Please select a location within or near ${cityLabel}.`,
+            color: 'red',
+            autoClose: 4500,
+        });
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -70,68 +115,71 @@ export default function LocationMapModal({
                 });
                 setAddress(initialLocation.address || '');
             } else {
+                // Prefer explicit bound center for this picker type
+                if (hasBounds) {
+                    setCenter({ lat: centerLat, lng: centerLng });
+                    return;
+                }
+
                 // Determine which location to use based on the modal title
                 const isPickup = title?.toLowerCase().includes('pickup');
                 let targetLocation = null;
-                
+
                 if (isPickup && fromLocation.lat && fromLocation.lng) {
-                    // For pickup, use fromLocation
                     targetLocation = {
                         lat: fromLocation.lat,
                         lng: fromLocation.lng
                     };
                 } else if (!isPickup && toLocation.lat && toLocation.lng) {
-                    // For dropoff, use toLocation
                     targetLocation = {
                         lat: toLocation.lat,
                         lng: toLocation.lng
                     };
                 } else if (fromLocation.lat && fromLocation.lng) {
-                    // Fallback to fromLocation
                     targetLocation = {
                         lat: fromLocation.lat,
                         lng: fromLocation.lng
                     };
                 }
-                
+
                 if (targetLocation) {
                     setCenter(targetLocation);
-                } else {
-                    // Try to get user's current location as last resort
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                const userLocation = {
-                                    lat: position.coords.latitude,
-                                    lng: position.coords.longitude
-                                };
-                                setCenter(userLocation);
-                            },
-                            (error) => {
-                                console.log('Could not get current location:', error);
-                            }
-                        );
-                    }
+                } else if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            setCenter({
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            });
+                        },
+                        (error) => {
+                            console.log('Could not get current location:', error);
+                        }
+                    );
                 }
             }
         }
-    }, [isOpen, initialLocation, fromLocation, toLocation, title]);
+    }, [isOpen, initialLocation, fromLocation, toLocation, title, hasBounds, centerLat, centerLng]);
 
     const handleMapClick = async (event) => {
         const lat = event.latLng.lat();
         const lng = event.latLng.lng();
-        
+
+        if (!isWithinBound(lat, lng)) {
+            rejectOutOfBound();
+            return;
+        }
+
         setSelectedPosition({ lat, lng });
         setIsLoadingAddress(true);
 
-        // Reverse geocode to get address
         try {
             const geocoder = new window.google.maps.Geocoder();
             geocoder.geocode(
                 { location: { lat, lng } },
                 (results, status) => {
                     setIsLoadingAddress(false);
-                    
+
                     if (status === 'OK' && results[0]) {
                         setAddress(results[0].formatted_address);
                     } else {
@@ -162,12 +210,17 @@ export default function LocationMapModal({
             return;
         }
 
+        if (!isWithinBound(selectedPosition.lat, selectedPosition.lng)) {
+            rejectOutOfBound();
+            return;
+        }
+
         onSelectLocation({
             address: address || `${selectedPosition.lat.toFixed(6)}, ${selectedPosition.lng.toFixed(6)}`,
             lat: selectedPosition.lat,
             lng: selectedPosition.lng
         });
-        
+
         onClose();
     };
 
@@ -180,11 +233,16 @@ export default function LocationMapModal({
                 const location = results[0].geometry.location;
                 const lat = location.lat();
                 const lng = location.lng();
-                
+
+                if (!isWithinBound(lat, lng)) {
+                    rejectOutOfBound();
+                    return;
+                }
+
                 setSelectedPosition({ lat, lng });
                 setCenter({ lat, lng });
                 setAddress(results[0].formatted_address);
-                
+
                 if (mapRef.current) {
                     mapRef.current.panTo({ lat, lng });
                 }
@@ -199,6 +257,22 @@ export default function LocationMapModal({
         });
     };
 
+    const mapRestriction = useMemo(() => {
+        if (!hasBounds) return undefined;
+        const latDelta = boundRadiusKm / 111;
+        const cosLat = Math.cos((centerLat * Math.PI) / 180);
+        const lngDelta = boundRadiusKm / (111 * Math.max(cosLat, 0.01));
+        return {
+            latLngBounds: {
+                north: centerLat + latDelta,
+                south: centerLat - latDelta,
+                east: centerLng + lngDelta,
+                west: centerLng - lngDelta,
+            },
+            strictBounds: false,
+        };
+    }, [hasBounds, centerLat, centerLng, boundRadiusKm]);
+
     return (
         <Modal
             opened={isOpen}
@@ -210,7 +284,9 @@ export default function LocationMapModal({
             <div>
                 <div className="mb-3">
                     <label className="form-label small text-muted">
-                        Click on the map to select a location or search for an address
+                        {hasBounds
+                            ? `Select a location within or near ${cityLabel}`
+                            : 'Click on the map to select a location or search for an address'}
                     </label>
                     <div className="input-group">
                         <input
@@ -226,8 +302,8 @@ export default function LocationMapModal({
                                 }
                             }}
                         />
-                        <button 
-                            className="btn btn-outline-secondary" 
+                        <button
+                            className="btn btn-outline-secondary"
                             type="button"
                             onClick={handleSearchLocation}
                         >
@@ -247,18 +323,19 @@ export default function LocationMapModal({
                             streetViewControl: false,
                             mapTypeControl: true,
                             fullscreenControl: true,
+                            ...(mapRestriction ? { restriction: mapRestriction } : {}),
                         }}
                     >
                         {selectedPosition && (
-                            <Marker 
+                            <Marker
                                 position={selectedPosition}
-                                animation={window.google.maps.Animation.DROP}
+                                animation={window.google?.maps?.Animation?.DROP}
                             />
                         )}
                     </GoogleMap>
-                    
+
                     {isLoadingAddress && (
-                        <div 
+                        <div
                             className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
                             style={{ background: 'rgba(255,255,255,0.7)', pointerEvents: 'none' }}
                         >
@@ -278,13 +355,13 @@ export default function LocationMapModal({
                 )}
 
                 <div className="d-flex gap-2 justify-content-end mt-3">
-                    <button 
+                    <button
                         className="btn btn-outline-secondary"
                         onClick={onClose}
                     >
                         Cancel
                     </button>
-                    <button 
+                    <button
                         className="btn btn-primary"
                         onClick={handleConfirm}
                         disabled={!selectedPosition}

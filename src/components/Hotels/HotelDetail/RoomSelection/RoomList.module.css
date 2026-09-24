@@ -298,6 +298,16 @@
   background: #0D1E3D;
 }
 
+.roomTypeCardBtn:disabled {
+  background: #9aa8c2;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.roomTypeCardBtn:disabled:hover {
+  background: #9aa8c2;
+}
+
 .roomTypeCardBtnOutline {
   border: 1px solid #1B3B6F;
   background: #eef4ff;
@@ -793,19 +803,19 @@
 
 @media (max-width: 767px) {
   .roomTypeGrid {
-    display: flex;
-    overflow-x: auto;
-    gap: 0.75rem;
-    padding-bottom: 0.35rem;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+    overflow-x: visible;
+    padding-bottom: 0;
+    scroll-snap-type: none;
   }
 
   .roomTypeCard {
-    min-width: 280px;
-    max-width: 300px;
-    scroll-snap-align: start;
-    flex-shrink: 0;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    flex-shrink: 1;
   }
 
   .rateRowPrice .priceMobile {

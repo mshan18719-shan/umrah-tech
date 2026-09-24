@@ -10,6 +10,10 @@ import moment from "moment";
 import HotelLocationSelector from './HotelLocationSelector';
 import homeStyles from './FlightSearchHome.module.css';
 
+const MAX_ROOMS = 5;
+const MAX_ADULTS_PER_ROOM = 6;
+const MAX_CHILDREN_PER_ROOM = 4;
+
 export default function HotelSearch() {
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -55,6 +59,15 @@ export default function HotelSearch() {
   });
 
   const addRoom = () => {
+    if (rooms.length >= MAX_ROOMS) {
+      notifications.show({
+        autoClose: 2500,
+        title: "Room limit",
+        message: `You can add up to ${MAX_ROOMS} rooms.`,
+        color: "red",
+      });
+      return;
+    }
     setRooms([...rooms, { adults: 2, children: 0, childrenAges: [], errors: {} }]);
   };
 
@@ -70,13 +83,35 @@ export default function HotelSearch() {
     const updatedRooms = [...rooms];
 
     if (type === "adults") {
-      updatedRooms[index].adults = Math.max(
-        1,
-        updatedRooms[index].adults + delta
+      const next = updatedRooms[index].adults + delta;
+      if (delta > 0 && updatedRooms[index].adults >= MAX_ADULTS_PER_ROOM) {
+        notifications.show({
+          autoClose: 2500,
+          title: "Adult limit",
+          message: `Maximum ${MAX_ADULTS_PER_ROOM} adults per room.`,
+          color: "red",
+        });
+        return;
+      }
+      updatedRooms[index].adults = Math.min(
+        MAX_ADULTS_PER_ROOM,
+        Math.max(1, next)
       );
     } else if (type === "children") {
       const prevCount = updatedRooms[index].children;
-      const newCount = Math.max(0, prevCount + delta);
+      if (delta > 0 && prevCount >= MAX_CHILDREN_PER_ROOM) {
+        notifications.show({
+          autoClose: 2500,
+          title: "Child limit",
+          message: `Maximum ${MAX_CHILDREN_PER_ROOM} children per room.`,
+          color: "red",
+        });
+        return;
+      }
+      const newCount = Math.min(
+        MAX_CHILDREN_PER_ROOM,
+        Math.max(0, prevCount + delta)
+      );
 
       updatedRooms[index].children = newCount;
 
@@ -283,11 +318,21 @@ export default function HotelSearch() {
             </div>
             <div className="e301a14002">
               <div className="e301a14002">
-                <button onClick={() => handleRoomChange(index, "adults", -1)} className="adult-modal-btn">
+                <button
+                  type="button"
+                  onClick={() => handleRoomChange(index, "adults", -1)}
+                  className="adult-modal-btn"
+                  disabled={room.adults <= 1}
+                >
                   <FaMinus />
                 </button>
                 <span className="mx-2" aria-hidden="true">{room.adults}</span>
-                <button onClick={() => handleRoomChange(index, "adults", 1)} className="adult-modal-btn">
+                <button
+                  type="button"
+                  onClick={() => handleRoomChange(index, "adults", 1)}
+                  className="adult-modal-btn"
+                  disabled={room.adults >= MAX_ADULTS_PER_ROOM}
+                >
                   <FaPlus />
                 </button>
               </div>
@@ -299,11 +344,21 @@ export default function HotelSearch() {
             </div>
             <div className="e301a14002">
               <div className="e301a14002">
-                <button onClick={() => handleRoomChange(index, "children", -1)} className="adult-modal-btn">
+                <button
+                  type="button"
+                  onClick={() => handleRoomChange(index, "children", -1)}
+                  className="adult-modal-btn"
+                  disabled={room.children <= 0}
+                >
                   <FaMinus />
                 </button>
                 <span className="mx-2" aria-hidden="true">{room.children}</span>
-                <button onClick={() => handleRoomChange(index, "children", 1)} className="adult-modal-btn">
+                <button
+                  type="button"
+                  onClick={() => handleRoomChange(index, "children", 1)}
+                  className="adult-modal-btn"
+                  disabled={room.children >= MAX_CHILDREN_PER_ROOM}
+                >
                   <FaPlus />
                 </button>
               </div>
@@ -331,7 +386,11 @@ export default function HotelSearch() {
         </div>
       ))}
       <hr />
-      <p onClick={addRoom} className="small cursor-pointer text-end mb-1 text-primary">+ Add Room</p>
+      {rooms.length < MAX_ROOMS ? (
+        <p onClick={addRoom} className="small cursor-pointer text-end mb-1 text-primary">+ Add Room</p>
+      ) : (
+        <p className="small text-end mb-1 text-muted">Maximum {MAX_ROOMS} rooms</p>
+      )}
       <button onClick={ClosePopover} type="button" className="btn w-100 btn-outline-success">Done</button>
     </div>
   );

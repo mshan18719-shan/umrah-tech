@@ -1,66 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import FlightDetail from "./FlightDetail";
 import { useFlightList } from "./FlightListingContext";
 import moment from "moment";
 import airline from "@/util/airlines.json";
 import { useFlightStore } from "../Store/FlightStore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import Image from "next/image";
 import { FaPlane } from "react-icons/fa";
+import { notifications } from '@mantine/notifications';
 import { usePackageMode } from "../Store/PackageModeHelper";
 import { useHolidayPackageStore } from "../Store/HolidayPackageStore";
 import styles from "./FlightCard.module.css";
-
-function groupSegments(flight) {
-  if (!flight || !flight.segments) return [];
-  if (flight.trip_type === 'return') {
-    const midpoint = Math.ceil(flight.segments.length / 2);
-    return [
-      { segments: flight.segments.slice(0, midpoint), label: 'Departure' },
-      { segments: flight.segments.slice(midpoint), label: 'Return' }
-    ];
-  } else if (flight.trip_type === 'multicity') {
-    const legs = flight.search_criteria?.legs || [];
-    if (legs.length === 0) {
-      return flight.segments.map((segment, idx) => ({
-        segments: [segment],
-        label: `Flight ${idx + 1}`
-      }));
-    }
-
-    const groupedLegs = [];
-    let currentSegmentIndex = 0;
-
-    legs.forEach((leg, legIndex) => {
-      const legSegments = [];
-      const destination = leg.destination;
-
-      while (currentSegmentIndex < flight.segments.length) {
-        const segment = flight.segments[currentSegmentIndex];
-        legSegments.push(segment);
-        currentSegmentIndex++;
-
-        if (segment.arrival.airport_code === destination) {
-          break;
-        }
-      }
-
-      if (legSegments.length > 0) {
-        groupedLegs.push({
-          segments: legSegments,
-          label: `Flight ${legIndex + 1}`
-        });
-      }
-    });
-
-    return groupedLegs;
-  }
-  return [{ segments: flight.segments, label: 'Departure' }];
-}
+import {
+  groupSegments,
+  normalizeTripType,
+  buildRevalidatePayload,
+  normalizeRevalidateResponse,
+} from "./Checkout/flightHelpers";
 
 function getLegBadgeClass(tripType, idx) {
-  if (tripType === 'multicity') return styles.legBadgeOther;
+  if (normalizeTripType({ trip_type: tripType }) === 'multicity') return styles.legBadgeOther;
   return idx === 0 ? styles.legBadgeDeparture : styles.legBadgeReturn;
 }
 
@@ -77,7 +37,7 @@ function getStopLabel(group) {
   return `${stops} ${stops === 1 ? 'Stop' : 'Stops'}`;
 }
 
-function FlightCardItem({ flight, onSelect, includedBanner }) {
+function FlightCardItem({ flight, onSelect, includedBanner, selecting = false }) {
   const segmentGroups = groupSegments(flight);
   const totalAmount = Number(flight?.pricing?.total_amount || 0);
   const currency = flight?.pricing?.currency;
@@ -123,7 +83,7 @@ function FlightCardItem({ flight, onSelect, includedBanner }) {
                 className={`${styles.legSection} ${idx < segmentGroups.length - 1 ? styles.legSectionDivider : ''}`}
               >
                 <div className={styles.legHeader}>
-                  <span className={`${styles.legBadge} ${getLegBadgeClass(flight.trip_type, idx)}`}>
+                  <span className={`${styles.legBadge} ${getLegBadgeClass(flight.trip_type || flight?.search_criteria?.AirTripType, idx)}`}>
                     <FaPlane size={9} />
                     {group.label}
                   </span>
@@ -203,13 +163,11 @@ function FlightCardItem({ flight, onSelect, includedBanner }) {
             <div className={styles.priceBlock}>
               {showPerPerson ? (
                 <>
-                  <span className={styles.priceLabel}>Per person</span>
+                  <span className={styles.priceLabel}> Total </span>
                   <p className={styles.priceMain}>
-                    <PriceDisplay price={perPersonAmount} currency={currency} />
+                    <PriceDisplay price={totalAmount} currency={currency} />
                   </p>
-                  <span className={styles.priceTotal}>
-                    Total: <PriceDisplay price={totalAmount} currency={currency} />
-                  </span>
+                  <span className={styles.priceNote}>VAT and taxes included</span>
                 </>
               ) : (
                 <>
@@ -221,8 +179,14 @@ function FlightCardItem({ flight, onSelect, includedBanner }) {
               )}
             </div>
 
-            <button type="button" onClick={onSelect} className={styles.selectBtn}>
-              Select Flight
+            <button
+              type="button"
+              onClick={onSelect}
+              className={styles.selectBtn}
+              disabled={selecting}
+              aria-busy={selecting}
+            >
+              {selecting ? 'Validating…' : 'Select Flight'}
             </button>
           </div>
         </div>
@@ -236,17 +200,71 @@ export default function FlightCard() {
   const { setSelectedFlight } = useFlightStore();
   const { selectedData } = useHolidayPackageStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectingIndex, setSelectingIndex] = useState(null);
 
   const { isPackageMode, isEditMode, handleFlightSelection } = usePackageMode();
 
-  const handleFlightSelect = (index) => {
+  const handleFlightSelect = async (index) => {
     const selectedFlightData = flights[index];
     if (isPackageMode || isEditMode) {
       handleFlightSelection(selectedFlightData, true);
       return;
     }
-    setSelectedFlight(selectedFlightData);
-    router.push("/flights/checkout");
+
+    if (selectingIndex !== null) return;
+
+    setSelectingIndex(index);
+    try {
+      const payload = buildRevalidatePayload(selectedFlightData, {
+        adult: searchParams.get('adult'),
+        child: searchParams.get('child'),
+        infant: searchParams.get('infant'),
+      });
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/flights/revalidate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const response = await res.json();
+
+      if (!response?.success) {
+        notifications.show({
+          title: 'Flight unavailable',
+          message: response?.error?.message || 'Unable to revalidate this flight. Please try another.',
+          autoClose: 4000,
+          color: 'red',
+        });
+        return;
+      }
+
+      const revalidated = normalizeRevalidateResponse(response, selectedFlightData, payload);
+      if (!revalidated?.segments?.length) {
+        notifications.show({
+          title: 'Flight unavailable',
+          message: 'Revalidated flight data was incomplete. Please try another flight.',
+          autoClose: 4000,
+          color: 'red',
+        });
+        return;
+      }
+
+      setSelectedFlight(revalidated);
+      router.push('/flights/checkout');
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        title: 'Error',
+        message: 'A network error occurred while validating the flight. Please try again.',
+        autoClose: 4000,
+        color: 'red',
+      });
+    } finally {
+      setSelectingIndex(null);
+    }
   };
 
   const handleSameFlightSelect = (flight) => {
@@ -279,6 +297,7 @@ export default function FlightCard() {
         <FlightCardItem
           key={index}
           flight={item}
+          selecting={selectingIndex === index}
           onSelect={() => handleFlightSelect(index)}
         />
       ))}

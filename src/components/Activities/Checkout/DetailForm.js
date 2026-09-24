@@ -13,6 +13,93 @@ import { BsBank2 } from 'react-icons/bs';
 import Link from 'next/link';
 import Autocomplete from "react-google-autocomplete";
 import LeadDetail from '@/components/LeadDetail/LeadDetail';
+
+const NAME_MAX = 35;
+const EMAIL_MAX = 200;
+
+/** Mr/Master → male; Mrs/Miss/Ms → female; Dr (and empty) → null (manual). */
+function genderFromTitle(title) {
+    const t = String(title || '').trim().toUpperCase();
+    if (t === 'MR' || t === 'MSTR' || t === 'MASTER') return 'male';
+    if (t === 'MRS' || t === 'MISS' || t === 'MS') return 'female';
+    return null;
+}
+
+const normalizeName = (value) =>
+    String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const fullNameKey = (first, last) => {
+    const f = normalizeName(first);
+    const l = normalizeName(last);
+    if (!f || !l) return '';
+    return `${f}|${l}`;
+};
+
+/** Live / submit name uniqueness + first≠last + length (no required checks when requireFilled=false). */
+function computeNameErrors(leadFirst, leadLast, guests, { requireFilled = false } = {}) {
+    const leadErrors = {};
+    const guestErrors = guests.map(() => ({}));
+
+    const lf = String(leadFirst || '').trim();
+    const ll = String(leadLast || '').trim();
+    const leadKey = fullNameKey(lf, ll);
+
+    if (requireFilled && !lf) {
+        leadErrors.firstName = 'First name is required.';
+    } else if (lf.length > NAME_MAX) {
+        leadErrors.firstName = `First name must be ${NAME_MAX} characters or fewer.`;
+    }
+
+    if (requireFilled && !ll) {
+        leadErrors.lastName = 'Last name is required.';
+    } else if (ll.length > NAME_MAX) {
+        leadErrors.lastName = `Last name must be ${NAME_MAX} characters or fewer.`;
+    }
+
+    if (lf && ll && normalizeName(lf) === normalizeName(ll)) {
+        leadErrors.lastName = 'First name and last name cannot be the same.';
+    }
+
+    const guestKeys = guests.map((g) => fullNameKey(g.firstName, g.lastName));
+
+    guests.forEach((guest, index) => {
+        const gf = String(guest.firstName || '').trim();
+        const gl = String(guest.lastName || '').trim();
+        const gKey = guestKeys[index];
+        const ge = guestErrors[index];
+
+        if (requireFilled && !gf) {
+            ge.firstName = 'First name is required';
+        } else if (gf.length > NAME_MAX) {
+            ge.firstName = `First name must be ${NAME_MAX} characters or fewer`;
+        }
+
+        if (requireFilled && !gl) {
+            ge.lastName = 'Last name is required';
+        } else if (gl.length > NAME_MAX) {
+            ge.lastName = `Last name must be ${NAME_MAX} characters or fewer`;
+        }
+
+        if (gf && gl && normalizeName(gf) === normalizeName(gl)) {
+            ge.lastName = 'First name and last name cannot be the same';
+        }
+
+        if (gKey) {
+            if (leadKey && gKey === leadKey) {
+                ge.firstName = 'Name cannot match the lead passenger';
+                ge.lastName = 'Name cannot match the lead passenger';
+                if (!leadErrors.firstName) leadErrors.firstName = 'Name cannot match another traveler';
+                if (!leadErrors.lastName) leadErrors.lastName = 'Name cannot match another traveler';
+            } else if (guestKeys.some((key, i) => i !== index && key && key === gKey)) {
+                ge.firstName = 'Guest name cannot match another traveler';
+                ge.lastName = 'Guest name cannot match another traveler';
+            }
+        }
+    });
+
+    return { leadErrors, guestErrors };
+}
+
 export default function DetailForm({ activityDetail, onRegisterSubmit, onLoadingChange, totalGuests = 0, guestLabel = '' }) {
     const [errors, setErrors] = useState({});
     const router = useRouter();
@@ -108,12 +195,60 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
             : item.idd?.root,
     }));
     // ---- Handle field change ----
+    const syncLiveNameValidation = (nextForm, nextGuests) => {
+        const { leadErrors, guestErrors } = computeNameErrors(
+            nextForm.firstName,
+            nextForm.lastName,
+            nextGuests,
+            { requireFilled: false }
+        );
+
+        setErrors((prev) => {
+            const next = { ...prev };
+            // Replace live name errors; clear name fields when valid
+            if (leadErrors.firstName) next.firstName = leadErrors.firstName;
+            else delete next.firstName;
+            if (leadErrors.lastName) next.lastName = leadErrors.lastName;
+            else delete next.lastName;
+            return next;
+        });
+
+        setOtherGuestError(
+            nextGuests.map((_, index) => {
+                const live = guestErrors[index] || {};
+                return {
+                    ...(live.firstName ? { firstName: live.firstName } : {}),
+                    ...(live.lastName ? { lastName: live.lastName } : {}),
+                };
+            })
+        );
+    };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData({
+        const nextValue = type === "checkbox" ? checked : value;
+
+        // Gender is locked unless title is Dr (or empty)
+        if (name === 'gender' && genderFromTitle(formData.title)) {
+            return;
+        }
+
+        const nextForm = {
             ...formData,
-            [name]: type === "checkbox" ? checked : value,
-        });
+            [name]: nextValue,
+        };
+
+        if (name === 'title') {
+            const autoGender = genderFromTitle(nextValue);
+            if (autoGender) nextForm.gender = autoGender;
+        }
+
+        setFormData(nextForm);
+
+        if (name === 'firstName' || name === 'lastName') {
+            syncLiveNameValidation(nextForm, otherGuestDetail);
+            return;
+        }
 
         if (errors[name]) {
             setErrors((prev) => {
@@ -211,13 +346,22 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
     // ---- Validation ----
     const validateForm = () => {
         const newErrors = {};
-        const otherGuestErrors = [];
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
         if (!formData.title) newErrors.title = "Please select a title.";
-        if (!formData.firstName) newErrors.firstName = "First name is required.";
-        if (!formData.lastName) newErrors.lastName = "Last name is required.";
+
+        const { leadErrors, guestErrors: otherGuestErrors } = computeNameErrors(
+            formData.firstName,
+            formData.lastName,
+            otherGuestDetail,
+            { requireFilled: true }
+        );
+        Object.assign(newErrors, leadErrors);
+
         if (!formData.email) {
             newErrors.email = "Email is required.";
+        } else if (String(formData.email).length > EMAIL_MAX) {
+            newErrors.email = `Email must be ${EMAIL_MAX} characters or fewer.`;
         } else if (emailRegex.test(formData.email) === false) {
             newErrors.email = "Please enter a valid email address.";
         }
@@ -233,20 +377,8 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
         // if (!formData.expiry) newErrors.expiry = "Expiry date is required.";
         // if (!formData.cvv) newErrors.cvv = "CVV is required.";
         if (!formData.terms) newErrors.terms = "You must agree to terms.";
-        if (otherGuestDetail.length > 0) {
-            otherGuestDetail.forEach((guest, index) => {
-                const guestErrors = {};
-                if (!guest.firstName.trim()) {
-                    guestErrors.firstName = "First name is required";
-                }
-                if (!guest.lastName.trim()) {
-                    guestErrors.lastName = "Last name is required";
-                }
-                otherGuestErrors[index] = guestErrors;
-            });
 
-            setOtherGuestError(otherGuestErrors);
-        }
+        setOtherGuestError(otherGuestErrors);
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0 && otherGuestErrors.every(err => Object.keys(err).length === 0);
     };
@@ -270,6 +402,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
     const handleGuestRemove = (index) => {
         const updatedGuests = otherGuestDetail.filter((_, i) => i !== index);
         setOtherGuestDetail(updatedGuests);
+        syncLiveNameValidation(formData, updatedGuests);
     };
 
     const handleGuestChange = (e, index) => {
@@ -282,13 +415,18 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
         }
 
         const updatedGuests = [...otherGuestDetail];
-        updatedGuests[index][field] = value;
+        updatedGuests[index] = { ...updatedGuests[index], [field]: value };
         setOtherGuestDetail(updatedGuests);
+
+        if (field === 'firstName' || field === 'lastName') {
+            syncLiveNameValidation(formData, updatedGuests);
+            return;
+        }
 
         // Clear error if exists
         const updatedErrors = [...otherGuestError];
         if (updatedErrors[index]?.[field]) {
-            updatedErrors[index][field] = "";
+            updatedErrors[index] = { ...updatedErrors[index], [field]: "" };
             setOtherGuestError(updatedErrors);
         }
     };
@@ -570,6 +708,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                             className={`form-control ${errors.firstName ? "is-invalid" : ""}`}
                             placeholder="First Name"
                             autoComplete="off"
+                            maxLength={35}
                         />
                         {errors.firstName && (
                             <div className="invalid-feedback">{errors.firstName}</div>
@@ -587,6 +726,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                             className={`form-control ${errors.lastName ? "is-invalid" : ""}`}
                             placeholder="Last Name"
                             autoComplete="off"
+                            maxLength={35}
                         />
                         {errors.lastName && (
                             <div className="invalid-feedback">{errors.lastName}</div>
@@ -604,6 +744,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                             className={`form-control ${errors.email ? "is-invalid" : ""}`}
                             placeholder="you@example.com"
                             autoComplete="off"
+                            maxLength={200}
                         />
                         {errors.email && (
                             <div className="invalid-feedback">{errors.email}</div>
@@ -690,11 +831,11 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                         <label className="form-label">Gender*</label>
                         <div className="">
                             <div className="form-check form-check-inline">
-                                <input className="form-check-input" checked={formData.gender === "male"} type="radio" onChange={handleChange} name="gender" id="leadRadio1" value="male" />
+                                <input className="form-check-input" checked={formData.gender === "male"} type="radio" onChange={handleChange} name="gender" id="leadRadio1" value="male" disabled={!!genderFromTitle(formData.title)} />
                                 <label className="form-check-label" htmlFor="leadRadio1">Male</label>
                             </div>
                             <div className="form-check form-check-inline">
-                                <input className="form-check-input" checked={formData.gender === "female"} type="radio" onChange={handleChange} name="gender" id="leadRadio2" value="female" />
+                                <input className="form-check-input" checked={formData.gender === "female"} type="radio" onChange={handleChange} name="gender" id="leadRadio2" value="female" disabled={!!genderFromTitle(formData.title)} />
                                 <label className="form-check-label" htmlFor="leadRadio2">Female</label>
                             </div>
                         </div>
@@ -739,12 +880,12 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                         <div className="row g-3">
                             <div className="col-12 col-md-4">
                                 <label className="form-label">First Name</label>
-                                <input type="text" name="firstName" onChange={(e) => handleGuestChange(e, index)} value={item.firstName} placeholder="First Name" className={`form-control ${otherGuestError[index]?.firstName ? "is-invalid" : ""}`} />
+                                <input type="text" name="firstName" onChange={(e) => handleGuestChange(e, index)} value={item.firstName} placeholder="First Name" maxLength={35} className={`form-control ${otherGuestError[index]?.firstName ? "is-invalid" : ""}`} />
                                 {otherGuestError[index]?.firstName && <div className="invalid-feedback">{otherGuestError[index]?.firstName}</div>}
                             </div>
                             <div className="col-12 col-md-4">
                                 <label className="form-label">Last Name</label>
-                                <input type="text" name="lastName" onChange={(e) => handleGuestChange(e, index)} value={item.lastName} placeholder="Last Name" className={`form-control ${otherGuestError[index]?.lastName ? "is-invalid" : ""}`} />
+                                <input type="text" name="lastName" onChange={(e) => handleGuestChange(e, index)} value={item.lastName} placeholder="Last Name" maxLength={35} className={`form-control ${otherGuestError[index]?.lastName ? "is-invalid" : ""}`} />
                                 {otherGuestError[index]?.lastName && <div className="invalid-feedback">{otherGuestError[index]?.lastName}</div>}
                             </div>
                             <div className="col-12 col-md-4">

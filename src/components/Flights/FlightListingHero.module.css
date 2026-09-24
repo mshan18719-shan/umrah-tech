@@ -53,21 +53,28 @@
 }
 
 /*
-  Tall search (Multi-City): keep a light hero overlap, but put the panel
-  back in document flow so it no longer covers filters / results below.
+  Tall search (Multi-City): keep half-on-image overlap, but grow the hero
+  image height with the form and reserve margin so results stay clear.
 */
 .heroSectionTall {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--hero-margin-bottom, 12rem);
+  overflow: visible;
+}
+
+.heroSectionTall .heroImageWrap {
+  height: var(--hero-image-height, 360px);
+  transition: height 0.2s ease;
 }
 
 .heroSectionTall .searchPanel {
-  position: relative;
-  left: auto;
-  right: auto;
-  bottom: auto;
-  transform: none;
-  margin-top: -4.5rem;
-  padding-bottom: 0.25rem;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateY(45%);
+  margin-top: 0;
+  padding-bottom: 0;
+  z-index: 5;
 }
 
 @media (max-width: 1199px) {
@@ -84,12 +91,15 @@
   }
 
   .heroSectionTall {
-    margin-bottom: 1.25rem;
+    margin-bottom: var(--hero-margin-bottom, 13rem);
+  }
+
+  .heroSectionTall .heroImageWrap {
+    height: var(--hero-image-height, 320px);
   }
 
   .heroSectionTall .searchPanel {
-    transform: none;
-    margin-top: -3.75rem;
+    transform: translateY(48%);
   }
 }
 
@@ -107,11 +117,14 @@
   }
 
   .heroSectionTall {
-    margin-bottom: 1rem;
+    margin-bottom: var(--hero-margin-bottom, 14rem);
+  }
+
+  .heroSectionTall .heroImageWrap {
+    height: var(--hero-image-height, 280px);
   }
 
   .heroSectionTall .searchPanel {
-    transform: none;
-    margin-top: -3rem;
+    transform: translateY(50%);
   }
 }

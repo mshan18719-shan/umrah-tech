@@ -1,10 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import CookieConsent from "react-cookie-consent";
 import { useRouter } from "next/navigation";
 
 export default function VipCookieConsent() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Avoid SSR/client cookie mismatch (hydration error on invoice/voucher tabs)
+  if (!mounted) return null;
 
   return (
     <CookieConsent

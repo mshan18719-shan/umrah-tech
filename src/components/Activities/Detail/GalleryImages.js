@@ -65,7 +65,18 @@ export default function GalleryImages({ imageList }) {
         </div>
       )}
 
-      <Modal overlayProps={{ backgroundOpacity: 0.55, blur: 3, }} opened={modalOpen} onClose={handlemodalopenclose} size='auto' title="Activity Images">
+      <Modal
+        lockScroll
+        trapFocus
+        centered
+        withinPortal
+        zIndex={12000}
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+        opened={modalOpen}
+        onClose={handlemodalopenclose}
+        size="auto"
+        title="Activity Images"
+      >
         <Grid className='p-3' grow gutter="xs">
           <GridCol span={{ base: 12, md: 12, lg: 8 }}>
             <Grid grow gutter="xs">
@@ -102,6 +113,7 @@ export default function GalleryImages({ imageList }) {
         close={() => setBasicExampleOpen(false)}
         slides={imageList.map((img) => ({ src: img }))}
         index={currentIndex}
+        styles={{ root: { zIndex: 13000 } }}
       />
     </div>
   )

@@ -23,17 +23,99 @@ const normalizeChildren = (children) => {
         .filter(Boolean);
 };
 
-const resolveChildren = (item, rate, searchRooms) => {
-    const fromItem = normalizeChildren(item.children);
-    if (fromItem.length) return fromItem;
-
-    const fromRate = normalizeChildren(rate?.metadata?.search_request?.rooms?.[0]?.children);
-    if (fromRate.length) return fromRate;
-
-    return normalizeChildren(searchRooms?.[0]?.children);
+const resolveSeqIndex = (item, rate, room) => {
+    if (item?.seqNo === 0 || item?.seqNo === '0') return 0;
+    if (item?.seqNo != null && item?.seqNo !== '') {
+        const n = Number(item.seqNo);
+        if (Number.isFinite(n)) return n;
+    }
+    const fromRate = getRateSeqNo(rate, room);
+    if (fromRate != null) return fromRate;
+    return 0;
 };
 
-export default function RoomSummery({ selectedRooms, roomList, detail, variant = 'bottom' }) {
+/** Adults + children (with ages) for the matching search room / seq_no */
+const resolveOccupancy = (item, rate, room, searchRooms) => {
+    const idx = resolveSeqIndex(item, rate, room);
+    const meta = getRateMetadata(rate);
+
+    const fromSearch = searchRooms?.[idx];
+    if (fromSearch) {
+        return {
+            adults: Number(fromSearch.adults) || Number(item?.adults) || 1,
+            children: normalizeChildren(fromSearch.children),
+        };
+    }
+
+    const fromItemChildren = normalizeChildren(item?.children);
+    if (fromItemChildren.length || (item?.adults != null && Number(item.adults) > 0)) {
+        return {
+            adults: Number(item.adults) || Number(rate?.adults) || 2,
+            children: fromItemChildren,
+        };
+    }
+
+    const apiRoom = meta?.search_request?.rooms?.[idx]
+        ?? rate?.metadata?.search_request?.rooms?.[idx];
+    if (apiRoom) {
+        return {
+            adults: Number(apiRoom.adults) || Number(rate?.adults) || 2,
+            children: normalizeChildren(apiRoom.children),
+        };
+    }
+
+    return {
+        adults: Number(rate?.adults) || 2,
+        children: [],
+    };
+};
+
+const getRateMetadata = (rate) => {
+    const meta = rate?.metadata;
+    if (meta == null) return null;
+    if (typeof meta === "string") {
+        try {
+            return JSON.parse(meta);
+        } catch {
+            return null;
+        }
+    }
+    return typeof meta === "object" ? meta : null;
+};
+
+const getRateSeqNo = (rate, room) => {
+    const meta = getRateMetadata(rate);
+    const roomMeta = getRateMetadata(room);
+    const raw =
+        meta?.seq_no ??
+        meta?.search_request?.seq_no ??
+        meta?.search_request?.rooms?.[0]?.seq_no ??
+        rate?.seq_no ??
+        rate?.search_request?.seq_no ??
+        rate?.search_request?.rooms?.[0]?.seq_no ??
+        room?.seq_no ??
+        roomMeta?.seq_no;
+    if (raw === 0 || raw === "0") return 0;
+    if (raw == null || raw === "") return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+};
+
+const findRoomBySelection = (roomList, selected) => {
+    if (!selected) return null;
+    const byRate = roomList.find((r) =>
+        r?.rates?.some((rt) => rt.rate_key === selected.ratekey)
+    );
+    if (byRate) return byRate;
+    return roomList.find((r) => r.id === selected.roomId) || null;
+};
+
+const findRateBySelection = (room, selected) => {
+    if (!room || !selected) return null;
+    return room.rates?.find((rt) => rt.rate_key === selected.ratekey) || null;
+};
+
+export default function RoomSummery({ selectedRooms, roomList, detail, variant = 'bottom', hotelstonRequiredCount }) {
     const { handleHotelSelection, isPackageMode, isEditMode } = usePackageMode();
     const { packageConfig } = useHolidayPackageStore();
     const { setAvailabilityData } = useHotelStore();
@@ -58,9 +140,9 @@ export default function RoomSummery({ selectedRooms, roomList, detail, variant =
         let currencySymbol = '';
 
         selectedRooms.forEach(selected => {
-            const room = roomList.find(r => r.id === selected.roomId);
+            const room = findRoomBySelection(roomList, selected);
             if (room) {
-                const rate = room.rates.find(rt => rt.rate_key === selected.ratekey);
+                const rate = findRateBySelection(room, selected);
                 if (rate) {
                     currencySymbol = rate.currency || currencySymbol;
                     total += (Number(rate.price) * selected.qty);
@@ -81,7 +163,66 @@ export default function RoomSummery({ selectedRooms, roomList, detail, variant =
             });
             return;
         }
-        if (detail?.provider === 'custom' || isPackageMode || isEditMode) {
+
+        const isHotelston = String(detail?.provider || '').toLowerCase() === 'hotelston';
+        if (isHotelston) {
+            const seqsFromList = new Set();
+            (roomList || []).forEach((room) => {
+                (room?.rates || []).forEach((rate) => {
+                    const seq = getRateSeqNo(rate, room);
+                    if (seq != null) seqsFromList.add(seq);
+                });
+            });
+
+            let searchRooms = [];
+            try {
+                searchRooms = JSON.parse(localStorage.getItem('searchRoomSelection') || '[]');
+            } catch {
+                searchRooms = [];
+            }
+            if (!Array.isArray(searchRooms) || searchRooms.length === 0) {
+                searchRooms = search;
+            }
+
+            // Prefer unique seqs available on this hotel; never force stale search count above that
+            const requiredCount = seqsFromList.size > 0
+                ? seqsFromList.size
+                : Math.max(Number(hotelstonRequiredCount) || 0, searchRooms.length || 0, 1);
+
+            const selectedSeqs = new Set(
+                selectedRooms
+                    .map((r) => {
+                        if (r.seqNo === 0 || r.seqNo === '0') return 0;
+                        if (r.seqNo != null && r.seqNo !== '') {
+                            const n = Number(r.seqNo);
+                            return Number.isFinite(n) ? n : null;
+                        }
+                        const room = findRoomBySelection(roomList, r);
+                        const rate = findRateBySelection(room, r);
+                        return getRateSeqNo(rate, room);
+                    })
+                    .filter((n) => n != null && Number.isFinite(n))
+            );
+
+            const hasAllSeqs =
+                seqsFromList.size > 0
+                    ? [...seqsFromList].every((seq) => selectedSeqs.has(seq))
+                    : selectedRooms.length >= requiredCount;
+
+            if (!hasAllSeqs || selectedRooms.length < requiredCount) {
+                notifications.show({
+                    autoClose: 3500,
+                    title: "Incomplete Room Selection",
+                    message: `Please select ${requiredCount} room${requiredCount > 1 ? 's' : ''} to match your search (one per guest group).`,
+                    color: "red",
+                });
+                return;
+            }
+        }
+
+        // Guest-capacity check: package/edit only. Hotelston uses seq_no rules above.
+        // Custom and other providers can proceed with any selected room(s).
+        if (isPackageMode || isEditMode) {
             if (!CheckCustomHotelRoomSelection()) {
                 notifications.show({
                     autoClose: 3000,
@@ -97,21 +238,44 @@ export default function RoomSummery({ selectedRooms, roomList, detail, variant =
         if (storedData) {
             searchData = JSON.parse(storedData);
         }
+
+        let searchRooms = search;
+        try {
+            const storedSearch = JSON.parse(localStorage.getItem('searchRoomSelection') || '[]');
+            if (Array.isArray(storedSearch) && storedSearch.length > 0) {
+                searchRooms = storedSearch;
+            }
+        } catch {
+            /* keep search state */
+        }
+
+        // Send rooms in search / seq_no order so occupancy matches Room 1, Room 2, Room 3…
+        const orderedSelections = [...selectedRooms].sort((a, b) => {
+            const sa = a.seqNo === 0 || a.seqNo === '0'
+                ? 0
+                : (a.seqNo != null && a.seqNo !== '' ? Number(a.seqNo) : Number.MAX_SAFE_INTEGER);
+            const sb = b.seqNo === 0 || b.seqNo === '0'
+                ? 0
+                : (b.seqNo != null && b.seqNo !== '' ? Number(b.seqNo) : Number.MAX_SAFE_INTEGER);
+            return sa - sb;
+        });
+
         const request = {
             "provider": detail?.provider,
             "hotelId": detail?.hotel_code,
             "clientNationality": "",
             "checkIn": searchData?.check_in,
             "checkOut": searchData?.check_out,
-            "rooms": selectedRooms.map(item => {
-                const room = roomList.find(r => r.id === item.roomId);
-                const rate = room?.rates?.find(rt => rt.rate_key === item.ratekey);
+            "rooms": orderedSelections.map(item => {
+                const room = findRoomBySelection(roomList, item);
+                const rate = findRateBySelection(room, item);
+                const occupancy = resolveOccupancy(item, rate, room, searchRooms);
 
                 return {
                     "rateKey": item.ratekey,
                     "quantity": item.qty,
-                    "adults": String(item.adults) || '',
-                    "children": resolveChildren(item, rate, search),
+                    "adults": String(occupancy.adults),
+                    "children": occupancy.children,
                     "roomTypeId": String(item.roomTypeId ?? ''),
                     "boardTypeId": String(item.boardTypeId ?? ''),
                 };
@@ -135,11 +299,24 @@ export default function RoomSummery({ selectedRooms, roomList, detail, variant =
             setIsLoading(false);
             if (res.success) {
                 if (isPackageMode || isEditMode) {
-                    handleHotelSelection(detail, selectedRooms, true);
+                    handleHotelSelection(detail, orderedSelections, true);
                 } else {
                     res.data.provider = res.provider;
                     res.data.address = detail?.address;
                     res.data.main_images = detail?.main_images;
+                    // Keep search occupancy (incl. child ages) for checkout / invoice / voucher
+                    res.data.search_rooms = searchRooms;
+                    res.data.selected_occupancy = orderedSelections.map((item) => {
+                        const room = findRoomBySelection(roomList, item);
+                        const rate = findRateBySelection(room, item);
+                        const occupancy = resolveOccupancy(item, rate, room, searchRooms);
+                        return {
+                            rateKey: item.ratekey,
+                            seqNo: item.seqNo,
+                            adults: occupancy.adults,
+                            children: occupancy.children,
+                        };
+                    });
                     setAvailabilityData(res.data);
                     router.push('/hotels/checkout');
                 }
@@ -159,7 +336,7 @@ export default function RoomSummery({ selectedRooms, roomList, detail, variant =
 
     const CheckCustomHotelRoomSelection = () => {
         const filteredRooms = roomList.filter(item =>
-            selectedRooms.some(room => room?.roomId === item.id)
+            selectedRooms.some(room => room?.roomId === item.id || item?.rates?.some(rt => rt.rate_key === room?.ratekey))
         );
         const totals = filteredRooms.reduce(
             (acc, item) => {
@@ -203,27 +380,28 @@ export default function RoomSummery({ selectedRooms, roomList, detail, variant =
                     <div className="hotel-detail-summary-empty">No Room Selected.</div>
                 ) : (
                     <div className="hotel-detail-summary-body">
-                        {roomList.filter(item => selectedRooms.some(room => room?.roomId === item.id)).map((item, index) => (
-                            <div key={index}>
-                                {item?.rates.filter(rate => selectedRooms.some(room => room?.ratekey === rate.rate_key)).map((rateItem, rateIndex) => (
-                                    <div key={rateIndex} className="hotel-detail-summary-item">
-                                        <h6>{item.name} ({rateItem.board_name})</h6>
-                                        <div className="hotel-detail-summary-line">
-                                            <span><IoPerson className='icon' size={17} /> {Number(rateItem.adults) > 1 ? 'Adults' : 'Adult'}</span>
-                                            <span>{rateItem.adults}</span>
-                                        </div>
-                                        <div className="hotel-detail-summary-line">
-                                            <span><MdChildFriendly className='icon' size={15} /> {Number(rateItem.children) > 1 ? 'Children' : 'Child'}</span>
-                                            <span>{rateItem.children}</span>
-                                        </div>
-                                        <div className="hotel-detail-summary-line">
-                                            <span><IoMdPricetag className='icon' size={15} /> Price</span>
-                                            <span>{selectedRooms.find(room => room?.ratekey === rateItem.rate_key).qty} × <PriceDisplay price={rateItem.price} currency={rateItem?.currency} /></span>
-                                        </div>
+                        {selectedRooms.map((selected, index) => {
+                            const item = findRoomBySelection(roomList, selected);
+                            const rateItem = findRateBySelection(item, selected);
+                            if (!item || !rateItem) return null;
+                            return (
+                                <div key={`${selected.ratekey}-${index}`} className="hotel-detail-summary-item">
+                                    <h6>{item.name} ({rateItem.board_name})</h6>
+                                    <div className="hotel-detail-summary-line">
+                                        <span><IoPerson className='icon' size={17} /> {Number(rateItem.adults) > 1 ? 'Adults' : 'Adult'}</span>
+                                        <span>{rateItem.adults}</span>
                                     </div>
-                                ))}
-                            </div>
-                        ))}
+                                    <div className="hotel-detail-summary-line">
+                                        <span><MdChildFriendly className='icon' size={15} /> {Number(rateItem.children) > 1 ? 'Children' : 'Child'}</span>
+                                        <span>{rateItem.children}</span>
+                                    </div>
+                                    <div className="hotel-detail-summary-line">
+                                        <span><IoMdPricetag className='icon' size={15} /> Price</span>
+                                        <span>{selected.qty} × <PriceDisplay price={rateItem.price} currency={rateItem?.currency} /></span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                         <div className="hotel-detail-summary-meta">
                             <div className="hotel-detail-summary-line">
                                 <span>Total length of stay</span>

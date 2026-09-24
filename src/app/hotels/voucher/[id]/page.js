@@ -86,30 +86,78 @@ export default function Page() {
 
   const cancelCards = useMemo(() => {
     const cards = [];
-    const currency = voucherDetail?.pricing?.display_currency || "";
-    voucherDetail?.rooms_details?.forEach((item) => {
-      item?.rates?.forEach((rate) => {
-        if (
-          rate?.rateComments === "refundable" &&
-          rate?.cancellationPolicies?.length
-        ) {
-          rate.cancellationPolicies.forEach((policy, idx) => {
-            const from = moment.utc(policy.from);
-            cards.push({
-              when: from.isValid()
-                ? `${from.format("MMM DD").toUpperCase()} BEFORE`
-                : `${72 - idx * 24} HRS BEFORE`,
-              amount: `${currency} ${convertToCustomerCurrency(policy.amount)}`,
-              desc: "Fixed cancellation charge",
-            });
-          });
+    const displayCurrency = voucherDetail?.pricing?.display_currency || "";
+
+    const pushPolicy = (policy, roomName = "") => {
+      if (!policy) return;
+      const from = moment(policy.from || policy.from_date || policy.start_date);
+      const amountVal = policy.amount ?? policy.original_amount ?? policy.penalty_amount;
+      if (amountVal == null && !from.isValid()) return;
+      cards.push({
+        when: from.isValid()
+          ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+          : "CANCELLATION",
+        amount: `${displayCurrency} ${convertToCustomerCurrency(amountVal || 0)}`.trim(),
+        desc: roomName
+          ? `${roomName} — Fixed cancellation charge`
+          : "Fixed cancellation charge",
+      });
+    };
+
+    const topLevel =
+      voucherDetail?.cancellation_policies ||
+      voucherDetail?.cancellationPolicies ||
+      [];
+
+    if (Array.isArray(topLevel) && topLevel.length) {
+      topLevel.forEach((roomPolicy) => {
+        const roomName =
+          roomPolicy?.name ||
+          roomPolicy?.room_name ||
+          roomPolicy?.roomName ||
+          "";
+        const policies =
+          roomPolicy?.policies ||
+          roomPolicy?.cancellationPolicies ||
+          roomPolicy?.cancellation_policies ||
+          null;
+
+        if (Array.isArray(policies) && policies.length) {
+          policies.forEach((policy) => pushPolicy(policy, roomName));
+        } else if (roomPolicy?.amount != null || roomPolicy?.from) {
+          pushPolicy(roomPolicy, roomName);
         }
       });
-    });
+    }
+
     if (!cards.length) {
+      voucherDetail?.rooms_details?.forEach((item) => {
+        item?.rates?.forEach((rate) => {
+          const policies =
+            rate?.cancellationPolicies ||
+            rate?.cancellation_policies ||
+            [];
+          if (Array.isArray(policies) && policies.length) {
+            policies.forEach((policy) =>
+              pushPolicy(policy, item?.name || rate?.boardName || "")
+            );
+          }
+        });
+      });
+    }
+
+    const seen = new Set();
+    const unique = cards.filter((c) => {
+      const key = `${c.when}-${c.amount}-${c.desc}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (!unique.length) {
       return [{ nonRefundable: true }];
     }
-    return cards.slice(0, 3);
+    return unique;
   }, [voucherDetail]);
 
   const paymentStatus = (voucherDetail?.payment_status || "").toLowerCase();

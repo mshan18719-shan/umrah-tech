@@ -87,7 +87,7 @@ export default function Page() {
 
   // Only show Read more when clamped text actually overflows (~4 lines)
   useLayoutEffect(() => {
-    if (!plainDescription) {
+    if (!hotelDetails?.description && !plainDescription) {
       setNeedsReadMore(false);
       return;
     }
@@ -97,7 +97,7 @@ export default function Page() {
     if (!el) return;
 
     setNeedsReadMore(el.scrollHeight > el.clientHeight + 1);
-  }, [plainDescription, descExpanded, isHtmlDescription]);
+  }, [hotelDetails?.description, plainDescription, descExpanded, isHtmlDescription]);
 
   useEffect(() => {
     const storedData = localStorage.getItem('HotelSearchData');
@@ -191,19 +191,18 @@ export default function Page() {
             {(hotelDetails?.description || plainDescription) && (
               <section className="hotel-detail-card hotel-detail-about">
                 <h3 className="hotel-detail-about__title">About this hotel</h3>
-                {isHtmlDescription && descExpanded ? (
+                {isHtmlDescription ? (
                   <div
-                    className="hotel-detail-about__html"
+                    ref={descTextRef}
+                    className={`hotel-detail-about__html${!descExpanded ? " hotel-detail-about__html--truncated" : ""}`}
                     dangerouslySetInnerHTML={{ __html: hotelDetails.description }}
                   />
                 ) : (
                   <p
                     ref={descTextRef}
-                    className={`hotel-detail-about__text${
-                      (!descExpanded ? " hotel-detail-about__text--truncated" : "")
-                    }`}
+                    className={`hotel-detail-about__text${!descExpanded ? " hotel-detail-about__text--truncated" : ""}`}
                   >
-                    {isHtmlDescription ? plainDescription : hotelDetails.description}
+                    {hotelDetails.description}
                   </p>
                 )}
                 {needsReadMore && (
@@ -212,7 +211,7 @@ export default function Page() {
                     className="hotel-detail-link-btn"
                     onClick={() => setDescExpanded((prev) => !prev)}
                   >
-                    {descExpanded ? "Read less" : "Read more"}
+                    {descExpanded ? "View less" : "View more"}
                   </button>
                 )}
               </section>

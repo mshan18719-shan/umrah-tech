@@ -637,16 +637,19 @@
 
 .priceTableWrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 
 .priceTable {
   width: 100%;
+  min-width: 620px;
   border-collapse: collapse;
   margin-bottom: 16px;
+  table-layout: auto;
 }
 
 .priceTable th {
-  text-align: left;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.7px;
@@ -654,15 +657,12 @@
   color: #9AA3B5;
   padding: 8px 10px 12px;
   border-bottom: 1px solid #E8ECF3;
+  white-space: nowrap;
 }
 
-.priceTable th:nth-child(2),
-.priceTable th:nth-child(3),
-.priceTable th:nth-child(4),
-.priceTable td:nth-child(2),
-.priceTable td:nth-child(3),
-.priceTable td:nth-child(4) {
-  text-align: right;
+.priceTable th:first-child,
+.priceTable td:first-child {
+  text-align: left;
 }
 
 .priceTable td {
@@ -672,6 +672,7 @@
   color: #1a2332;
   border-bottom: 1px solid #F0F3F8;
   vertical-align: top;
+  white-space: nowrap;
 }
 
 .totals {
@@ -716,6 +717,15 @@
   font-size: 16px;
   font-weight: 800;
   color: #fff;
+}
+
+.taxNote {
+  margin: 8px 4px 0;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6B7280;
+  letter-spacing: 0.2px;
 }
 
 .remainingBar {
@@ -1162,6 +1172,7 @@
   letter-spacing: 0.4px;
   background: #E8F0FE;
   color: #1B3B6F;
+  white-space: nowrap;
 }
 
 .typeBadgeChild {
@@ -1307,7 +1318,7 @@
 .priceTable.navyTableHead td:nth-child(2),
 .priceTable.navyTableHead td:nth-child(3),
 .priceTable.navyTableHead td:nth-child(4) {
-  text-align: left;
+  text-align: right;
 }
 
 .excursionsSection {
@@ -1384,9 +1395,12 @@
 
 .addressRow {
   display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
   gap: 8px;
   margin-top: 12px;
   font-size: 13px;
+  text-align: right;
 }
 
 .addressLabel {

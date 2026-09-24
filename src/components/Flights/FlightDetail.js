@@ -10,7 +10,20 @@ import { AirportList } from '@/util/AirportList';
 import Image from 'next/image';
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import styles from './FlightDetail.module.css';
+import { groupSegments } from './Checkout/flightHelpers';
 
+const PASSENGER_TYPES = [
+    { key: 'adult', label: 'Adult' },
+    { key: 'child', label: 'Child' },
+    { key: 'infant', label: 'Infant' },
+];
+
+const POLICY_FIELDS = [
+    { key: 'change_before_departure', label: 'Change before departure', kind: 'change' },
+    { key: 'change_after_departure', label: 'Change after departure', kind: 'change' },
+    { key: 'refund_before_departure', label: 'Refund before departure', kind: 'refund' },
+    { key: 'refund_after_departure', label: 'Refund after departure', kind: 'refund' },
+];
 
 export default function FlightDetail({ flightdata, outlineBtn, showFlights, onClose, hideTrigger = false, linkTrigger = false }) {
     const [modalOpen, setModalOpen] = useState(false);
@@ -37,78 +50,6 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
         const next = !modalOpen;
         setModalOpen(next);
         if (!next && onClose) onClose();
-    };
-
-    const groupSegments = (flight) => {
-        if (!flight || !flight.segments) return [];
-        if (flight.trip_type === 'return') {
-            const legs = flight?.search_criteria?.legs || [];
-            if (legs.length === 0) {
-                const midpoint = Math.ceil(flight.segments.length / 2);
-                return [
-                    { segments: flight.segments.slice(0, midpoint), label: 'Departure' },
-                    { segments: flight.segments.slice(midpoint), label: 'Return' }
-                ];
-            }
-
-            const groupedLegs = [];
-            let segmentIndex = 0;
-            const labels = ['Departure', 'Return'];
-
-            legs.forEach((leg, legIndex) => {
-                const legSegments = [];
-                while (segmentIndex < flight.segments.length) {
-                    const segment = flight.segments[segmentIndex];
-                    legSegments.push(segment);
-                    segmentIndex++;
-                    if (segment.arrival?.airport_code === leg.destination) break;
-                }
-                if (legSegments.length) {
-                    groupedLegs.push({
-                        segments: legSegments,
-                        label: labels[legIndex] || `Flight ${legIndex + 1}`,
-                    });
-                }
-            });
-
-            return groupedLegs;
-        } else if (flight.trip_type === 'multicity') {
-            const legs = flight.search_criteria?.legs || [];
-            if (legs.length === 0) {
-                return flight.segments.map((segment, idx) => ({
-                    segments: [segment],
-                    label: `Flight ${idx + 1}`
-                }));
-            }
-
-            const groupedLegs = [];
-            let currentSegmentIndex = 0;
-
-            legs.forEach((leg, legIndex) => {
-                const legSegments = [];
-                const destination = leg.destination;
-
-                while (currentSegmentIndex < flight.segments.length) {
-                    const segment = flight.segments[currentSegmentIndex];
-                    legSegments.push(segment);
-                    currentSegmentIndex++;
-
-                    if (segment.arrival.airport_code === destination) {
-                        break;
-                    }
-                }
-
-                if (legSegments.length > 0) {
-                    groupedLegs.push({
-                        segments: legSegments,
-                        label: `Flight ${legIndex + 1}`
-                    });
-                }
-            });
-
-            return groupedLegs;
-        }
-        return [{ segments: flight.segments, label: 'Departure' }];
     };
 
     const getSectionLabel = (label) => {
@@ -140,14 +81,6 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
         return `${hours}h ${mins}m`;
     };
 
-    const formatBaggageSummary = (segments) => {
-        const firstWithBaggage = segments.find(s => s?.baggage_info?.adult);
-        if (!firstWithBaggage) return null;
-        const { cabin, checked } = firstWithBaggage.baggage_info.adult;
-        const parts = [checked, cabin].filter(Boolean);
-        return parts.length ? parts.join(' + ') : null;
-    };
-
     const getAirportMeta = (airportCode, segmentFallback) => {
         const airport = AirportList.find(item => item.airportCode === airportCode);
         if (airport) {
@@ -171,62 +104,212 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
         return `${formatDuration(layoverMinutes)} layover in ${city} (${code})`;
     };
 
-    const renderPenalties = () => {
-        if (!flightdata?.penalties) return null;
+    const getSegmentIndexes = (segments) => {
+        const allSegments = flightdata?.segments || [];
+        return segments
+            .map((seg) => allSegments.indexOf(seg))
+            .filter((idx) => idx >= 0);
+    };
+
+    const matchesSegmentList = (segmentIndexList, segmentIndexes) => {
+        if (!Array.isArray(segmentIndexList) || !segmentIndexList.length) return true;
+        const zeroBased = new Set(segmentIndexes);
+        const oneBased = new Set(segmentIndexes.map((idx) => idx + 1));
+        return segmentIndexList.some((idx) => zeroBased.has(idx) || oneBased.has(idx));
+    };
+
+    const pickPassengerEntry = (entries, segmentIndexes, legIndex = 0) => {
+        if (!entries) return null;
+        if (!Array.isArray(entries)) return entries;
+        if (!entries.length) return null;
+
+        const matched = entries.find((entry) =>
+            Array.isArray(entry?.segment_index_list)
+            && entry.segment_index_list.length
+            && matchesSegmentList(entry.segment_index_list, segmentIndexes)
+        );
+        if (matched) return matched;
+
+        const hasSegmentLists = entries.some(
+            (entry) => Array.isArray(entry?.segment_index_list) && entry.segment_index_list.length
+        );
+        if (hasSegmentLists) return null;
+
+        const firstSegIdx = segmentIndexes[0];
+        if (firstSegIdx != null && entries[firstSegIdx]) return entries[firstSegIdx];
+        if (entries[legIndex]) return entries[legIndex];
+        return entries[0];
+    };
+
+    const getBaggageSource = (segments) => {
+        const fromSegment = segments.find((seg) => seg?.baggage_info)?.baggage_info;
+        return fromSegment || flightdata?.baggage_info || null;
+    };
+
+    const formatBaggageText = (bag) => {
+        if (!bag || typeof bag !== 'object') return null;
+        const parts = [bag.checked, bag.cabin].filter(Boolean);
+        return parts.length ? parts.join(' + ') : null;
+    };
+
+    const getBaggageRows = (segments, legIndex = 0) => {
+        const baggageInfo = getBaggageSource(segments);
+        if (!baggageInfo) return [];
+
+        const segmentIndexes = getSegmentIndexes(segments);
+
+        return PASSENGER_TYPES.map(({ key, label }) => {
+            const entry = pickPassengerEntry(baggageInfo[key], segmentIndexes, legIndex);
+            const text = formatBaggageText(entry);
+            if (!text) return null;
+            return { key, label, text };
+        }).filter(Boolean);
+    };
+
+    const isAllowed = (policy) => {
+        if (!policy) return false;
+        const value = policy.allowed;
+        return value === true || value === 'true' || value === 1 || value === '1';
+    };
+
+    const formatPolicyValue = (policy, kind) => {
+        if (!isAllowed(policy)) {
+            return {
+                status: 'denied',
+                text: kind === 'refund' ? 'Not refundable' : 'Not permitted',
+            };
+        }
+
+        const amount = Number(policy.penalty_amount);
+        const hasCharge = policy.penalty_amount != null
+            && policy.penalty_currency
+            && !Number.isNaN(amount)
+            && amount > 0;
+
+        if (hasCharge) {
+            return {
+                status: 'charged',
+                amount: policy.penalty_amount,
+                currency: policy.penalty_currency,
+            };
+        }
+
+        return { status: 'free', text: 'Free' };
+    };
+
+    const hasPassengerPenalties = (penalties) => {
+        if (!penalties || typeof penalties !== 'object') return false;
+        return PASSENGER_TYPES.some(({ key }) => Array.isArray(penalties[key]) || (penalties[key] && typeof penalties[key] === 'object' && !Array.isArray(penalties[key]) && (penalties[key].refund_before_departure || penalties[key].change_before_departure)));
+    };
+
+    const getFlatPolicies = (penalties) => {
+        if (!penalties) return [];
+        return POLICY_FIELDS
+            .filter(({ key }) => penalties[key])
+            .map(({ key, label, kind }) => ({
+                key,
+                label,
+                kind,
+                value: formatPolicyValue(penalties[key], kind),
+            }));
+    };
+
+    const getPassengerPoliciesForLeg = (segmentIndexes, legIndex = 0) => {
+        const penalties = flightdata?.penalties;
+        if (!penalties) return [];
+
+        return PASSENGER_TYPES.map(({ key, label }) => {
+            const entry = pickPassengerEntry(penalties[key], segmentIndexes, legIndex);
+            if (!entry) return null;
+
+            const policies = POLICY_FIELDS
+                .filter(({ key: policyKey }) => entry[policyKey] != null)
+                .map(({ key: policyKey, label: policyLabel, kind }) => ({
+                    key: policyKey,
+                    label: policyLabel,
+                    kind,
+                    value: formatPolicyValue(entry[policyKey], kind),
+                }));
+
+            if (!policies.length) return null;
+            return { key, label, policies };
+        }).filter(Boolean);
+    };
+
+    const renderPolicyValue = (value) => {
+        if (value.status === 'free') {
+            return <span className={`${styles.policyValue} ${styles.textSuccess}`}>{value.text}</span>;
+        }
+        if (value.status === 'charged') {
+            return (
+                <span className={`${styles.policyValue} ${styles.textSuccess}`}>
+                    Fee of{' '}
+                    <strong>
+                        <PriceDisplay price={value.amount} currency={value.currency} />
+                    </strong>
+                </span>
+            );
+        }
+        return <span className={`${styles.policyValue} ${styles.textDanger}`}>{value.text}</span>;
+    };
+
+    const renderPolicyRows = (policies) => (
+        <div className={styles.policyRows}>
+            {policies.map((policy) => (
+                <div key={policy.key} className={styles.policyRow}>
+                    <span className={styles.policyRowLabel}>
+                        {policy.kind === 'refund' ? (
+                            <MdCancel className={styles.policyRowIcon} aria-hidden="true" />
+                        ) : (
+                            <MdSwapHoriz className={styles.policyRowIcon} aria-hidden="true" />
+                        )}
+                        {policy.label}
+                    </span>
+                    {renderPolicyValue(policy.value)}
+                </div>
+            ))}
+        </div>
+    );
+
+    const renderLegPolicies = (group, legIndex) => {
+        const penalties = flightdata?.penalties;
+        if (!penalties) return null;
+
+        const segmentIndexes = getSegmentIndexes(group.segments);
+        const sectionLabel = getSectionLabel(group.label);
+
+        if (hasPassengerPenalties(penalties)) {
+            const passengerPolicies = getPassengerPoliciesForLeg(segmentIndexes, legIndex);
+            if (!passengerPolicies.length) return null;
+
+            return (
+                <div className={styles.legPolicies}>
+                    <h6 className={styles.penaltiesTitle}>
+                        Cancellation & Change Policies — {sectionLabel}
+                    </h6>
+                    <div className={styles.passengerPolicyList}>
+                        {passengerPolicies.map((passenger) => (
+                            <div key={passenger.key} className={styles.passengerPolicyCard}>
+                                <div className={styles.passengerPolicyHeader}>{passenger.label}</div>
+                                {renderPolicyRows(passenger.policies)}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // Flat (legacy) penalties apply to the whole ticket — show once under the first leg
+        if (legIndex !== 0) return null;
+
+        const flatPolicies = getFlatPolicies(penalties);
+        if (!flatPolicies.length) return null;
 
         return (
-            <div className={styles.penaltiesSection}>
+            <div className={styles.legPolicies}>
                 <h6 className={styles.penaltiesTitle}>Cancellation & Change Policies</h6>
-                <div className={styles.penaltiesGrid}>
-                    {flightdata.penalties.refund_before_departure && (
-                        <div className={styles.penaltyCard}>
-                            <MdCancel className={styles.penaltyIcon} />
-                            <div>
-                                <span className={styles.penaltyLabel}>Cancellation Policy:</span>
-                                {flightdata.penalties.refund_before_departure.allowed ? (
-                                    <span className={`${styles.penaltyText} ${styles.textSuccess}`}>
-                                        {flightdata.penalties.refund_before_departure.penalty_amount &&
-                                            flightdata.penalties.refund_before_departure.penalty_currency ? (
-                                            flightdata.penalties.refund_before_departure.penalty_amount > 0 ? (
-                                                <>Cancellation allowed with a penalty fee of <strong><PriceDisplay price={flightdata.penalties.refund_before_departure.penalty_amount} currency={flightdata.penalties.refund_before_departure.penalty_currency} /></strong> before departure.</>
-                                            ) : (
-                                                <>Cancellation allowed at no additional cost before departure.</>
-                                            )
-                                        ) : (
-                                            <>Cancellation allowed before departure.</>
-                                        )}
-                                    </span>
-                                ) : (
-                                    <span className={`${styles.penaltyText} ${styles.textDanger}`}>This ticket is <strong>non-refundable</strong>. Cancellations are not permitted.</span>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {flightdata.penalties.change_before_departure && (
-                        <div className={styles.penaltyCard}>
-                            <MdSwapHoriz className={styles.penaltyIcon} />
-                            <div>
-                                <span className={styles.penaltyLabel}>Change/Exchange Policy:</span>
-                                {flightdata.penalties.change_before_departure.allowed ? (
-                                    <span className={`${styles.penaltyText} ${styles.textSuccess}`}>
-                                        {flightdata.penalties.change_before_departure.penalty_amount &&
-                                            flightdata.penalties.change_before_departure.penalty_currency ? (
-                                            flightdata.penalties.change_before_departure.penalty_amount > 0 ? (
-                                                <>Changes allowed with a fee of <strong><PriceDisplay price={flightdata.penalties.change_before_departure.penalty_amount} currency={flightdata.penalties.change_before_departure.penalty_currency} /></strong> before departure.</>
-                                            ) : (
-                                                <>Changes allowed at no additional cost before departure.</>
-                                            )
-                                        ) : (
-                                            <>Changes allowed before departure.</>
-                                        )}
-                                    </span>
-                                ) : (
-                                    <span className={`${styles.penaltyText} ${styles.textDanger}`}>Changes are <strong>not permitted</strong> for this ticket.</span>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                <div className={styles.passengerPolicyCard}>
+                    {renderPolicyRows(flatPolicies)}
                 </div>
             </div>
         );
@@ -235,7 +318,7 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
     const renderLegSection = (group, index) => {
         const firstSegment = group.segments[0];
         const lastSegment = group.segments[group.segments.length - 1];
-        const baggageSummary = formatBaggageSummary(group.segments);
+        const baggageRows = getBaggageRows(group.segments, index);
         const legDuration = getLegDurationMinutes(group.segments);
         const stopsLabel = getStopsLabel(group.segments);
         const dayDiff = moment(lastSegment.arrival.datetime).startOf('day').diff(
@@ -329,18 +412,24 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
                         <span>{firstSegment.cabin_class?.name || 'Economy'}</span>
                     </div>
                     <div className={styles.infoPill}>
-                        <FaSuitcase className={styles.infoPillIcon} aria-hidden="true" />
-                        <span>{baggageSummary || 'See airline policy'}</span>
-                    </div>
-                    {/* <div className={styles.infoPill}>
-                        <FaClock className={styles.infoPillIcon} aria-hidden="true" />
-                        <span>Duration: {formatDuration(legDuration)}</span>
-                    </div> */}
-                    <div className={styles.infoPill}>
                         <FaPlane className={styles.infoPillIcon} aria-hidden="true" />
                         <span>Flight No: {firstSegment.airline.code}{firstSegment.flight_number}</span>
                     </div>
                 </div>
+
+                {baggageRows.length > 0 && (
+                    <div className={styles.baggageList}>
+                        {baggageRows.map((row) => (
+                            <div key={row.key} className={styles.baggageItem}>
+                                <FaSuitcase className={styles.baggageIcon} aria-hidden="true" />
+                                <span className={styles.baggageLabel}>{row.label}</span>
+                                <span className={styles.baggageText}>{row.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {renderLegPolicies(group, index)}
             </div>
         );
     };
@@ -410,7 +499,6 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
 
                     <div className={styles.body}>
                         {groupSegments(flightdata).map((group, index) => renderLegSection(group, index))}
-                        {renderPenalties()}
                     </div>
 
                     <div className={styles.footer}>

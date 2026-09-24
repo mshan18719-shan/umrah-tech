@@ -84,11 +84,55 @@ export default function Page() {
     return parts.join(", ") || "—";
   };
 
+  const formatGuestName = (guest) => {
+    if (!guest) return "";
+    return `${guest.first_name || guest.firstName || ""} ${guest.last_name || guest.lastName || ""}`.trim();
+  };
+
+  const guestSlots = useMemo(() => {
+    const adultsBooked = Number(voucherDetail?.adults || 0);
+    const childrenBooked = Number(voucherDetail?.children || 0);
+    const additionalAdults =
+      voucherDetail?.other_passengers?.additional_adults || [];
+    const childrenDetails =
+      voucherDetail?.other_passengers?.children_details || [];
+
+    const adultGuests = [];
+    const extraAdultSlots = Math.max(
+      Math.max(0, adultsBooked - 1),
+      additionalAdults.length
+    );
+    for (let i = 0; i < extraAdultSlots; i++) {
+      const guest = additionalAdults[i];
+      const name = formatGuestName(guest);
+      adultGuests.push({
+        key: `adult-${i}`,
+        label: `Adult ${i + 2}`,
+        value: name
+          ? `${name}${guest?.gender ? ` · ${capitalize(guest.gender)}` : ""}`
+          : "Details not provided",
+      });
+    }
+
+    const childGuests = [];
+    const childSlots = Math.max(childrenBooked, childrenDetails.length);
+    for (let i = 0; i < childSlots; i++) {
+      const guest = childrenDetails[i];
+      const name = formatGuestName(guest);
+      childGuests.push({
+        key: `child-${i}`,
+        label: `Child ${i + 1}`,
+        value: name
+          ? `${name}${guest?.gender ? ` · ${capitalize(guest.gender)}` : ""}`
+          : "Details not provided",
+      });
+    }
+
+    return { adultGuests, childGuests };
+  }, [voucherDetail]);
+
   const guestCount =
-    Number(voucherDetail?.adults || 0) +
-    Number(voucherDetail?.children || 0) +
-    (voucherDetail?.other_passengers?.additional_adults?.length || 0) +
-    (voucherDetail?.other_passengers?.children_details?.length || 0);
+    Number(voucherDetail?.adults || 0) + Number(voucherDetail?.children || 0);
 
   const cancelCards = useMemo(() => {
     const policy = voucherDetail?.activity?.cancellation_policy;
@@ -498,10 +542,42 @@ export default function Page() {
                   </div>
                 </section>
 
-                {/* 03 Cancellation */}
+                {(guestSlots.adultGuests.length > 0 ||
+                  guestSlots.childGuests.length > 0) && (
+                  <section className={styles.section}>
+                    <div className={styles.sectionTitleRow}>
+                      <span className={styles.sectionNum}>03</span>
+                      <span className={styles.sectionIcon}>
+                        <FaUser size={11} />
+                      </span>
+                      <h3 className={styles.sectionTitle}>Guests</h3>
+                    </div>
+                    <div className={styles.bookingGrid}>
+                      {guestSlots.adultGuests.map((guest) => (
+                        <div key={guest.key}>
+                          <span className={styles.fieldLabel}>{guest.label}</span>
+                          <div className={styles.fieldValue}>{guest.value}</div>
+                        </div>
+                      ))}
+                      {guestSlots.childGuests.map((guest) => (
+                        <div key={guest.key}>
+                          <span className={styles.fieldLabel}>{guest.label}</span>
+                          <div className={styles.fieldValue}>{guest.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Cancellation */}
                 <section className={styles.section}>
                   <div className={styles.sectionTitleRow}>
-                    <span className={styles.sectionNum}>03</span>
+                    <span className={styles.sectionNum}>
+                      {guestSlots.adultGuests.length > 0 ||
+                      guestSlots.childGuests.length > 0
+                        ? "04"
+                        : "03"}
+                    </span>
                     <span className={styles.sectionIcon}>
                       <IoWarningOutline size={13} />
                     </span>
@@ -529,10 +605,15 @@ export default function Page() {
                   </div>
                 </section>
 
-                {/* 04 */}
+                {/* Special / Important */}
                 <section className={styles.section}>
                   <div className={styles.sectionTitleRow}>
-                    <span className={styles.sectionNum}>04</span>
+                    <span className={styles.sectionNum}>
+                      {guestSlots.adultGuests.length > 0 ||
+                      guestSlots.childGuests.length > 0
+                        ? "05"
+                        : "04"}
+                    </span>
                     <span className={styles.sectionIcon}>
                       <FaCheckCircle size={11} />
                     </span>

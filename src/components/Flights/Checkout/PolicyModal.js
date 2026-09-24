@@ -6,8 +6,9 @@ import Image from 'next/image';
 import { IoMdClose } from 'react-icons/io';
 import airline from '@/util/airlines.json';
 import {
-    getCancellationAirlineFee,
-    getAirlineFeeLabel,
+    getLegBaggageRows,
+    getLegPassengerPolicyRows,
+    formatPolicyFeeLabel,
 } from './flightHelpers';
 import { useCurrency } from '@/util/currency';
 import styles from './PolicyModal.module.css';
@@ -28,71 +29,102 @@ export default function PolicyModal({ opened, onClose, flightDetails, segmentGro
     const { currency, rates } = useCurrency();
     const [activeTab, setActiveTab] = useState('baggage');
 
-    const penalties = flightDetails?.penalties;
-    const renderBaggageRows = (segment) => {
-        const baggageInfo = segment?.baggage_info;
-        if (!baggageInfo) return null;
-
-        return Object.entries(baggageInfo).map(([type, baggage]) => {
-            if (!baggage?.cabin && !baggage?.checked) return null;
-
-            return (
-                <React.Fragment key={`${segment.flight_number}-${type}`}>
-                    {baggage.cabin && (
-                        <tr>
-                            <td>Cabin Baggage</td>
-                            <td>{PASSENGER_TYPE_LABELS[type] || type}</td>
-                            <td>{baggage.cabin}</td>
-                        </tr>
-                    )}
-                    {baggage.checked && (
-                        <tr>
-                            <td>Checked Baggage</td>
-                            <td>{PASSENGER_TYPE_LABELS[type] || type}</td>
-                            <td>{baggage.checked}</td>
-                        </tr>
-                    )}
-                </React.Fragment>
-            );
-        });
+    const renderFeeCell = (penalty, kind) => {
+        const label = formatPolicyFeeLabel(penalty, kind, currency, rates);
+        if (label === 'Free') {
+            return <span className={styles.freeText}>Free</span>;
+        }
+        if (label === 'Not refundable' || label === 'Not permitted') {
+            return <span className={styles.deniedText}>{label}</span>;
+        }
+        return label;
     };
 
-    const renderPolicyTable = (type) => {
-        const penalty =
-            type === 'reschedule'
-                ? penalties?.change_before_departure
-                : penalties?.refund_before_departure;
+    const renderPolicyTable = (group, groupIndex, kind) => {
+        const rows = getLegPassengerPolicyRows(
+            flightDetails,
+            group.segments,
+            groupIndex,
+            kind
+        );
 
-        const airlineFee =
-            type === 'reschedule'
-                ? getAirlineFeeLabel(penalty, currency, rates)
-                : getCancellationAirlineFee(penalty, currency, rates);
+        const beforeLabel = kind === 'change' ? 'Change before departure' : 'Refund before departure';
+        const afterLabel = kind === 'change' ? 'Change after departure' : 'Refund after departure';
+        const title = kind === 'change' ? 'Reschedule charges' : 'Cancellation Policy';
+
+        if (!rows.length) {
+            return (
+                <>
+                    <h4 className={styles.sectionTitle}>{title}</h4>
+                    <p className={styles.emptyPolicy}>Policy details are not available for this flight.</p>
+                </>
+            );
+        }
 
         return (
             <>
-                <h4 className={styles.sectionTitle}>
-                    {type === 'reschedule' ? 'Reschedule charges' : 'Cancellation Policy'}
-                </h4>
+                <h4 className={styles.sectionTitle}>{title}</h4>
                 <div className={styles.tableWrap}>
                     <table className={styles.policyTable}>
                         <thead>
                             <tr>
                                 <th>Passenger Type</th>
-                                <th>Airline Fees (Per Passenger)</th>
-                                <th>Service Fees (Per Passenger)</th>
+                                <th>{beforeLabel}</th>
+                                <th>{afterLabel}</th>
+                                <th>Service Fees</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>Adult</td>
-                                <td>{airlineFee}</td>
-                                <td>
+                            {rows.map((row) => (
+                                <tr key={`${kind}-${groupIndex}-${row.key}`}>
+                                    <td>{PASSENGER_TYPE_LABELS[row.passenger] || row.passenger}</td>
+                                    <td>{renderFeeCell(row.before, kind)}</td>
+                                    <td>{renderFeeCell(row.after, kind)}</td>
+                                    <td>
                                         <span className={styles.freeText}>Free</span>
-                                </td>
-                            </tr>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
+            </>
+        );
+    };
+
+    const renderBaggageTable = (group, groupIndex) => {
+        const rows = getLegBaggageRows(flightDetails, group.segments, groupIndex);
+
+        if (!rows.length) {
+            return <p className={styles.emptyPolicy}>Baggage details are not available for this flight.</p>;
+        }
+
+        return (
+            <>
+                <div className={styles.tableWrap}>
+                    <table className={styles.policyTable}>
+                        <thead>
+                            <tr>
+                                <th>Service Type</th>
+                                <th>Passenger Type</th>
+                                <th>Allowance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map((row) => (
+                                <tr key={`${groupIndex}-${row.key}`}>
+                                    <td>{row.service}</td>
+                                    <td>{PASSENGER_TYPE_LABELS[row.passenger] || row.passenger}</td>
+                                    <td>{row.detail}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <p className={styles.disclaimer}>
+                    The baggage allowance may vary according to the fare selected. Please check
+                    with the airline for the most accurate information.
+                </p>
             </>
         );
     };
@@ -103,7 +135,6 @@ export default function PolicyModal({ opened, onClose, flightDetails, segmentGro
                 <strong>Fare Rules :</strong> Please note that the fare selected is governed by its own set of rules
                 &amp; restrictions. For the purpose of your booking, the most restrictive set of rule will apply.
             </p>
-            
         </div>
     );
 
@@ -166,9 +197,6 @@ export default function PolicyModal({ opened, onClose, flightDetails, segmentGro
                                     )}
                                     <div>
                                         <span className={styles.flightLabel}>{group.label}</span>
-                                        {/* <h3 className={styles.routeTitle}>
-                                            {firstSegment.departure.city} - {lastSegment.arrival.city}
-                                        </h3> */}
                                         <p className={styles.routeSub}>
                                             {firstSegment.departure.city} ({firstSegment.departure.airport_code}) -{' '}
                                             {lastSegment.arrival.city} ({lastSegment.arrival.airport_code})
@@ -176,26 +204,9 @@ export default function PolicyModal({ opened, onClose, flightDetails, segmentGro
                                     </div>
                                 </div>
 
-                                {activeTab === 'baggage' && (
-                                    <>
-                                        <div className={styles.tableWrap}>
-                                            <table className={styles.policyTable}>
-                                                <tbody>
-                                                    {group.segments.map((segment, idx) =>
-                                                        renderBaggageRows(segment, idx)
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <p className={styles.disclaimer}>
-                                            The baggage allowance may vary according to the fare selected. Please check
-                                            with the airline for the most accurate information.
-                                        </p>
-                                    </>
-                                )}
-
-                                {activeTab === 'reschedule' && renderPolicyTable('reschedule')}
-                                {activeTab === 'cancellation' && renderPolicyTable('cancellation')}
+                                {activeTab === 'baggage' && renderBaggageTable(group, groupIndex)}
+                                {activeTab === 'reschedule' && renderPolicyTable(group, groupIndex, 'change')}
+                                {activeTab === 'cancellation' && renderPolicyTable(group, groupIndex, 'refund')}
                             </div>
                         );
                     })}

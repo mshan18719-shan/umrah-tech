@@ -37,9 +37,8 @@ export async function middleware(req) {
   // ── Step 2: Require OTP verification within the last 1 hour ─────────────
   const otpVerifiedAt = Number(token.otpVerifiedAt) || 0;
   if (!otpVerifiedAt || Date.now() - otpVerifiedAt > OTP_TTL_MS) {
-    const url = new URL("/verify-otp", req.url);
-    if (token.email) url.searchParams.set("email", token.email);
-    return NextResponse.redirect(url);
+    // OTP expired — send user back to email login to request a fresh OTP
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   return NextResponse.next();
