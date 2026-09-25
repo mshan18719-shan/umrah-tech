@@ -1,10 +1,10 @@
 'use client';
 
 import moment from 'moment';
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import styles from './aboutUs.module.css';
 import Link from 'next/link';
-const playfair = Playfair({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['500', '600', '700'],
 });

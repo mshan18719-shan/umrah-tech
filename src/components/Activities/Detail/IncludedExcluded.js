@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import styles from './IncludedExcluded.module.css';
 
-const playfair = Playfair({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['600', '700'],
 });

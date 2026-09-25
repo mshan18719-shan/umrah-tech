@@ -1,10 +1,10 @@
 'use client';
 
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import { FaShieldAlt, FaClock, FaStar, FaGlobe } from 'react-icons/fa';
 import styles from './Chooseus.module.css';
 
-const playfair = Playfair({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['600', '700'],
 });

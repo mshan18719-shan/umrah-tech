@@ -1,14 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import { FaStar } from 'react-icons/fa';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Navigation } from 'swiper/modules';
 import 'swiper/css/pagination';
 import styles from './Testimonials.module.css';
 
-const playfair = Playfair({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['600', '700'],
 });

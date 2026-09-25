@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import moment from 'moment';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import { FaArrowLeft, FaArrowRight, FaMapMarkerAlt, FaStar, FaHotel } from 'react-icons/fa';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Navigation } from 'swiper/modules';
@@ -12,7 +12,7 @@ import 'swiper/css/pagination';
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import styles from './TopHotels.module.css';
 
-const playfair = Playfair({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['600', '700'],
 });

@@ -7,11 +7,11 @@ import { useSearchParams, useParams } from 'next/navigation';
 import PackagePagination from './PackagePagination';
 import Link from 'next/link';
 import { FaHome } from 'react-icons/fa';
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import Filter from './Filter';
 import PackageSort, { sortPackages } from './PackageSort';
 
-const playfair = Playfair({
+const playfair = Playfair_Display({
     weight: '700',
     subsets: ['latin'],
 });

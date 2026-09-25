@@ -2,13 +2,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import { FaGlobe } from 'react-icons/fa';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import styles from './Destinations.module.css';
 
-const playfair = Playfair({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['600', '700'],
 });

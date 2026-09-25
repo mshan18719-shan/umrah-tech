@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import moment from 'moment';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -20,7 +20,7 @@ import 'swiper/css/pagination';
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import styles from './TopActivities.module.css';
 
-const playfair = Playfair({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['600', '700'],
 });

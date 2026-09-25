@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import moment from 'moment';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { GiGearStickPattern } from 'react-icons/gi';
 import { GoPerson } from 'react-icons/go';
@@ -15,7 +15,7 @@ import styles from './TopTransfers.module.css';
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import VehicleDetail from '@/components/Transfer/Listing/VehicleDetail';
 import { useTransferStore } from '@/components/Store/TransferStore';
-const playfair = Playfair({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['600', '700'],
 });

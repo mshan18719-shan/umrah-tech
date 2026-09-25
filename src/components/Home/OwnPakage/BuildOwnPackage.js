@@ -1,5 +1,5 @@
 'use client'
-import { Playfair } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import { PiCompassBold } from "react-icons/pi";
 import {
     FaMapMarkerAlt,
@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa";
 import styles from './BuildOwnPackage.module.css';
 
-const playfair = Playfair({
+const playfair = Playfair_Display({
     subsets: ['latin'],
     weight: ['600', '700'],
 });
