@@ -1,5 +1,4 @@
 'use client'
-import { Playfair_Display } from 'next/font/google';
 import { PiCompassBold } from "react-icons/pi";
 import {
     FaMapMarkerAlt,
@@ -12,11 +11,6 @@ import {
     FaCheckCircle,
 } from "react-icons/fa";
 import styles from './BuildOwnPackage.module.css';
-
-const playfair = Playfair_Display({
-    subsets: ['latin'],
-    weight: ['600', '700'],
-});
 
 const steps = [
     {
@@ -89,7 +83,7 @@ export default function BuildYourOwnPackage() {
                     <span className={styles.tag}>
                         <PiCompassBold /> Personalise Your Journey
                     </span>
-                    <h2 className={`${styles.title} ${playfair.className}`}>
+                    <h2 className={`${styles.title} font-playfair`}>
                         Build Your Own Umrah Package
                     </h2>
                     <p className={styles.subtitle}>
@@ -116,7 +110,7 @@ export default function BuildYourOwnPackage() {
                 {/* ── CTA Banner ── */}
                 <div className={`${styles.ctaBanner} d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between mt-5`}>
                     <div className={styles.ctaText}>
-                        <h3 className={`${styles.ctaTitle} ${playfair.className}`}>
+                        <h3 className={`${styles.ctaTitle} font-playfair`}>
                             Ready to design your perfect Umrah?
                         </h3>
                         <p className={styles.ctaSubtitle}>

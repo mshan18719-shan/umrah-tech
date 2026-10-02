@@ -56,3 +56,251 @@
 .animate-bounce-subtle {
   animation: bounce-subtle 2s ease-in-out infinite;
 }
+
+/* ==========================================================
+   Package Booking Loader – restyled to match the new site
+   (navy + sky-blue theme, soft tinted cards, rounded corners)
+   ========================================================== */
+.pbl-overlay {
+  --pbl-navy: #1b3a6b;
+  --pbl-navy-dark: #14305a;
+  --pbl-sky: #29a9e0;
+  --pbl-tint: #eef5fd;
+  --pbl-border: #d5e3f4;
+  --pbl-text: #1f2a44;
+  --pbl-muted: #6b7a90;
+  --pbl-success: #1f9d63;
+  --pbl-success-tint: #e8f7ef;
+  --pbl-danger: #d64545;
+  --pbl-danger-tint: #fdeeee;
+
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 30, 60, 0.6);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.pbl-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 28px 28px 22px;
+  background: #fff;
+  border: 1px solid var(--pbl-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(15, 30, 60, 0.35);
+  color: var(--pbl-text);
+}
+
+/* Header */
+.pbl-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.pbl-title {
+  margin: 0 0 6px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--pbl-navy);
+}
+
+.pbl-subtitle {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--pbl-muted);
+}
+
+/* Steps */
+.pbl-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.pbl-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--pbl-border);
+  border-radius: 14px;
+  transition: background-color 0.35s ease, border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.pbl-step-icon {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: var(--pbl-tint);
+  color: var(--pbl-navy);
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+.pbl-step-text {
+  text-align: left;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pbl-step-label {
+  margin: 0;
+  font-size: 0.97rem;
+  font-weight: 600;
+  color: var(--pbl-navy);
+}
+
+.pbl-step-status {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  color: var(--pbl-muted);
+}
+
+/* Pending */
+.pbl-step--pending {
+  background: #f8fafd;
+}
+.pbl-step--pending .pbl-step-icon {
+  background: #e6edf6;
+  color: #8fa0b8;
+}
+.pbl-step--pending .pbl-step-label {
+  color: #7d8ca3;
+}
+
+/* Active */
+.pbl-step--active {
+  background: var(--pbl-tint);
+  border-color: var(--pbl-sky);
+  box-shadow: 0 6px 18px rgba(41, 169, 224, 0.16);
+}
+.pbl-step--active .pbl-step-icon {
+  background: var(--pbl-navy);
+  color: #fff;
+}
+.pbl-step--active .pbl-step-status {
+  color: var(--pbl-sky);
+  font-weight: 600;
+}
+
+/* Spinner ring around the active icon */
+.pbl-step-ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: 15px;
+  border: 2px solid transparent;
+  border-top-color: var(--pbl-sky);
+  border-right-color: var(--pbl-sky);
+  animation: spin-smooth 1s linear infinite;
+  pointer-events: none;
+}
+
+/* Completed */
+.pbl-step--completed {
+  background: var(--pbl-success-tint);
+  border-color: #b9e4cf;
+}
+.pbl-step--completed .pbl-step-icon {
+  background: var(--pbl-success);
+  color: #fff;
+}
+.pbl-step--completed .pbl-step-status {
+  color: var(--pbl-success);
+  font-weight: 600;
+}
+
+/* Failed */
+.pbl-step--failed {
+  background: var(--pbl-danger-tint);
+  border-color: #f0b8b8;
+}
+.pbl-step--failed .pbl-step-icon {
+  background: var(--pbl-danger);
+  color: #fff;
+}
+.pbl-step--failed .pbl-step-status {
+  color: var(--pbl-danger);
+  font-weight: 600;
+}
+
+/* Progress bar */
+.pbl-progress {
+  height: 6px;
+  margin-bottom: 18px;
+  overflow: hidden;
+  background: #e6edf6;
+  border-radius: 999px;
+}
+
+.pbl-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pbl-navy), var(--pbl-sky));
+  background-size: 200% 100%;
+  transition: width 0.5s ease-out;
+  animation: pbl-shimmer 1.6s linear infinite;
+}
+.pbl-progress-bar--success {
+  background: var(--pbl-success);
+  animation: none;
+}
+.pbl-progress-bar--error {
+  background: var(--pbl-danger);
+  animation: none;
+}
+
+@keyframes pbl-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: 0 0; }
+}
+
+/* Error message */
+.pbl-error {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  text-align: left;
+  color: #a12d2d;
+  background: var(--pbl-danger-tint);
+  border: 1px solid #f0b8b8;
+  border-left: 4px solid var(--pbl-danger);
+  border-radius: 10px;
+}
+
+/* Footer */
+.pbl-footer {
+  margin: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--pbl-muted);
+}
+
+@media (max-width: 480px) {
+  .pbl-card { padding: 22px 18px 18px; border-radius: 16px; }
+  .pbl-title { font-size: 1.4rem; }
+  .pbl-step { padding: 12px; gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pbl-step-ring,
+  .pbl-progress-bar { animation: none; }
+}

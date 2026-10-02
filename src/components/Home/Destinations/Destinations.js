@@ -2,16 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Playfair_Display } from 'next/font/google';
 import { FaGlobe } from 'react-icons/fa';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import styles from './Destinations.module.css';
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
 
 // Static fallback data — replace with an API fetch once the endpoint is live.
 const destinations = [
@@ -127,7 +121,7 @@ export default function Destinations() {
             <FaGlobe className={styles.tagIcon} aria-hidden="true" />
             Destinations
           </span>
-          <h2 className={`${styles.title} ${playfair.className}`}>
+          <h2 className={`${styles.title} font-playfair`}>
             Popular Destinations
           </h2>
           <p className={styles.subtitle}>

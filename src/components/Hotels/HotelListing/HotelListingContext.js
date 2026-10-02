@@ -252,7 +252,18 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
             setMinPrice(min);
             setMaxPrice(max);
         } else {
+            // New search started (list cleared) → clear applied filters
             setConvertedHotels([]);
+            setSearch(null);
+            setStar([]);
+            setMeal([]);
+            setDistance([]);
+            setSort("recommended");
+            setVisibleCount(10);
+            setPriceRange([0, 0]);
+            setMinPrice(0);
+            setMaxPrice(0);
+            setResetPrice((prev) => prev + 1);
         }
     }, [hotels, rates, currency]);
 

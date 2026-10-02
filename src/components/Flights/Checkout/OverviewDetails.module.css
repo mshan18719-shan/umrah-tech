@@ -1,0 +1,136 @@
+/* Seat summary shown on the review step. Matches the checkout design system. */
+
+.formCard {
+    background: #fff;
+    border: 1px solid #e8e4de;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(15, 35, 70, 0.08);
+    padding: 1.25rem 1.35rem;
+}
+
+.section {
+    margin: 0;
+}
+
+.sectionHead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.sectionIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #eef5ff;
+    border: 1px solid #d6e4f7;
+    color: #1b3b6f;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1b3b6f;
+}
+
+.seatDetailBlocks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.seatDetailBlock {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.seatDetailHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0.7rem 1rem;
+    background: #f7f9fc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.seatDetailRoute {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1b3b6f;
+    line-height: 1.35;
+}
+
+.seatDetailCount {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+}
+
+.seatDetailList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.seatDetailRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0.7rem 1rem;
+}
+
+.seatDetailRow + .seatDetailRow {
+    border-top: 1px solid #f1f3f6;
+}
+
+.seatDetailName {
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    overflow-wrap: anywhere;
+}
+
+.seatDetailAssigned {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #1b3b6f;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.seatDetailPrice {
+    padding-left: 6px;
+    margin-left: 2px;
+    border-left: 1px solid rgba(255, 255, 255, 0.35);
+    font-weight: 600;
+}
+
+@media (max-width: 575px) {
+    .formCard {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .seatDetailRow {
+        flex-wrap: wrap;
+    }
+}

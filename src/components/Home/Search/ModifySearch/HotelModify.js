@@ -312,6 +312,7 @@ export default function HotelModify({ onSearch }) {
     queryParams.set('location', formData.location);
     queryParams.set('country', formData.country);
     localStorage.setItem('searchRoomSelection', JSON.stringify(roomsArray));
+    queryParams.set('_ts', String(Date.now()));
     if (onSearch) onSearch();
     router.push(`/hotels?${queryParams.toString()}`);
   };

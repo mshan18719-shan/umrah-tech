@@ -1,10 +1,10 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react'
-import { IoPeopleOutline, IoPersonOutline } from 'react-icons/io5';
+import React, { useState, useEffect } from 'react'
 import { countryListLocal } from '@/util/CountryList';
 import { Select } from '@mantine/core';
 import Link from 'next/link';
 import { ConvertPrice } from '@/components/Currency/ConvertPrice';
+import PriceDisplay from '@/components/Currency/PriceDisplay';
 import { useCurrency } from '@/util/currency';
 import { notifications } from '@mantine/notifications';
 import { DateInput } from '@mantine/dates';
@@ -12,96 +12,239 @@ import PackageBookingLoader from '@/components/Loader/PackageBookingLoader';
 import { useRouter } from 'next/navigation';
 import LeadDetail from '@/components/LeadDetail/LeadDetail';
 import { isValidPhoneNumber } from 'libphonenumber-js';
-import { getPassengerCount, getPassengerLabel } from './flightHelpers';
+import moment from 'moment';
+import { IoPeopleOutline, IoPersonOutline } from 'react-icons/io5';
+import { FaCreditCard } from 'react-icons/fa';
 import styles from './Form.module.css';
 
-const NAME_MAX = 35;
-const EMAIL_MAX = 200;
+const createEmptyPassenger = (id, type) => ({
+    id,
+    type,
+    title: '',
+    firstName: '',
+    lastName: '',
+    gender: 'male',
+    dob: null,
+    email: '',
+    country: '',
+    nationality: '',
+    phoneCode: '',
+    phone: '',
+    cardType: '',
+    cardNum: '',
+    cardExpiredDate: null,
+});
 
-/** Mr/Master → male; Mrs/Miss/Ms → female; Dr (and empty) → null (manual). */
-function genderFromTitle(title) {
-    const t = String(title || '').trim().toUpperCase();
-    if (t === 'MR' || t === 'MSTR' || t === 'MASTER') return 'male';
-    if (t === 'MRS' || t === 'MISS' || t === 'MS') return 'female';
-    return null;
-}
+const formatBookingDate = (value) => {
+    if (!value) return '';
+    // Prefer moment — Mantine DateInput values are reliable this way in this project
+    const m = moment(value);
+    if (m.isValid()) return m.format('YYYY-MM-DD');
 
-const normalizeName = (value) =>
-    String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
-
-const fullNameKey = (first, last) => {
-    const f = normalizeName(first);
-    const l = normalizeName(last);
-    if (!f || !l) return '';
-    return `${f}|${l}`;
+    if (typeof value === 'object' && typeof value.format === 'function') {
+        try {
+            return value.format('YYYY-MM-DD');
+        } catch {
+            /* continue */
+        }
+    }
+    if (typeof value === 'object' && typeof value.toDate === 'function') {
+        return formatBookingDate(value.toDate());
+    }
+    if (typeof value === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+        return value;
+    }
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        const y = value.getFullYear();
+        const mth = String(value.getMonth() + 1).padStart(2, '0');
+        const d = String(value.getDate()).padStart(2, '0');
+        return `${y}-${mth}-${d}`;
+    }
+    return String(value);
 };
 
-function computeNameErrors(leadFirst, leadLast, guests, { requireFilled = false } = {}) {
-    const leadErrors = {};
-    const guestErrors = guests.map(() => ({}));
+const normalizePhone = (phoneCode, phone) => {
+    let code = String(phoneCode || '').trim();
+    if (code && !code.startsWith('+')) code = `+${code}`;
+    const national = String(phone || '').replace(/\s+/g, '').replace(/^0+/, '');
+    return `${code}${national}`;
+};
 
-    const lf = String(leadFirst || '').trim();
-    const ll = String(leadLast || '').trim();
-    const leadKey = fullNameKey(lf, ll);
+const normalizeNationality = (code) => {
+    const value = String(code || '').trim().toUpperCase();
+    if (value === 'UK') return 'GB';
+    return value;
+};
 
-    if (requireFilled && !lf) {
-        leadErrors.firstName = 'First name is required';
-    } else if (lf.length > NAME_MAX) {
-        leadErrors.firstName = `First name must be ${NAME_MAX} characters or fewer`;
-    }
+const normalizeCardType = (value) => {
+    const raw = String(value || '').trim().toUpperCase();
+    // Passport (P) or Other (O) only — ID Card removed
+    if (raw === 'P' || raw === 'O') return raw;
+    return '';
+};
 
-    if (requireFilled && !ll) {
-        leadErrors.lastName = 'Last name is required';
-    } else if (ll.length > NAME_MAX) {
-        leadErrors.lastName = `Last name must be ${NAME_MAX} characters or fewer`;
-    }
+/** Sample booking payload uses "YYYY-MM-DD HH:mm" for segment datetimes */
+const normalizeSegmentDateTime = (value) => {
+    if (!value) return value;
+    const m = moment(value);
+    if (!m.isValid()) return value;
+    return m.format('YYYY-MM-DD HH:mm');
+};
 
-    if (lf && ll && normalizeName(lf) === normalizeName(ll)) {
-        leadErrors.lastName = 'First name and last name cannot be the same';
-    }
-
-    const guestKeys = guests.map((g) => fullNameKey(g.firstName, g.lastName));
-
-    guests.forEach((guest, index) => {
-        const gf = String(guest.firstName || '').trim();
-        const gl = String(guest.lastName || '').trim();
-        const gKey = guestKeys[index];
-        const ge = guestErrors[index];
-
-        if (requireFilled && !gf) {
-            ge.firstName = 'First name is required';
-        } else if (gf.length > NAME_MAX) {
-            ge.firstName = `First name must be ${NAME_MAX} characters or fewer`;
+const sanitizeBookingSegments = (segments) => {
+    if (!Array.isArray(segments)) return [];
+    return segments.map((seg) => {
+        if (!seg || typeof seg !== 'object') return seg;
+        const next = { ...seg };
+        if (next.departure && typeof next.departure === 'object') {
+            next.departure = {
+                ...next.departure,
+                datetime: normalizeSegmentDateTime(next.departure.datetime),
+                date: next.departure.date
+                    ? formatBookingDate(next.departure.date)
+                    : next.departure.date,
+            };
         }
-
-        if (requireFilled && !gl) {
-            ge.lastName = 'Last name is required';
-        } else if (gl.length > NAME_MAX) {
-            ge.lastName = `Last name must be ${NAME_MAX} characters or fewer`;
+        if (next.arrival && typeof next.arrival === 'object') {
+            next.arrival = {
+                ...next.arrival,
+                datetime: normalizeSegmentDateTime(next.arrival.datetime),
+                date: next.arrival.date
+                    ? formatBookingDate(next.arrival.date)
+                    : next.arrival.date,
+            };
         }
-
-        if (gf && gl && normalizeName(gf) === normalizeName(gl)) {
-            ge.lastName = 'First name and last name cannot be the same';
+        if (next.aircraft && typeof next.aircraft === 'object') {
+            next.aircraft = next.aircraft.name || next.aircraft.code || null;
         }
-
-        if (gKey) {
-            if (leadKey && gKey === leadKey) {
-                ge.firstName = 'Name cannot match the lead passenger';
-                ge.lastName = 'Name cannot match the lead passenger';
-                if (!leadErrors.firstName) leadErrors.firstName = 'Name cannot match another traveler';
-                if (!leadErrors.lastName) leadErrors.lastName = 'Name cannot match another traveler';
-            } else if (guestKeys.some((key, i) => i !== index && key && key === gKey)) {
-                ge.firstName = 'Guest name cannot match another traveler';
-                ge.lastName = 'Guest name cannot match another traveler';
-            }
-        }
+        return next;
     });
+};
 
-    return { leadErrors, guestErrors };
-}
+const getDepartureDate = (flight) => {
+    const raw =
+        flight?.segments?.[0]?.departure?.datetime ||
+        flight?.segments?.[0]?.departure?.date ||
+        null;
+    if (!raw) return new Date();
+    if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+        return new Date(raw.slice(0, 10));
+    }
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+};
 
-export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) {
-    // console.log('flightdata in checkout form', flightdata);
+const getAgeOnDate = (dob, onDate) => {
+    const birthStr = formatBookingDate(dob);
+    if (!birthStr || !/^\d{4}-\d{2}-\d{2}$/.test(birthStr)) return null;
+    const [by, bm, bd] = birthStr.split('-').map(Number);
+    const birth = new Date(by, bm - 1, bd);
+
+    let target;
+    if (onDate instanceof Date) {
+        target = onDate;
+    } else {
+        const targetStr = formatBookingDate(onDate);
+        if (targetStr && /^\d{4}-\d{2}-\d{2}$/.test(targetStr)) {
+            const [ty, tm, td] = targetStr.split('-').map(Number);
+            target = new Date(ty, tm - 1, td);
+        } else {
+            target = new Date(onDate);
+        }
+    }
+    if (Number.isNaN(birth.getTime()) || Number.isNaN(target.getTime())) return null;
+
+    let age = target.getFullYear() - birth.getFullYear();
+    const monthDiff = target.getMonth() - birth.getMonth();
+    const dayDiff = target.getDate() - birth.getDate();
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) age -= 1;
+    return age;
+};
+
+const getPassengerAgeError = (type, dob, departureDate) => {
+    const age = getAgeOnDate(dob, departureDate);
+    if (age === null) return 'Please select a valid date of birth';
+
+    if (type === 'infant_without_seat' || type === 'infant') {
+        if (age < 0 || age >= 2) {
+            return 'Infant date of birth must be under 2 years old on the departure date';
+        }
+        return '';
+    }
+    if (type === 'child') {
+        if (age < 2 || age >= 12) {
+            return 'Child date of birth must be between 2 and 11 years old on the departure date';
+        }
+        return '';
+    }
+    if (age < 12) {
+        return 'Adult date of birth must be 12 years or older on the departure date';
+    }
+    return '';
+};
+
+const resolveTripType = (flight) => {
+    const trip = String(flight?.trip_type || '').toLowerCase().replace(/[\s-]+/g, '_');
+    if (trip === 'one_way' || trip === 'oneway') return 'one_way';
+    if (trip === 'return' || trip === 'roundtrip' || trip === 'round_trip') return 'return';
+    if (trip === 'multicity' || trip === 'multi_city') return 'multi_city';
+
+    const airTripType = flight?.search_criteria?.AirTripType;
+    if (airTripType === 'MultiCity') return 'multi_city';
+    if (airTripType === 'OneWay') return 'one_way';
+    if (airTripType === 'Return' || airTripType === 'RoundTrip') return 'return';
+
+    // Fall back to segment count when trip_type is missing/unexpected
+    const segmentCount = Array.isArray(flight?.segments) ? flight.segments.length : 0;
+    if (segmentCount > 2) return 'multi_city';
+    if (segmentCount === 2) return 'return';
+    return 'one_way';
+};
+
+const resolvePassengerTypeForBooking = (type) => {
+    if (type === 'infant' || type === 'infant_without_seat') return 'infant_without_seat';
+    if (type === 'child') return 'child';
+    return 'adult';
+};
+
+const sortPassengersForBooking = (list) => {
+    const rank = (type) => {
+        if (type === 'adult') return 0;
+        if (type === 'child') return 1;
+        return 2;
+    };
+    return [...list].sort((a, b) => rank(a.type) - rank(b.type));
+};
+
+const getPassengerCountsFromFlight = (flight) => {
+    if (Array.isArray(flight?.passenger_pricing) && flight.passenger_pricing.length) {
+        const counts = { adult: 0, child: 0, infant: 0 };
+        flight.passenger_pricing.forEach((pp) => {
+            const type = pp.type || pp.passenger_type;
+            const qty = Number(pp.quantity) || 1;
+            if (type === 'adult') counts.adult += qty;
+            else if (type === 'child') counts.child += qty;
+            else if (type === 'infant' || type === 'infant_without_seat') counts.infant += qty;
+        });
+        if (counts.adult + counts.child + counts.infant > 0) return counts;
+    }
+
+    return {
+        adult: Number(flight?.adults ?? flight?.search_criteria?.adult ?? 0),
+        child: Number(flight?.children ?? flight?.search_criteria?.child ?? 0),
+        infant: Number(flight?.infants ?? flight?.search_criteria?.infant ?? 0),
+    };
+};
+
+export default function Form({
+    flightdata,
+    onPassengersChange,
+    mode = 'passengers',
+    onContinue,
+    ancillarySelections = null,
+    continueLoading = false,
+}) {
     const { currency, rates } = useCurrency();
     const router = useRouter();
     const [passengers, setPassengers] = useState([]);
@@ -117,161 +260,71 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         dob: null,
         gender: 'male',
         country: '',
+        nationality: '',
         phoneCode: '',
         phone: '',
-        documentType: '',
-        documentNumber: '',
-        documentExpiry: null,
+        cardType: '',
+        cardNum: '',
+        cardExpiredDate: null,
         type: 'adult'
     });
     const [errors, setErrors] = useState({});
     const [termsAccepted, setTermsAccepted] = useState(false);
-    const handleSubmitRef = useRef(null);
+    const [paymentMethod, setPaymentMethod] = useState('card');
 
-    const criteriaTotal =
-        (flightdata?.search_criteria?.adult || 0) +
-        (flightdata?.search_criteria?.child || 0) +
-        (flightdata?.search_criteria?.infant || 0);
-    const totalPassengers = getPassengerCount(flightdata) || criteriaTotal || passengers.length + 1;
-    const passengerLabel = getPassengerLabel(flightdata);
+    const isOverview = mode === 'overview';
+    const isPassengersStep = !isOverview;
 
     const countryOptions = countryListLocal.item.map((item) => ({
         label: item.name.common,
         value: item.name.common,
+        cca2: item.cca2,
         code: item.idd?.root && item.idd?.suffixes?.length
             ? item.idd.root + item.idd.suffixes[0]
             : item.idd?.root,
-        cca2: item.cca2 || '',
     }));
 
-    const formatBookingDate = (value) => {
-        if (!value) return '';
-        if (value instanceof Date && !Number.isNaN(value.getTime())) {
-            const year = value.getFullYear();
-            const month = String(value.getMonth() + 1).padStart(2, '0');
-            const day = String(value.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-        if (typeof value === 'string') {
-            if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
-            const parsed = new Date(value);
-            if (!Number.isNaN(parsed.getTime())) return formatBookingDate(parsed);
-        }
-        return String(value);
-    };
-
-    const getBookingTripType = (flight) => {
-        const airType = (flight?.search_criteria?.AirTripType || '').toString();
-        const tripType = (flight?.trip_type || '').toString().toLowerCase().replace(/[_\s-]/g, '');
-
-        if (airType === 'MultiCity' || tripType === 'multicity') return 'multi_city';
-        if (airType === 'OneWay' || tripType === 'oneway') return 'one_way';
-        if (airType === 'Return' || tripType === 'return' || tripType === 'roundtrip') return 'return';
-        return 'one_way';
-    };
-
-    const getCountryCode = (countryName) => {
-        if (!countryName) return '';
-        const match = countryOptions.find((c) => c.value === countryName);
-        return match?.cca2 || '';
-    };
-
-    const buildPassengerPayload = (passenger) => ({
-        type: passenger.type || 'adult',
-        title: (passenger.title || '').toLowerCase(),
-        firstName: passenger.firstName,
-        lastName: passenger.lastName,
-        dateOfBirth: formatBookingDate(passenger.dob),
-        gender: passenger.gender === 'male' ? 'm' : 'f',
-        email: passenger.email,
-        phone: `${passenger.phoneCode || ''}${passenger.phone || ''}`,
-        nationality: getCountryCode(passenger.country),
-        cardType: passenger.documentType || '',
-        cardNum: passenger.documentNumber || '',
-        cardExpiredDate: formatBookingDate(passenger.documentExpiry),
-    });
-
     useEffect(() => {
-        if (flightdata?.search_criteria) {
+        const counts = getPassengerCountsFromFlight(flightdata);
+        const adultCount = counts.adult;
+        const childCount = counts.child;
+        const infantCount = counts.infant;
+
+        if (!flightdata || adultCount + childCount + infantCount <= 0) return;
+
             const passengerList = [];
             let passengerId = 1;
-            const { adult, child, infant } = flightdata.search_criteria;
-            // Count passenger types
-            const counts = { adult: adult || 0, child: child || 0, infant: infant || 0 };
 
-            // Skip first adult as it's the lead passenger
-            if (counts.adult > 0) {
-                for (let i = 1; i < counts.adult; i++) {
-                    passengerList.push({
-                        id: passengerId++,
-                        type: 'adult',
-                        title: '',
-                        firstName: '',
-                        lastName: '',
-                        gender: 'male',
-                        dob: '',
-                        email: '',
-                        country: '',
-                        phoneCode: '',
-                        phone: '',
-                        documentType: '',
-                        documentNumber: '',
-                        documentExpiry: null,
-                    });
-                }
-            }
-
-            // Add children
-            if (counts.child > 0) {
-                for (let i = 0; i < counts.child; i++) {
-                    passengerList.push({
-                        id: passengerId++,
-                        type: 'child',
-                        title: '',
-                        firstName: '',
-                        lastName: '',
-                        gender: 'male',
-                        dob: '',
-                        email: '',
-                        country: '',
-                        phoneCode: '',
-                        phone: '',
-                        documentType: '',
-                        documentNumber: '',
-                        documentExpiry: null,
-                    });
-                }
-            }
-
-            // Add infants
-            if (counts.infant > 0) {
-                for (let i = 0; i < counts.infant; i++) {
-                    passengerList.push({
-                        id: passengerId++,
-                        type: 'infant_without_seat',
-                        title: '',
-                        firstName: '',
-                        lastName: '',
-                        gender: 'male',
-                        dob: '',
-                        country: '',
-                        phoneCode: '',
-                        email: '',
-                        phone: '',
-                        documentType: '',
-                        documentNumber: '',
-                        documentExpiry: null,
-                    });
-                }
+        for (let i = 1; i < adultCount; i++) {
+            passengerList.push(createEmptyPassenger(passengerId++, 'adult'));
+        }
+        for (let i = 0; i < childCount; i++) {
+            passengerList.push(createEmptyPassenger(passengerId++, 'child'));
+        }
+        for (let i = 0; i < infantCount; i++) {
+            passengerList.push(createEmptyPassenger(passengerId++, 'infant_without_seat'));
             }
 
             setPassengers(passengerList);
-        }
     }, [flightdata]);
+
+    useEffect(() => {
+        if (typeof onPassengersChange !== 'function') return;
+        onPassengersChange([
+            {
+                id: 'lead',
+                ...leadPassenger,
+                type: leadPassenger.type || 'adult',
+            },
+            ...passengers,
+        ]);
+    }, [leadPassenger, passengers, onPassengersChange]);
+
     useEffect(() => {
         const callCurrencyAPI = async () => {
-            if (!flightdata?.id) return;
-            var APiCurrency = currency;
+            const modelId = flightdata?.offer_id || flightdata?.id;
+            if (!modelId) return;
+            let APiCurrency = currency;
             if (Object.keys(rates).length === 1) {
                 APiCurrency = flightdata?.pricing?.currency;
             }
@@ -282,7 +335,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        model_id: flightdata?.id,
+                        model_id: modelId,
                         type: "flight",
                         display_currency: APiCurrency,
                         model_currency: flightdata?.pricing?.currency,
@@ -298,14 +351,117 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         };
 
         callCurrencyAPI();
-    }, [currency, flightdata?.id]);
+    }, [currency, flightdata?.id, flightdata?.offer_id, rates, flightdata?.pricing?.currency]);
 
     const getPassengerTypeLabel = (type) => {
         if (type === 'adult') return 'Adult';
         if (type === 'child') return 'Child';
-        if (type === 'infant_without_seat') return 'Infant';
+        if (type === 'infant_without_seat' || type === 'infant') return 'Infant';
         return type;
     };
+
+    const normalizeGuestName = (value) =>
+        String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ");
+
+    const foldGuestName = (value) =>
+        normalizeGuestName(value).replace(/[aeiou]/g, "");
+
+    const namesAreSame = (firstA, lastA, firstB, lastB) => {
+        const first1 = normalizeGuestName(firstA);
+        const last1 = normalizeGuestName(lastA);
+        const first2 = normalizeGuestName(firstB);
+        const last2 = normalizeGuestName(lastB);
+        if (!first1 || !last1 || !first2 || !last2) return false;
+        if (first1 === first2 && last1 === last2) return true;
+        const foldedFirst1 = foldGuestName(first1);
+        const foldedFirst2 = foldGuestName(first2);
+        return (
+            last1 === last2 &&
+            foldedFirst1 === foldedFirst2 &&
+            foldedFirst1.length >= 3
+        );
+    };
+
+    const NAME_CONFLICT_MSG =
+        "Lead guest first and last name cannot match another guest.";
+    const GUEST_CONFLICT_MSG = "This name is already used for another guest.";
+
+    const getDuplicateNameErrors = (leadFirst, leadLast, guests) => {
+        const guestErrors = guests.map(() => ({}));
+        const leadErrors = {};
+
+        guests.forEach((guest, index) => {
+            if (namesAreSame(leadFirst, leadLast, guest.firstName, guest.lastName)) {
+                guestErrors[index].firstName = NAME_CONFLICT_MSG;
+                guestErrors[index].lastName = NAME_CONFLICT_MSG;
+                leadErrors.firstName = NAME_CONFLICT_MSG;
+                leadErrors.lastName = NAME_CONFLICT_MSG;
+            }
+
+            guests.forEach((other, otherIndex) => {
+                if (otherIndex <= index) return;
+                if (
+                    namesAreSame(
+                        guest.firstName,
+                        guest.lastName,
+                        other.firstName,
+                        other.lastName,
+                    )
+                ) {
+                    guestErrors[index].firstName = GUEST_CONFLICT_MSG;
+                    guestErrors[index].lastName = GUEST_CONFLICT_MSG;
+                    guestErrors[otherIndex].firstName = GUEST_CONFLICT_MSG;
+                    guestErrors[otherIndex].lastName = GUEST_CONFLICT_MSG;
+                }
+            });
+        });
+
+        return { leadErrors, guestErrors };
+    };
+
+    useEffect(() => {
+        const { leadErrors, guestErrors } = getDuplicateNameErrors(
+            leadPassenger.firstName,
+            leadPassenger.lastName,
+            passengers,
+        );
+        setErrors((prev) => {
+            const next = { ...prev };
+            if (leadErrors.firstName) {
+                next.lead_firstName = leadErrors.firstName;
+                next.lead_lastName = leadErrors.lastName;
+            } else {
+                if (next.lead_firstName === NAME_CONFLICT_MSG) delete next.lead_firstName;
+                if (next.lead_lastName === NAME_CONFLICT_MSG) delete next.lead_lastName;
+            }
+            passengers.forEach((passenger, index) => {
+                const conflict = guestErrors[index]?.firstName;
+                if (conflict) {
+                    next[`passenger_${passenger.id}_firstName`] = conflict;
+                    next[`passenger_${passenger.id}_lastName`] = conflict;
+                } else {
+                    const firstKey = `passenger_${passenger.id}_firstName`;
+                    const lastKey = `passenger_${passenger.id}_lastName`;
+                    if (
+                        next[firstKey] === NAME_CONFLICT_MSG ||
+                        next[firstKey] === GUEST_CONFLICT_MSG
+                    ) {
+                        delete next[firstKey];
+                    }
+                    if (
+                        next[lastKey] === NAME_CONFLICT_MSG ||
+                        next[lastKey] === GUEST_CONFLICT_MSG
+                    ) {
+                        delete next[lastKey];
+                    }
+                }
+            });
+            return next;
+        });
+    }, [leadPassenger.firstName, leadPassenger.lastName, passengers]);
 
     const validateEmail = (email) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -314,39 +470,45 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
 
     const getFieldLabel = (name) => {
         const labels = {
-            documentType: 'Document type',
-            documentNumber: 'Document number',
-            documentExpiry: 'Document expiry',
+            title: 'Title',
             firstName: 'First name',
             lastName: 'Last name',
+            email: 'Email',
             dob: 'Date of birth',
+            gender: 'Gender',
+            country: 'Country',
+            phone: 'Phone number',
+            cardType: 'ID type',
+            cardNum: 'ID number',
+            cardExpiredDate: 'ID expiry date',
+            passportNumber: 'Passport number',
+            passportExpiry: 'Passport expiry',
         };
-        return labels[name] || name.replace(/([A-Z])/g, ' $1').trim();
+        if (labels[name]) return labels[name];
+        const spaced = name.replace(/([A-Z])/g, ' $1').trim().toLowerCase();
+        return spaced.charAt(0).toUpperCase() + spaced.slice(1);
     };
 
     const validateField = (name, value, isLeadPassenger = true, passengerData = null) => {
-        const isEmpty =
-            value == null
-            || value === ''
-            || (typeof value === 'string' && value.trim() === '');
-
-        if (isEmpty) {
+        if (value instanceof Date) {
+            if (Number.isNaN(value.getTime())) {
+                return `${getFieldLabel(name)} is required`;
+            }
+        } else if (value === null || value === undefined || String(value).trim() === '') {
             return `${getFieldLabel(name)} is required`;
         }
 
         if (name === 'firstName' || name === 'lastName') {
-            if (String(value).trim().length > NAME_MAX) {
-                return `${getFieldLabel(name)} must be ${NAME_MAX} characters or fewer`;
+            const length = String(value).trim().length;
+            if (length < 3 || length > 20) {
+                return `${getFieldLabel(name)} must be between 3 and 20 characters`;
             }
         }
-
-        if (name === 'email') {
-            if (String(value).length > EMAIL_MAX) {
-                return `Email must be ${EMAIL_MAX} characters or fewer`;
-            }
-            if (!validateEmail(value)) {
-                return 'Please enter a valid email address';
-            }
+        if (name === 'email' && String(value).length > 200) {
+            return 'Email cannot exceed 200 characters.';
+        }
+        if (name === 'email' && isLeadPassenger && !validateEmail(String(value).trim())) {
+            return 'Please enter a valid email address';
         }
 
         if (name === 'phone') {
@@ -354,25 +516,27 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
             const phone = isLeadPassenger ? leadPassenger.phone : passengerData?.phone;
 
             if (phoneCode && phone) {
-                const phoneNumber = isValidPhoneNumber(phoneCode + phone);
+                const phoneNumber = isValidPhoneNumber(normalizePhone(phoneCode, phone));
                 if (!phoneNumber) {
                     return 'Please enter a valid phone number';
                 }
             }
         }
 
-        if ((name === 'passportNumber' || name === 'documentNumber') && String(value).trim().length < 6) {
+        if (name === 'cardNum' && String(value).trim().length < 6) {
             return 'Document number must be at least 6 characters';
         }
 
-        if (name === 'documentExpiry') {
-            const expiryDate = value instanceof Date ? value : new Date(value);
-            if (Number.isNaN(expiryDate.getTime())) {
+        if (name === 'cardType' && !['P', 'O'].includes(String(value).toUpperCase())) {
+            return 'Please select a valid document type';
+        }
+
+        if (name === 'cardExpiredDate') {
+            const expiry = moment(value);
+            if (!expiry.isValid()) {
                 return 'Please enter a valid document expiry date';
             }
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (expiryDate < today) {
+            if (expiry.isBefore(moment().startOf('day'))) {
                 return 'Document expiry must be a future date';
             }
         }
@@ -380,69 +544,42 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         return '';
     };
 
-    const syncLiveNameValidation = (nextLead, nextPassengers) => {
-        const { leadErrors, guestErrors } = computeNameErrors(
-            nextLead.firstName,
-            nextLead.lastName,
-            nextPassengers,
-            { requireFilled: false }
-        );
-
-        setErrors((prev) => {
-            const next = { ...prev };
-            delete next.lead_firstName;
-            delete next.lead_lastName;
-            nextPassengers.forEach((p) => {
-                delete next[`passenger_${p.id}_firstName`];
-                delete next[`passenger_${p.id}_lastName`];
-            });
-
-            if (leadErrors.firstName) next.lead_firstName = leadErrors.firstName;
-            if (leadErrors.lastName) next.lead_lastName = leadErrors.lastName;
-
-            nextPassengers.forEach((p, index) => {
-                const ge = guestErrors[index] || {};
-                if (ge.firstName) next[`passenger_${p.id}_firstName`] = ge.firstName;
-                if (ge.lastName) next[`passenger_${p.id}_lastName`] = ge.lastName;
-            });
-
-            return next;
-        });
+    const getGenderFromTitle = (title) => {
+        const t = String(title || "").toUpperCase();
+        if (t === "MR") return "male";
+        if (t === "MRS" || t === "MISS" || t === "MS") return "female";
+        return null; // DR or empty — gender stays editable
     };
+
+    const isGenderLockedByTitle = (title) => getGenderFromTitle(title) !== null;
 
     const handleLeadPassengerChange = (field, value) => {
         // Only allow alphabets and spaces for name fields
         let finalValue = value;
         if (field === 'firstName' || field === 'lastName') {
-            finalValue = value.replace(/[^a-zA-Z\s]/g, '').slice(0, NAME_MAX);
-        }
-        if (field === 'email') {
-            finalValue = String(value).slice(0, EMAIL_MAX);
-        }
-
-        if (field === 'gender' && genderFromTitle(leadPassenger.title)) {
-            return;
+            finalValue = value.replace(/[^a-zA-Z\s]/g, '').slice(0, 20);
+        } else if (field === 'email') {
+            finalValue = String(value).slice(0, 200);
+        } else if (field === 'cardNum') {
+            finalValue = String(value).replace(/\s+/g, '').slice(0, 30);
         }
 
-        const nextLead = { ...leadPassenger, [field]: finalValue };
-        if (field === 'title') {
-            const autoGender = genderFromTitle(finalValue);
-            if (autoGender) nextLead.gender = autoGender;
-        }
+        setLeadPassenger((prev) => {
+            const updated = { ...prev, [field]: finalValue };
+            if (field === "title") {
+                const genderFromTitle = getGenderFromTitle(finalValue);
+                if (genderFromTitle) {
+                    updated.gender = genderFromTitle;
+                }
+            }
+            return updated;
+        });
 
-        setLeadPassenger(nextLead);
-
-        if (field === 'firstName' || field === 'lastName') {
-            syncLiveNameValidation(nextLead, passengers);
-            return;
-        }
-
-        // Clear error for this field
-        if (errors[`lead_${field}`]) {
+        if (errors[`lead_${field}`] && field !== 'firstName' && field !== 'lastName') {
             setErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors[`lead_${field}`];
-                if (field === 'title' && nextLead.gender) {
+                if (field === "title") {
                     delete newErrors.lead_gender;
                 }
                 return newErrors;
@@ -455,6 +592,7 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         setLeadPassenger(prev => ({
             ...prev,
             country: value,
+            nationality: country?.cca2 || '',
             phoneCode: country?.code || '',
         }));
 
@@ -487,39 +625,32 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         if (field === 'phone') {
             finalValue = value.replace(/[^0-9]/g, '');
         } else if (field === 'firstName' || field === 'lastName') {
-            // Only allow alphabets and spaces for name fields
-            finalValue = value.replace(/[^a-zA-Z\s]/g, '').slice(0, NAME_MAX);
+            finalValue = value.replace(/[^a-zA-Z\s]/g, '').slice(0, 20);
         } else if (field === 'email') {
-            finalValue = String(value).slice(0, EMAIL_MAX);
+            finalValue = String(value).slice(0, 200);
+        } else if (field === 'cardNum') {
+            finalValue = String(value).replace(/\s+/g, '').slice(0, 30);
         }
 
-        const current = passengers.find((p) => p.id === id);
-        if (field === 'gender' && genderFromTitle(current?.title)) {
-            return;
-        }
+        setPassengers((prev) =>
+            prev.map((p) => {
+                if (p.id !== id) return p;
+                const updated = { ...p, [field]: finalValue };
+                if (field === "title") {
+                    const genderFromTitle = getGenderFromTitle(finalValue);
+                    if (genderFromTitle) {
+                        updated.gender = genderFromTitle;
+                    }
+                }
+                return updated;
+            }),
+        );
 
-        const nextPassengers = passengers.map(p => {
-            if (p.id !== id) return p;
-            const updated = { ...p, [field]: finalValue };
-            if (field === 'title') {
-                const autoGender = genderFromTitle(finalValue);
-                if (autoGender) updated.gender = autoGender;
-            }
-            return updated;
-        });
-        setPassengers(nextPassengers);
-
-        if (field === 'firstName' || field === 'lastName') {
-            syncLiveNameValidation(leadPassenger, nextPassengers);
-            return;
-        }
-
-        // Clear error for this field
-        if (errors[`passenger_${id}_${field}`]) {
+        if (errors[`passenger_${id}_${field}`] && field !== 'firstName' && field !== 'lastName') {
             setErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors[`passenger_${id}_${field}`];
-                if (field === 'title') {
+                if (field === "title") {
                     delete newErrors[`passenger_${id}_gender`];
                 }
                 return newErrors;
@@ -530,7 +661,14 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
     const handlePassengerCountryChange = (id, value) => {
         const country = countryOptions.find(c => c.value === value);
         setPassengers(prev => prev.map(p =>
-            p.id === id ? { ...p, country: value, phoneCode: country?.code || '' } : p
+            p.id === id
+                ? {
+                    ...p,
+                    country: value,
+                    nationality: country?.cca2 || '',
+                    phoneCode: country?.code || '',
+                }
+                : p
         ));
 
         if (errors[`passenger_${id}_country`]) {
@@ -542,17 +680,24 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         }
     };
 
-    const validateForm = () => {
+    const validateForm = ({ requireTerms = true } = {}) => {
         const newErrors = {};
 
         // Validate lead passenger
         const leadFields = [
-            'title', 'firstName', 'lastName', 'email', 'dob', 'gender', 'country', 'phone',
-            'documentType', 'documentNumber', 'documentExpiry',
+            'title',
+            'firstName',
+            'lastName',
+            'email',
+            'dob',
+            'gender',
+            'country',
+            'phone',
+            'cardType',
+            'cardNum',
+            'cardExpiredDate',
         ];
         leadFields.forEach(field => {
-            // Skip generic name required — handled by computeNameErrors for richer messages
-            if (field === 'firstName' || field === 'lastName') return;
             const error = validateField(field, leadPassenger[field], true);
             if (error) {
                 newErrors[`lead_${field}`] = error;
@@ -562,11 +707,19 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         // Validate other passengers
         passengers.forEach(passenger => {
             const passengerFields = [
-                'title', 'firstName', 'lastName', 'gender', 'dob', 'country', 'email', 'phone',
-                'documentType', 'documentNumber', 'documentExpiry',
+                'title',
+                'firstName',
+                'lastName',
+                'gender',
+                'dob',
+                'country',
+                'email',
+                'phone',
+                'cardType',
+                'cardNum',
+                'cardExpiredDate',
             ];
             passengerFields.forEach(field => {
-                if (field === 'firstName' || field === 'lastName') return;
                 const error = validateField(field, passenger[field], false, passenger);
                 if (error) {
                     newErrors[`passenger_${passenger.id}_${field}`] = error;
@@ -574,22 +727,26 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
             });
         });
 
-        const { leadErrors, guestErrors } = computeNameErrors(
+        const { leadErrors, guestErrors } = getDuplicateNameErrors(
             leadPassenger.firstName,
             leadPassenger.lastName,
             passengers,
-            { requireFilled: true }
         );
-        if (leadErrors.firstName) newErrors.lead_firstName = leadErrors.firstName;
-        if (leadErrors.lastName) newErrors.lead_lastName = leadErrors.lastName;
-        passengers.forEach((p, index) => {
-            const ge = guestErrors[index] || {};
-            if (ge.firstName) newErrors[`passenger_${p.id}_firstName`] = ge.firstName;
-            if (ge.lastName) newErrors[`passenger_${p.id}_lastName`] = ge.lastName;
+        if (leadErrors.firstName) {
+            newErrors.lead_firstName = leadErrors.firstName;
+            newErrors.lead_lastName = leadErrors.lastName;
+        }
+        passengers.forEach((passenger, index) => {
+            if (guestErrors[index]?.firstName) {
+                newErrors[`passenger_${passenger.id}_firstName`] =
+                    guestErrors[index].firstName;
+                newErrors[`passenger_${passenger.id}_lastName`] =
+                    guestErrors[index].lastName;
+            }
         });
 
-        // Validate terms
-        if (!termsAccepted) {
+        // Validate terms (overview / confirm only)
+        if (requireTerms && !termsAccepted) {
             newErrors['terms'] = 'You must accept the terms and conditions';
         }
 
@@ -597,99 +754,333 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
         return Object.keys(newErrors).length === 0;
     };
 
+    const sumAncillaryAmount = (selections) => {
+        let total = 0;
+        const bags = selections?.baggage?.items;
+        if (Array.isArray(bags) && bags.length) {
+            total += bags.reduce((sum, bag) => sum + Number(bag?.price || 0), 0);
+        } else {
+            const byPassenger = selections?.baggage?.byPassenger || {};
+            Object.values(byPassenger).forEach((byLeg) => {
+                Object.values(byLeg || {}).forEach((bag) => {
+                    total += Number(bag?.price || 0);
+                });
+            });
+        }
+        Object.values(selections?.seats || {}).forEach((bySegment) => {
+            Object.values(bySegment || {}).forEach((seat) => {
+                total += Number(seat?.seatPrice || seat?.price || 0);
+            });
+        });
+        return total;
+    };
+
     const handleSubmit = async (e) => {
-        if (e?.preventDefault) e.preventDefault();
-        if (validateForm()) {
+        e.preventDefault();
+
+        if (isPassengersStep && typeof onContinue === 'function') {
+            if (validateForm({ requireTerms: false })) {
+                onContinue();
+            }
+            return;
+        }
+
+        if (validateForm({ requireTerms: true })) {
             setConfirmStatus("pending");
             setLoading(true);
             await new Promise(resolve => setTimeout(resolve, 1500));
             setConfirmStatus("validate");
 
-            // Calculate currency conversion
             const packageCurrency = flightdata?.pricing?.currency || 'GBP';
-            const grandTotal = Number(flightdata?.pricing?.total_amount);
+            const ancillaryExtra = sumAncillaryAmount(ancillarySelections);
+            const grandTotal = Number(flightdata?.pricing?.total_amount) + ancillaryExtra;
 
             let customerCurrency = currency;
             let customerExchangeRate = 1;
             let customerTotalAfterDiscount = grandTotal;
 
-            // If currencies are different, convert the price
             if (currency !== packageCurrency && rates[packageCurrency] && rates[currency]) {
                 const conversion = ConvertPrice(grandTotal, packageCurrency, currency, rates);
                 customerCurrency = conversion.newcurrency;
                 customerTotalAfterDiscount = parseFloat(conversion.newprice);
-
-                // Calculate exchange rate
                 customerExchangeRate = (rates[currency] / rates[packageCurrency]);
             } else {
-                // Same currency, use original values
                 customerCurrency = packageCurrency;
                 customerExchangeRate = 1;
                 customerTotalAfterDiscount = grandTotal;
             }
 
-            // Create passengers array with lead passenger at index 0
-            const passengersArray = [
-                buildPassengerPayload(leadPassenger),
+            const departureDate = getDepartureDate(flightdata);
+
+            const buildPassengerPayload = (passenger) => {
+                const nationality = normalizeNationality(
+                    passenger.nationality ||
+                    countryOptions.find((c) => c.value === passenger.country)?.cca2 ||
+                    ''
+                );
+
+                return {
+                    type: resolvePassengerTypeForBooking(passenger.type),
+                    title: String(passenger.title || '').toLowerCase(),
+                    firstName: String(passenger.firstName || '').trim(),
+                    lastName: String(passenger.lastName || '').trim(),
+                    dateOfBirth: formatBookingDate(passenger.dob),
+                    gender: passenger.gender === 'male' ? 'm' : 'f',
+                    email: String(passenger.email || '').trim(),
+                    phone: normalizePhone(passenger.phoneCode, passenger.phone),
+                    nationality,
+                    cardType: normalizeCardType(passenger.cardType),
+                    cardNum: String(passenger.cardNum || '').trim().toUpperCase(),
+                    cardExpiredDate: formatBookingDate(passenger.cardExpiredDate),
+                };
+            };
+
+            const rawPassengers = [
+                buildPassengerPayload({
+                    ...leadPassenger,
+                    type: leadPassenger.type || 'adult',
+                }),
                 ...passengers.map((passenger) => buildPassengerPayload(passenger)),
             ];
 
-            const rawTag = flightdata?.tag ?? flightdata?.fare_tag ?? null;
+            const passengersArray = sortPassengersForBooking(rawPassengers);
+
+            for (let i = 0; i < passengersArray.length; i++) {
+                const p = passengersArray[i];
+                const ageError = getPassengerAgeError(p.type, p.dateOfBirth, departureDate);
+                if (ageError) {
+                    setLoaderError(ageError);
+                    setConfirmStatus('error');
+                    setTimeout(() => setLoading(false), 800);
+                    notifications.show({
+                        title: 'Invalid date of birth',
+                        message: `${p.type === 'infant_without_seat' ? 'Infant' : p.type === 'child' ? 'Child' : 'Adult'}: ${ageError}`,
+                        color: 'red',
+                        autoClose: 5000,
+                    });
+                    return;
+                }
+
+                if (!p.dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(p.dateOfBirth)) {
+                    setLoaderError('Please select a valid Date of Birth for every passenger.');
+                    setConfirmStatus('error');
+                    setTimeout(() => setLoading(false), 800);
+                    return;
+                }
+                if (!p.cardExpiredDate || !/^\d{4}-\d{2}-\d{2}$/.test(p.cardExpiredDate)) {
+                    setLoaderError('Please select a valid Document Expiry for every passenger.');
+                    setConfirmStatus('error');
+                    setTimeout(() => setLoading(false), 800);
+                    return;
+                }
+                if (!p.nationality || p.nationality.length !== 2) {
+                    setLoaderError('Please select a valid nationality for every passenger.');
+                    setConfirmStatus('error');
+                    setTimeout(() => setLoading(false), 800);
+                    return;
+                }
+                if (!p.cardType || !['P', 'O'].includes(p.cardType)) {
+                    setLoaderError('Please select a valid document type (Passport or Other).');
+                    setConfirmStatus('error');
+                    setTimeout(() => setLoading(false), 800);
+                    return;
+                }
+                if (!p.phone || p.phone.length < 8) {
+                    setLoaderError('Please enter a valid phone number with country code.');
+                    setConfirmStatus('error');
+                    setTimeout(() => setLoading(false), 800);
+                    return;
+                }
+                if (!p.title) {
+                    setLoaderError('Please select a title for every passenger.');
+                    setConfirmStatus('error');
+                    setTimeout(() => setLoading(false), 800);
+                    return;
+                }
+            }
+
+            const expectedCounts = getPassengerCountsFromFlight(flightdata);
+            const actualCounts = passengersArray.reduce(
+                (acc, p) => {
+                    if (p.type === 'adult') acc.adult += 1;
+                    else if (p.type === 'child') acc.child += 1;
+                    else if (p.type === 'infant_without_seat' || p.type === 'infant') acc.infant += 1;
+                    return acc;
+                },
+                { adult: 0, child: 0, infant: 0 }
+            );
+
+            if (
+                actualCounts.adult !== expectedCounts.adult ||
+                actualCounts.child !== expectedCounts.child ||
+                actualCounts.infant !== expectedCounts.infant
+            ) {
+                setLoaderError(
+                    `Passenger count mismatch. Offer expects ${expectedCounts.adult} adult(s), ${expectedCounts.child} child(ren), ${expectedCounts.infant} infant(s).`
+                );
+                setConfirmStatus('error');
+                setTimeout(() => setLoading(false), 800);
+                notifications.show({
+                    title: 'Passenger mismatch',
+                    message: 'Please go back and select the flight again with the correct passengers.',
+                    color: 'red',
+                    autoClose: 4500,
+                });
+                return;
+            }
+
+            // Prefer provider offer_id (pkfare/duffel), then fallback to id
+            const offerId = String(flightdata?.offer_id || flightdata?.id || '').trim();
+            if (!currencyKey) {
+                setLoaderError('Currency session missing. Please refresh and try again.');
+                setConfirmStatus('error');
+                setTimeout(() => setLoading(false), 800);
+                return;
+            }
+            if (!flightdata?.provider || !offerId) {
+                setLoaderError('Flight offer is missing. Please select the flight again.');
+                setConfirmStatus('error');
+                setTimeout(() => setLoading(false), 800);
+                return;
+            }
+
+            const safeAmount = Number(Number(customerTotalAfterDiscount).toFixed(2));
+            const safeRate = Number(Number(customerExchangeRate).toFixed(2));
+            if (!Number.isFinite(safeAmount) || safeAmount <= 0) {
+                setLoaderError('Invalid flight price. Please go back and select the flight again.');
+                setConfirmStatus('error');
+                setTimeout(() => setLoading(false), 800);
+                return;
+            }
+
+            // Exact shape from working booking sample
             const request = {
-                provider: flightdata?.provider,
+                provider: flightdata.provider,
                 booking_type: 'hold',
-                trip_type: getBookingTripType(flightdata),
+                payment_method: 'stripe',
+                trip_type: resolveTripType(flightdata),
                 currency_uuid: currencyKey,
-                offer_id: flightdata?.id,
+                offer_id: offerId,
                 customer_currency: customerCurrency,
-                customer_exchange_rate: customerExchangeRate,
-                customer_amount: customerTotalAfterDiscount,
+                customer_exchange_rate: Number.isFinite(safeRate) ? safeRate : 1,
+                customer_amount: safeAmount,
                 passengers: passengersArray,
-                tag: rawTag == null || rawTag === '' ? '' : String(rawTag),
-                segments: flightdata?.segments || [],
+                tag: flightdata?.tag == null ? '' : String(flightdata.tag),
+                segments: sanitizeBookingSegments(flightdata?.segments || []),
                 pricing: flightdata?.pricing || {},
             };
+
+            const ancillaryPayload = ancillarySelections?.ancillary;
+            if (
+                ancillaryPayload &&
+                Array.isArray(ancillaryPayload.journeys) &&
+                ancillaryPayload.journeys.length > 0
+            ) {
+                request.ancillary = ancillaryPayload;
+            }
+
+            if (!request.passengers?.length || !request.booking_type || !request.offer_id) {
+                setLoaderError('Booking payload incomplete. Please refresh and try again.');
+                setConfirmStatus('error');
+                setTimeout(() => setLoading(false), 800);
+                return;
+            }
+
             try {
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/flights/booking`, {
-                    method: "POST",
+                    method: 'POST',
                     headers: {
-                        "Content-Type": "application/json",
-                        // 'ngrok-skip-browser-warning': 'true',
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                     },
                     body: JSON.stringify(request),
+                    redirect: 'manual',
                 });
-                const response = await res.json();
+
+                if (res.status >= 300 && res.status < 400) {
+                    throw new Error(
+                        `Booking failed with redirect (${res.status}). Please try again or contact support.`
+                    );
+                }
+
+                const contentType = res.headers.get('content-type') || '';
+                const rawText = await res.text();
+                let response = null;
+                if (contentType.includes('application/json') || rawText.trim().startsWith('{')) {
+                    try {
+                        response = JSON.parse(rawText);
+                    } catch {
+                        throw new Error('Invalid booking response from server.');
+                    }
+                } else {
+                    throw new Error(
+                        rawText?.slice(0, 120) ||
+                        `Booking failed with status ${res.status}. Please try again.`
+                    );
+                }
+
                 if (response?.success) {
                     await new Promise(resolve => setTimeout(resolve, 800));
                     setConfirmStatus("reserve");
                     await handlePayment(response?.data);
                 } else {
-                    setLoaderError(response?.error?.message || "Booking failed. Please try again.");
+                    const providerCode = response?.error?.details?.errorCode;
+                    const providerMsg =
+                        response?.error?.details?.errorMsg ||
+                        response?.error?.details?.message ||
+                        response?.error?.message;
+                    let errorMessage =
+                        response?.error?.message ||
+                        response?.message ||
+                        (response?.errors
+                            ? Object.values(response.errors).flat().join(' ')
+                            : null) ||
+                        'Booking failed. Please try again.';
+
+                    // Keep API message; append provider detail when available
+                    if (providerCode === 'P006' || /invalid parameter/i.test(String(providerMsg || errorMessage))) {
+                        errorMessage =
+                            'Invalid parameter (P006). Please go back, select the flight again (offer may have expired), and use a real passenger name (3–20 letters), Passport number, phone with country code, and nationality.';
+                    } else if (providerCode || providerMsg) {
+                        const detail = [providerCode, providerMsg].filter(Boolean).join(': ');
+                        if (detail && !String(errorMessage).includes(detail)) {
+                            errorMessage = `${errorMessage} (${detail})`;
+                        }
+                    }
+
+                    setLoaderError(errorMessage);
                     setConfirmStatus("error");
                     setTimeout(() => {
                         setLoading(false);
                         notifications.show({
                             title: 'Error',
-                            message: response?.error?.message,
-                            autoClose: 3500,
+                            message: errorMessage,
+                            autoClose: 5500,
                             color: 'red'
                         })
                     }, 1000);
                 }
             } catch (err) {
-                setLoaderError("A network error occurred. Please try again.");
+                setLoaderError(err?.message || "A network error occurred. Please try again.");
                 setConfirmStatus("error");
-                setTimeout(() => setLoading(false), 1000);
+                setTimeout(() => {
+                    setLoading(false);
+                    notifications.show({
+                        title: 'Error',
+                        message: err?.message || 'A network error occurred. Please try again.',
+                        autoClose: 4000,
+                        color: 'red',
+                    });
+                }, 1000);
             }
         } else {
-            // Scroll to first error
             const firstError = document.querySelector('.is-invalid');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
     };
-
     const handlePayment = async (data) => {
         const domain = window.location.origin;
         const checkoutUrl = window.location.href;
@@ -736,27 +1127,29 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
             setTimeout(() => setLoading(false), 1000);
         }
     };
-
     const handleLoaderComplete = () => {
     };
 
-    handleSubmitRef.current = handleSubmit;
-
-    useEffect(() => {
-        if (onRegisterSubmit) {
-            onRegisterSubmit(() => handleSubmitRef.current?.());
-        }
-    }, [onRegisterSubmit]);
-
-    useEffect(() => {
-        if (onLoadingChange) {
-            onLoadingChange(loading);
-        }
-    }, [loading, onLoadingChange]);
+    const passengerCounts = getPassengerCountsFromFlight(flightdata);
+    const totalPassengers =
+        Number(passengerCounts.adult || 0) +
+        Number(passengerCounts.child || 0) +
+        Number(passengerCounts.infant || 0);
+    const passengerCountChips = [
+        passengerCounts.adult > 0
+            ? `${passengerCounts.adult} Adult${passengerCounts.adult > 1 ? 's' : ''}`
+            : null,
+        passengerCounts.child > 0
+            ? `${passengerCounts.child} Child${passengerCounts.child > 1 ? 'ren' : ''}`
+            : null,
+        passengerCounts.infant > 0
+            ? `${passengerCounts.infant} Infant${passengerCounts.infant > 1 ? 's' : ''}`
+            : null,
+    ].filter(Boolean);
 
     return (
         <div className={styles.formWrapper}>
-            <LeadDetail setFormData={setLeadPassenger} module="flight" />
+            {isPassengersStep && <LeadDetail setFormData={setLeadPassenger} module="flight" />}
             {loading && (
                 <PackageBookingLoader
                     errorMessage={loaderError}
@@ -767,546 +1160,658 @@ export default function Form({ flightdata, onRegisterSubmit, onLoadingChange }) 
                 />
             )}
 
-            <div className="checkout-form-note">
-                Enter the names exactly as they appear in your passport/ID to avoid check-in complications.
+            {isPassengersStep && (
+            <>
+            <header className={styles.checkoutHeader}>
+                <h2 className={styles.checkoutTitle}>Checkout</h2>
+                <p className={styles.checkoutSubtitle}>
+                    Complete your booking — enter passenger and payment details
+                </p>
+            </header>
+
+            <div className={styles.countCard}>
+                <div className={styles.countCardHeader}>
+                    <span className={styles.countCardIcon} aria-hidden>
+                        <IoPeopleOutline />
+                    </span>
+                    <h3 className={styles.countCardTitle}>Number of Passengers</h3>
+                </div>
+                <div className={styles.countRow}>
+                    <span className={styles.countValueBox}>{totalPassengers || 1}</span>
+                    <span className={styles.countLabel}>
+                        {totalPassengers === 1 ? 'passenger' : 'passengers'}
+                    </span>
+                    {passengerCountChips.length > 0 && (
+                        <div className={styles.countBreakdown}>
+                            {passengerCountChips.map((chip) => (
+                                <span key={chip} className={styles.countChip}>
+                                    {chip}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {totalPassengers > 0 && (
-                <div className="checkout-form-card">
-                    <div className="checkout-form-card-header">
-                        <div className="checkout-form-card-icon">
-                            <IoPeopleOutline />
-                        </div>
-                        <div>
-                            <h5>Number of Passengers</h5>
-                        </div>
+            <div className={styles.formCard}>
+                <div className={styles.cardHeader}>
+                    <span className={styles.cardIcon} aria-hidden>
+                        <IoPersonOutline />
+                    </span>
+                    <h3 className={styles.cardTitle}>Lead Passenger Details</h3>
+                </div>
+                <div className={styles.fieldGrid}>
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadTitle" className={styles.label}>
+                            Title <span className={styles.required}>*</span>
+                        </label>
+                        <select
+                            id="leadTitle"
+                            value={leadPassenger.title}
+                            onChange={(e) => handleLeadPassengerChange('title', e.target.value)}
+                            className={`${styles.select} ${errors.lead_title ? styles.inputError : ''}`}
+                        >
+                            <option value="">Select</option>
+                            <option value="MR">Mr</option>
+                            <option value="MRS">Mrs</option>
+                            <option value="MISS">Miss</option>
+                            <option value="DR">Dr</option>
+                        </select>
+                        {errors.lead_title && <p className={styles.errorText}>{errors.lead_title}</p>}
                     </div>
-                    <div className="checkout-passenger-row">
-                        <span className="checkout-passenger-count">{totalPassengers}</span>
-                        <span className="checkout-passenger-label">
-                            passenger{totalPassengers !== 1 ? 's' : ''}
-                            {passengerLabel ? ` (${passengerLabel})` : ''}
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadFirstName" className={styles.label}>
+                            First Name <span className={styles.required}>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="leadFirstName"
+                            value={leadPassenger.firstName}
+                            onChange={(e) => handleLeadPassengerChange('firstName', e.target.value)}
+                            maxLength={20}
+                            className={`${styles.input} ${errors.lead_firstName ? styles.inputError : ''}`}
+                            placeholder="e.g. Ahmed"
+                        />
+                        {errors.lead_firstName && <p className={styles.errorText}>{errors.lead_firstName}</p>}
+                    </div>
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadLastName" className={styles.label}>
+                            Last Name <span className={styles.required}>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="leadLastName"
+                            value={leadPassenger.lastName}
+                            onChange={(e) => handleLeadPassengerChange('lastName', e.target.value)}
+                            maxLength={20}
+                            className={`${styles.input} ${errors.lead_lastName ? styles.inputError : ''}`}
+                            placeholder="e.g. Khan"
+                        />
+                        {errors.lead_lastName && <p className={styles.errorText}>{errors.lead_lastName}</p>}
+                    </div>
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadEmail" className={styles.label}>
+                            Email Address <span className={styles.required}>*</span>
+                        </label>
+                        <input
+                            type="email"
+                            id="leadEmail"
+                            value={leadPassenger.email}
+                            onChange={(e) => handleLeadPassengerChange('email', e.target.value)}
+                            maxLength={200}
+                            className={`${styles.input} ${errors.lead_email ? styles.inputError : ''}`}
+                            placeholder="you@example.com"
+                        />
+                        {errors.lead_email && <p className={styles.errorText}>{errors.lead_email}</p>}
+                    </div>
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadDob" className={styles.label}>
+                            Date of Birth <span className={styles.required}>*</span>
+                        </label>
+                        <DateInput
+                            className={styles.dateInput}
+                            maxDate={new Date()}
+                            placeholder="YYYY-MM-DD"
+                            valueFormat="YYYY-MM-DD"
+                            clearable
+                            error={errors.lead_dob}
+                            value={leadPassenger.dob}
+                            onChange={(date) => handleLeadPassengerChange('dob', date)}
+                        />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                        <span className={styles.label}>
+                            Gender <span className={styles.required}>*</span>
                         </span>
+                        <div className={styles.genderGroup}>
+                            <label className={styles.radioLabel} htmlFor="leadMale">
+                                <input
+                                    className={styles.radioInput}
+                                    type="radio"
+                                    name="leadGender"
+                                    id="leadMale"
+                                    value="male"
+                                    checked={leadPassenger.gender === 'male'}
+                                    disabled={isGenderLockedByTitle(leadPassenger.title)}
+                                    onChange={(e) => handleLeadPassengerChange('gender', e.target.value)}
+                                />
+                                Male
+                            </label>
+                            <label className={styles.radioLabel} htmlFor="leadFemale">
+                                <input
+                                    className={styles.radioInput}
+                                    type="radio"
+                                    name="leadGender"
+                                    id="leadFemale"
+                                    value="female"
+                                    checked={leadPassenger.gender === 'female'}
+                                    disabled={isGenderLockedByTitle(leadPassenger.title)}
+                                    onChange={(e) => handleLeadPassengerChange('gender', e.target.value)}
+                                />
+                                Female
+                            </label>
+                        </div>
+                        {errors.lead_gender && <p className={styles.errorText}>{errors.lead_gender}</p>}
+                    </div>
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadCountry" className={styles.label}>
+                            Country / Nationality <span className={styles.required}>*</span>
+                        </label>
+                        <Select
+                            id="leadCountry"
+                            className={styles.selectInput}
+                            placeholder="Select Country"
+                            searchable
+                            value={leadPassenger.country}
+                            onChange={handleLeadCountryChange}
+                            data={countryOptions}
+                            limit={50}
+                            error={errors.lead_country}
+                        />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadPhone" className={styles.label}>
+                            Phone Number <span className={styles.required}>*</span>
+                        </label>
+                        <div className={`${styles.phoneGroup} ${errors.lead_phone ? styles.phoneGroupError : ''}`}>
+                            <span className={styles.phonePrefix}>
+                                {leadPassenger.phoneCode || '+__'}
+                            </span>
+                            <input
+                                type="text"
+                                id="leadPhone"
+                                name="leadPhone"
+                                value={leadPassenger.phone}
+                                onChange={(e) => handleLeadPhoneChange(e.target.value)}
+                                className={`${styles.input} ${styles.phoneInput}`}
+                                placeholder="1234567890"
+                                autoComplete="off"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                            />
+                        </div>
+                        {errors.lead_phone && <p className={styles.errorText}>{errors.lead_phone}</p>}
+                    </div>
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadCardType" className={styles.label}>
+                            ID Type <span className={styles.required}>*</span>
+                        </label>
+                        <select
+                            id="leadCardType"
+                            value={leadPassenger.cardType === 'N' || leadPassenger.cardType === 'A' || leadPassenger.cardType === 'I' ? '' : leadPassenger.cardType}
+                            onChange={(e) => handleLeadPassengerChange('cardType', e.target.value)}
+                            className={`${styles.select} ${errors.lead_cardType ? styles.inputError : ''}`}
+                        >
+                            <option value="">Select</option>
+                            <option value="P">Passport</option>
+                            <option value="O">Other</option>
+                        </select>
+                        {errors.lead_cardType && <p className={styles.errorText}>{errors.lead_cardType}</p>}
+                    </div>
+                    <div className={styles.fieldGroup}>
+                        <label htmlFor="leadCardNum" className={styles.label}>
+                            ID Number <span className={styles.required}>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="leadCardNum"
+                            value={leadPassenger.cardNum}
+                            onChange={(e) => handleLeadPassengerChange('cardNum', e.target.value)}
+                            className={`${styles.input} ${errors.lead_cardNum ? styles.inputError : ''}`}
+                            placeholder="e.g. AB1360538"
+                        />
+                        {errors.lead_cardNum && <p className={styles.errorText}>{errors.lead_cardNum}</p>}
+                    </div>
+                    <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
+                        <label htmlFor="leadCardExpiredDate" className={styles.label}>
+                            ID Expiry Date <span className={styles.required}>*</span>
+                        </label>
+                        <DateInput
+                            id="leadCardExpiredDate"
+                            className={styles.dateInput}
+                            minDate={new Date()}
+                            placeholder="Document Expiry"
+                            valueFormat="YYYY-MM-DD"
+                            clearable
+                            error={errors.lead_cardExpiredDate}
+                            value={leadPassenger.cardExpiredDate}
+                            onChange={(date) => handleLeadPassengerChange('cardExpiredDate', date)}
+                        />
+                    </div>
+                </div>
+                <p className={styles.sectionNote}>
+                    This information will be used for all booking confirmations and
+                    communications. Ensure that the name matches travel documents.
+                </p>
+            </div>
+
+            {passengers.length > 0 && (
+                <div className={styles.formCard}>
+                    <div className={styles.cardHeader}>
+                        <span className={styles.cardIcon} aria-hidden>
+                            <IoPeopleOutline />
+                        </span>
+                        <h3 className={styles.cardTitle}>Other Passengers</h3>
+                    </div>
+                    {passengers.map((passenger, index) => (
+                        <div key={passenger.id} className={styles.passengerBlock}>
+                            <div className={styles.passengerHeader}>
+                                <h4 className={styles.passengerTitle}>Passenger {index + 2}</h4>
+                                <span className={styles.passengerBadge}>
+                                    {getPassengerTypeLabel(passenger.type)}
+                                </span>
+                            </div>
+                            <div className={styles.fieldGrid}>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        Title <span className={styles.required}>*</span>
+                                    </label>
+                                    <select
+                                        value={passenger.title}
+                                        onChange={(e) => handlePassengerChange(passenger.id, 'title', e.target.value)}
+                                        className={`${styles.select} ${errors[`passenger_${passenger.id}_title`] ? styles.inputError : ''}`}
+                                    >
+                                        <option value="">Select</option>
+                                        <option value="MR">Mr</option>
+                                        <option value="MRS">Mrs</option>
+                                        <option value="MISS">Miss</option>
+                                        <option value="DR">Dr</option>
+                                    </select>
+                                    {errors[`passenger_${passenger.id}_title`] && (
+                                        <p className={styles.errorText}>{errors[`passenger_${passenger.id}_title`]}</p>
+                                    )}
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        First Name <span className={styles.required}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={passenger.firstName}
+                                        onChange={(e) => handlePassengerChange(passenger.id, 'firstName', e.target.value)}
+                                        maxLength={20}
+                                        placeholder="e.g. Ahmed"
+                                        className={`${styles.input} ${errors[`passenger_${passenger.id}_firstName`] ? styles.inputError : ''}`}
+                                    />
+                                    {errors[`passenger_${passenger.id}_firstName`] && (
+                                        <p className={styles.errorText}>{errors[`passenger_${passenger.id}_firstName`]}</p>
+                                    )}
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        Last Name <span className={styles.required}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={passenger.lastName}
+                                        onChange={(e) => handlePassengerChange(passenger.id, 'lastName', e.target.value)}
+                                        maxLength={20}
+                                        placeholder="e.g. Khan"
+                                        className={`${styles.input} ${errors[`passenger_${passenger.id}_lastName`] ? styles.inputError : ''}`}
+                                    />
+                                    {errors[`passenger_${passenger.id}_lastName`] && (
+                                        <p className={styles.errorText}>{errors[`passenger_${passenger.id}_lastName`]}</p>
+                                    )}
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        Date of Birth <span className={styles.required}>*</span>
+                                    </label>
+                                    <DateInput
+                                        className={styles.dateInput}
+                                        maxDate={new Date()}
+                                        placeholder="YYYY-MM-DD"
+                                        valueFormat="YYYY-MM-DD"
+                                        clearable
+                                        error={errors[`passenger_${passenger.id}_dob`]}
+                                        value={passenger.dob}
+                                        onChange={(date) => handlePassengerChange(passenger.id, 'dob', date)}
+                                    />
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        Email <span className={styles.required}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={passenger.email}
+                                        onChange={(e) => handlePassengerChange(passenger.id, 'email', e.target.value)}
+                                        maxLength={200}
+                                        placeholder="you@example.com"
+                                        className={`${styles.input} ${errors[`passenger_${passenger.id}_email`] ? styles.inputError : ''}`}
+                                    />
+                                    {errors[`passenger_${passenger.id}_email`] && (
+                                        <p className={styles.errorText}>{errors[`passenger_${passenger.id}_email`]}</p>
+                                    )}
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <span className={styles.label}>
+                                        Gender <span className={styles.required}>*</span>
+                                    </span>
+                                    <div className={styles.genderGroup}>
+                                        <label className={styles.radioLabel} htmlFor={`male_${passenger.id}`}>
+                                            <input
+                                                className={styles.radioInput}
+                                                type="radio"
+                                                name={`gender_${passenger.id}`}
+                                                id={`male_${passenger.id}`}
+                                                value="male"
+                                                checked={passenger.gender === 'male'}
+                                                disabled={isGenderLockedByTitle(passenger.title)}
+                                                onChange={(e) => handlePassengerChange(passenger.id, 'gender', e.target.value)}
+                                            />
+                                            Male
+                                        </label>
+                                        <label className={styles.radioLabel} htmlFor={`female_${passenger.id}`}>
+                                            <input
+                                                className={styles.radioInput}
+                                                type="radio"
+                                                name={`gender_${passenger.id}`}
+                                                id={`female_${passenger.id}`}
+                                                value="female"
+                                                checked={passenger.gender === 'female'}
+                                                disabled={isGenderLockedByTitle(passenger.title)}
+                                                onChange={(e) => handlePassengerChange(passenger.id, 'gender', e.target.value)}
+                                            />
+                                            Female
+                                        </label>
+                                    </div>
+                                    {errors[`passenger_${passenger.id}_gender`] && (
+                                        <p className={styles.errorText}>{errors[`passenger_${passenger.id}_gender`]}</p>
+                                    )}
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        Country <span className={styles.required}>*</span>
+                                    </label>
+                                    <Select
+                                        className={styles.selectInput}
+                                        placeholder="Select Country"
+                                        searchable
+                                        value={passenger.country}
+                                        onChange={(value) => handlePassengerCountryChange(passenger.id, value)}
+                                        data={countryOptions}
+                                        limit={50}
+                                        error={errors[`passenger_${passenger.id}_country`]}
+                                    />
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        Phone Number <span className={styles.required}>*</span>
+                                    </label>
+                                    <div className={`${styles.phoneGroup} ${errors[`passenger_${passenger.id}_phone`] ? styles.phoneGroupError : ''}`}>
+                                        <span className={styles.phonePrefix}>
+                                            {passenger.phoneCode || '+__'}
+                                        </span>
+                                        <input
+                                            type="text"
+                                            name="leadPhone"
+                                            value={passenger.phone}
+                                            onChange={(e) => handlePassengerChange(passenger.id, 'phone', e.target.value)}
+                                            className={`${styles.input} ${styles.phoneInput}`}
+                                            placeholder="1234567890"
+                                            autoComplete="off"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                        />
+                                    </div>
+                                    {errors[`passenger_${passenger.id}_phone`] && (
+                                        <p className={styles.errorText}>{errors[`passenger_${passenger.id}_phone`]}</p>
+                                    )}
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        ID Type <span className={styles.required}>*</span>
+                                    </label>
+                                    <select
+                                        value={
+                                            passenger.cardType === 'N' || passenger.cardType === 'A' || passenger.cardType === 'I'
+                                                ? ''
+                                                : passenger.cardType || ''
+                                        }
+                                        onChange={(e) => handlePassengerChange(passenger.id, 'cardType', e.target.value)}
+                                        className={`${styles.select} ${errors[`passenger_${passenger.id}_cardType`] ? styles.inputError : ''}`}
+                                    >
+                                        <option value="">Select</option>
+                                        <option value="P">Passport</option>
+                                        <option value="O">Other</option>
+                                    </select>
+                                    {errors[`passenger_${passenger.id}_cardType`] && (
+                                        <p className={styles.errorText}>{errors[`passenger_${passenger.id}_cardType`]}</p>
+                                    )}
+                                </div>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.label}>
+                                        ID Number <span className={styles.required}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={passenger.cardNum || ''}
+                                        onChange={(e) => handlePassengerChange(passenger.id, 'cardNum', e.target.value)}
+                                        placeholder="e.g. AB1360538"
+                                        className={`${styles.input} ${errors[`passenger_${passenger.id}_cardNum`] ? styles.inputError : ''}`}
+                                    />
+                                    {errors[`passenger_${passenger.id}_cardNum`] && (
+                                        <p className={styles.errorText}>{errors[`passenger_${passenger.id}_cardNum`]}</p>
+                                    )}
+                                </div>
+                                <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
+                                    <label className={styles.label}>
+                                        ID Expiry Date <span className={styles.required}>*</span>
+                                    </label>
+                                    <DateInput
+                                        className={styles.dateInput}
+                                        minDate={new Date()}
+                                        placeholder="Document Expiry"
+                                        valueFormat="YYYY-MM-DD"
+                                        clearable
+                                        error={errors[`passenger_${passenger.id}_cardExpiredDate`]}
+                                        value={passenger.cardExpiredDate}
+                                        onChange={(date) => handlePassengerChange(passenger.id, 'cardExpiredDate', date)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div className={styles.formCard}>
+                <div className={styles.cardHeader}>
+                    <span className={styles.cardIcon} aria-hidden>
+                        <FaCreditCard size={14} />
+                    </span>
+                    <h3 className={styles.cardTitle}>Payment Method</h3>
+                </div>
+                <div className={styles.paymentGrid}>
+                    <button
+                        type="button"
+                        className={`${styles.paymentOption} ${styles.paymentActive}`}
+                        onClick={() => setPaymentMethod('card')}
+                    >
+                        <FaCreditCard size={16} />
+                        Debit / Credit Card
+                    </button>
+                </div>
+            </div>
+            </>
+            )}
+
+            {isOverview && (
+                <div className={`${styles.formCard} mt-3`}>
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Passenger overview</h2>
+                        <div className={styles.passengerOverviewList}>
+                            {[
+                                {
+                                    id: 'lead',
+                                    ...leadPassenger,
+                                    type: leadPassenger.type || 'adult',
+                                },
+                                ...passengers,
+                            ].map((passenger, index) => {
+                                const name = [passenger.firstName, passenger.lastName]
+                                    .filter(Boolean)
+                                    .join(' ')
+                                    .trim();
+                                const bagByLeg =
+                                    ancillarySelections?.baggage?.byPassenger?.[passenger.id] || {};
+                                const bagLegs = ancillarySelections?.baggage?.legs || [];
+                                const bagItems = Object.entries(bagByLeg).filter(
+                                    ([, bag]) => bag?.ancillary_key
+                                );
+                                const roleLabel =
+                                    index === 0
+                                        ? `Lead Passenger - ${getPassengerTypeLabel(passenger.type)}`
+                                        : `Passenger ${index + 1} - ${getPassengerTypeLabel(passenger.type)}`;
+
+                                return (
+                                    <div key={passenger.id} className={styles.passengerOverviewCard}>
+                                        <div className={styles.passengerOverviewHeader}>
+                                            <p className={styles.passengerOverviewName}>
+                                                {name || `Passenger ${index + 1}`}
+                                            </p>
+                                            <span className={styles.passengerOverviewMeta}>
+                                                {roleLabel}
+                                            </span>
+                                        </div>
+                                        {bagItems.length > 0 && (
+                                            <ul className={styles.passengerAddonList}>
+                                                {bagItems.map(([legId, bag]) => {
+                                                    const legLabel = bagLegs.find((leg) => leg.id === legId)?.label;
+                                                    return (
+                                                        <li
+                                                            key={`${passenger.id}-${legId}-${bag.ancillary_key}`}
+                                                            className={styles.passengerAddonRow}
+                                                        >
+                                                            <span>
+                                                                <span className={styles.passengerAddonLabel}>
+                                                                    Extra baggage{legLabel && bagLegs.length > 1 ? ` (${legLabel})` : ''}
+                                                                </span>{' '}
+                                                                {bag.baggage_weight
+                                                                    ? String(bag.baggage_weight).toUpperCase()
+                                                                    : bag.name || 'Paid bag'}
+                                                            </span>
+                                                            {bag.price != null && (
+                                                                <PriceDisplay
+                                                                    currency={bag.currency}
+                                                                    price={bag.price}
+                                                                />
+                                                            )}
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
+                    <div className={styles.importantSection}>
+                        <h4 className={styles.importantTitle}>Important Information</h4>
+                        <ul className={styles.importantList}>
+                            <li>
+                                Please arrive at the airport at least 3 hours before international
+                                flights and 2 hours before domestic flights.
+                            </li>
+                            <li>
+                                Valid passport and visa (if required) must be presented at check-in.
+                            </li>
+                            <li>
+                                Baggage allowance is subject to airline terms and conditions.
+                            </li>
+                            <li>
+                                Flight timings are subject to change. Please confirm with the airline
+                                24 hours before departure.
+                            </li>
+                        </ul>
                     </div>
                 </div>
             )}
 
-            <div className="checkout-form-card">
-                <div className="checkout-form-card-header">
-                    <div className="checkout-form-card-icon">
-                        <IoPersonOutline />
+            {isOverview && (
+                <div className={styles.formCard}>
+                    <div className={styles.cardHeader}>
+                        <span className={styles.cardIcon} aria-hidden>
+                            <FaCreditCard size={14} />
+                        </span>
+                        <h3 className={styles.cardTitle}>Payment Method</h3>
                     </div>
-                    <div>
-                        <h5>Lead Passenger Details</h5>
-                        <p>Please provide correct contact information for booking confirmations.</p>
+                    <div className={styles.paymentGrid}>
+                        <button
+                            type="button"
+                            className={`${styles.paymentOption} ${styles.paymentActive}`}
+                            onClick={() => setPaymentMethod('card')}
+                        >
+                            <FaCreditCard size={16} />
+                            Debit / Credit Card
+                        </button>
                     </div>
                 </div>
+            )}
 
-                    <div className={styles.fieldGrid}>
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadTitle" className={styles.label}>
-                                Title <span className={styles.required}>*</span>
-                            </label>
-                            <select
-                                id="leadTitle"
-                                value={leadPassenger.title}
-                                onChange={(e) => handleLeadPassengerChange('title', e.target.value)}
-                                className={`${styles.select} ${errors.lead_title ? `is-invalid ${styles.inputError}` : ''}`}
-                            >
-                                <option value="">Select</option>
-                                <option value="MR">Mr</option>
-                                <option value="MRS">Mrs</option>
-                                <option value="MISS">Miss</option>
-                                <option value="MS">Ms</option>
-                                <option value="DR">Dr</option>
-                            </select>
-                            {errors.lead_title && <p className={styles.errorText}>{errors.lead_title}</p>}
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadFirstName" className={styles.label}>
-                                First Name <span className={styles.required}>*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="leadFirstName"
-                                value={leadPassenger.firstName}
-                                onChange={(e) => handleLeadPassengerChange('firstName', e.target.value)}
-                                className={`${styles.input} ${errors.lead_firstName ? `is-invalid ${styles.inputError}` : ''}`}
-                                placeholder="First Name"
-                                maxLength={35}
-                            />
-                            {errors.lead_firstName && <p className={styles.errorText}>{errors.lead_firstName}</p>}
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadLastName" className={styles.label}>
-                                Last Name <span className={styles.required}>*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="leadLastName"
-                                value={leadPassenger.lastName}
-                                onChange={(e) => handleLeadPassengerChange('lastName', e.target.value)}
-                                className={`${styles.input} ${errors.lead_lastName ? `is-invalid ${styles.inputError}` : ''}`}
-                                placeholder="Last Name"
-                                maxLength={35}
-                            />
-                            {errors.lead_lastName && <p className={styles.errorText}>{errors.lead_lastName}</p>}
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadEmail" className={styles.label}>
-                                Email <span className={styles.required}>*</span>
-                            </label>
-                            <input
-                                type="email"
-                                id="leadEmail"
-                                value={leadPassenger.email}
-                                onChange={(e) => handleLeadPassengerChange('email', e.target.value)}
-                                className={`${styles.input} ${errors.lead_email ? `is-invalid ${styles.inputError}` : ''}`}
-                                placeholder="you@example.com"
-                                maxLength={200}
-                            />
-                            {errors.lead_email && <p className={styles.errorText}>{errors.lead_email}</p>}
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadDob" className={styles.label}>
-                                Date of Birth <span className={styles.required}>*</span>
-                            </label>
-                            <DateInput
-                                maxDate={new Date()}
-                                placeholder="Date of Birth"
-                                clearable="true"
-                                error={errors.lead_dob}
-                                value={leadPassenger.dob}
-                                onChange={(date) => handleLeadPassengerChange('dob', date)}
-                                classNames={{ root: styles.dateInput }}
-                            />
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <span className={styles.label}>
-                                Gender <span className={styles.required}>*</span>
-                            </span>
-                            <div className={styles.genderGroup}>
-                                <label className={styles.radioLabel} htmlFor="leadMale">
-                                    <input
-                                        className={styles.radioInput}
-                                        type="radio"
-                                        name="leadGender"
-                                        id="leadMale"
-                                        value="male"
-                                        checked={leadPassenger.gender === 'male'}
-                                        onChange={(e) => handleLeadPassengerChange('gender', e.target.value)}
-                                        disabled={!!genderFromTitle(leadPassenger.title)}
-                                    />
-                                    Male
-                                </label>
-                                <label className={styles.radioLabel} htmlFor="leadFemale">
-                                    <input
-                                        className={styles.radioInput}
-                                        type="radio"
-                                        name="leadGender"
-                                        id="leadFemale"
-                                        value="female"
-                                        checked={leadPassenger.gender === 'female'}
-                                        onChange={(e) => handleLeadPassengerChange('gender', e.target.value)}
-                                        disabled={!!genderFromTitle(leadPassenger.title)}
-                                    />
-                                    Female
-                                </label>
-                            </div>
-                            {errors.lead_gender && <p className={styles.errorText}>{errors.lead_gender}</p>}
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadCountry" className={styles.label}>
-                                Country <span className={styles.required}>*</span>
-                            </label>
-                            <Select
-                                id="leadCountry"
-                                placeholder="Select Country"
-                                searchable
-                                value={leadPassenger.country}
-                                onChange={handleLeadCountryChange}
-                                data={countryOptions}
-                                limit={50}
-                                error={errors.lead_country}
-                                classNames={{ root: styles.selectInput }}
-                            />
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadPhone" className={styles.label}>
-                                Phone Number <span className={styles.required}>*</span>
-                            </label>
-                            <div className={`${styles.phoneGroup} ${errors.lead_phone ? styles.phoneGroupError : ''}`}>
-                                <span className={styles.phonePrefix}>
-                                    {leadPassenger.phoneCode || '+__'}
-                                </span>
-                                <input
-                                    type="text"
-                                    id="leadPhone"
-                                    name="leadPhone"
-                                    value={leadPassenger.phone}
-                                    onChange={(e) => handleLeadPhoneChange(e.target.value)}
-                                    className={`${styles.input} ${styles.phoneInput} ${errors.lead_phone ? 'is-invalid' : ''}`}
-                                    placeholder="1234567890"
-                                    autoComplete="off"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                />
-                            </div>
-                            {errors.lead_phone && <p className={styles.errorText}>{errors.lead_phone}</p>}
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadDocumentType" className={styles.label}>
-                                Document Type <span className={styles.required}>*</span>
-                            </label>
-                            <select
-                                id="leadDocumentType"
-                                value={leadPassenger.documentType}
-                                onChange={(e) => handleLeadPassengerChange('documentType', e.target.value)}
-                                className={`${styles.select} ${errors.lead_documentType ? `is-invalid ${styles.inputError}` : ''}`}
-                            >
-                                <option value="">Select</option>
-                                <option value="P">Passport</option>
-                                <option value="N">ID Card</option>
-                                <option value="O">Other</option>
-                            </select>
-                            {errors.lead_documentType && <p className={styles.errorText}>{errors.lead_documentType}</p>}
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadDocumentNumber" className={styles.label}>
-                                Document Number <span className={styles.required}>*</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="leadDocumentNumber"
-                                value={leadPassenger.documentNumber}
-                                onChange={(e) => handleLeadPassengerChange('documentNumber', e.target.value)}
-                                className={`${styles.input} ${errors.lead_documentNumber ? `is-invalid ${styles.inputError}` : ''}`}
-                                placeholder="Document number"
-                                autoComplete="off"
-                            />
-                            {errors.lead_documentNumber && <p className={styles.errorText}>{errors.lead_documentNumber}</p>}
-                        </div>
-
-                        <div className={styles.fieldGroup}>
-                            <label htmlFor="leadDocumentExpiry" className={styles.label}>
-                                Document Expiry <span className={styles.required}>*</span>
-                            </label>
-                            <DateInput
-                                id="leadDocumentExpiry"
-                                minDate={new Date()}
-                                placeholder="Document expiry"
-                                clearable="true"
-                                error={errors.lead_documentExpiry}
-                                value={leadPassenger.documentExpiry}
-                                onChange={(date) => handleLeadPassengerChange('documentExpiry', date)}
-                                classNames={{ root: styles.dateInput }}
-                            />
-                        </div>
-                    </div>
-
-                    <p className={styles.sectionNote}>
-                        This information will be used for all booking confirmations and communications. Ensure that the name matches travel documents.
-                    </p>
+            {(isOverview || typeof onContinue !== 'function') && (
+            <div className={styles.footer}>
+            <div className={styles.termsRow}>
+                <input
+                    className={`${styles.termsCheckbox} ${errors.terms ? styles.inputError : ''}`}
+                    type="checkbox"
+                    id="terms"
+                    checked={termsAccepted}
+                    onChange={(e) => {
+                        setTermsAccepted(e.target.checked);
+                        if (e.target.checked && errors.terms) {
+                            setErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.terms;
+                                return newErrors;
+                            });
+                        }
+                    }}
+                />
+                <label className={styles.termsLabel} htmlFor="terms">
+                    I agree to the <Link href="/terms-and-conditions" target='_blank' className={styles.termsLink}>terms and conditions</Link>. and <Link href="/privacy-policy" target='_blank' className={styles.termsLink}>privacy policy</Link>. I understand the cancellation policy and booking terms.
+                </label>
             </div>
-
-                {passengers.length > 0 && (
-                    <div className="checkout-form-card">
-                        <div className="checkout-form-card-header">
-                            <div className="checkout-form-card-icon">
-                                <IoPeopleOutline />
-                            </div>
-                            <div>
-                                <h5>Other Passengers</h5>
-                                <p>Enter details exactly as shown on passport or government-issued ID.</p>
-                            </div>
-                        </div>
-
-                        {passengers.map((passenger, index) => (
-                            <div key={passenger.id} className={styles.passengerBlock}>
-                                <div className={styles.passengerHeader}>
-                                    <h3 className={styles.passengerTitle}>Passenger {index + 2}</h3>
-                                    <span className={styles.passengerBadge}>{getPassengerTypeLabel(passenger.type)}</span>
-                                </div>
-
-                                <div className={styles.fieldGrid}>
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Title <span className={styles.required}>*</span>
-                                        </label>
-                                        <select
-                                            value={passenger.title}
-                                            onChange={(e) => handlePassengerChange(passenger.id, 'title', e.target.value)}
-                                            className={`${styles.select} ${errors[`passenger_${passenger.id}_title`] ? `is-invalid ${styles.inputError}` : ''}`}
-                                        >
-                                            <option value="">Select</option>
-                                            <option value="MR">Mr</option>
-                                            <option value="MRS">Mrs</option>
-                                            <option value="MISS">Miss</option>
-                                            <option value="MS">Ms</option>
-                                            <option value="DR">Dr</option>
-                                        </select>
-                                        {errors[`passenger_${passenger.id}_title`] && (
-                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_title`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            First Name <span className={styles.required}>*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={passenger.firstName}
-                                            onChange={(e) => handlePassengerChange(passenger.id, 'firstName', e.target.value)}
-                                            placeholder="First Name"
-                                            maxLength={35}
-                                            className={`${styles.input} ${errors[`passenger_${passenger.id}_firstName`] ? `is-invalid ${styles.inputError}` : ''}`}
-                                        />
-                                        {errors[`passenger_${passenger.id}_firstName`] && (
-                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_firstName`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Last Name <span className={styles.required}>*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={passenger.lastName}
-                                            onChange={(e) => handlePassengerChange(passenger.id, 'lastName', e.target.value)}
-                                            placeholder="Last Name"
-                                            maxLength={35}
-                                            className={`${styles.input} ${errors[`passenger_${passenger.id}_lastName`] ? `is-invalid ${styles.inputError}` : ''}`}
-                                        />
-                                        {errors[`passenger_${passenger.id}_lastName`] && (
-                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_lastName`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Date of Birth <span className={styles.required}>*</span>
-                                        </label>
-                                        <DateInput
-                                            maxDate={new Date()}
-                                            placeholder="Date of Birth"
-                                            clearable="true"
-                                            error={errors[`passenger_${passenger.id}_dob`]}
-                                            value={passenger.dob}
-                                            onChange={(date) => handlePassengerChange(passenger.id, 'dob', date)}
-                                            classNames={{ root: styles.dateInput }}
-                                        />
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Email <span className={styles.required}>*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={passenger.email}
-                                            onChange={(e) => handlePassengerChange(passenger.id, 'email', e.target.value)}
-                                            placeholder="Email"
-                                            maxLength={200}
-                                            className={`${styles.input} ${errors[`passenger_${passenger.id}_email`] ? `is-invalid ${styles.inputError}` : ''}`}
-                                        />
-                                        {errors[`passenger_${passenger.id}_email`] && (
-                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_email`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <span className={styles.label}>
-                                            Gender <span className={styles.required}>*</span>
-                                        </span>
-                                        <div className={styles.genderGroup}>
-                                            <label className={styles.radioLabel} htmlFor={`male_${passenger.id}`}>
-                                                <input
-                                                    className={styles.radioInput}
-                                                    type="radio"
-                                                    name={`gender_${passenger.id}`}
-                                                    id={`male_${passenger.id}`}
-                                                    value="male"
-                                                    checked={passenger.gender === 'male'}
-                                                    onChange={(e) => handlePassengerChange(passenger.id, 'gender', e.target.value)}
-                                                    disabled={!!genderFromTitle(passenger.title)}
-                                                />
-                                                Male
-                                            </label>
-                                            <label className={styles.radioLabel} htmlFor={`female_${passenger.id}`}>
-                                                <input
-                                                    className={styles.radioInput}
-                                                    type="radio"
-                                                    name={`gender_${passenger.id}`}
-                                                    id={`female_${passenger.id}`}
-                                                    value="female"
-                                                    checked={passenger.gender === 'female'}
-                                                    onChange={(e) => handlePassengerChange(passenger.id, 'gender', e.target.value)}
-                                                    disabled={!!genderFromTitle(passenger.title)}
-                                                />
-                                                Female
-                                            </label>
-                                        </div>
-                                        {errors[`passenger_${passenger.id}_gender`] && (
-                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_gender`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Country <span className={styles.required}>*</span>
-                                        </label>
-                                        <Select
-                                            placeholder="Select Country"
-                                            searchable
-                                            value={passenger.country}
-                                            onChange={(value) => handlePassengerCountryChange(passenger.id, value)}
-                                            data={countryOptions}
-                                            limit={50}
-                                            error={errors[`passenger_${passenger.id}_country`]}
-                                            classNames={{ root: styles.selectInput }}
-                                        />
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Phone Number <span className={styles.required}>*</span>
-                                        </label>
-                                        <div className={`${styles.phoneGroup} ${errors[`passenger_${passenger.id}_phone`] ? styles.phoneGroupError : ''}`}>
-                                            <span className={styles.phonePrefix}>
-                                                {passenger.phoneCode || '+__'}
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={passenger.phone}
-                                                onChange={(e) => handlePassengerChange(passenger.id, 'phone', e.target.value)}
-                                                className={`${styles.input} ${styles.phoneInput} ${errors[`passenger_${passenger.id}_phone`] ? 'is-invalid' : ''}`}
-                                                placeholder="1234567890"
-                                                autoComplete="off"
-                                                inputMode="numeric"
-                                                pattern="[0-9]*"
-                                            />
-                                        </div>
-                                        {errors[`passenger_${passenger.id}_phone`] && (
-                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_phone`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Document Type <span className={styles.required}>*</span>
-                                        </label>
-                                        <select
-                                            value={passenger.documentType}
-                                            onChange={(e) => handlePassengerChange(passenger.id, 'documentType', e.target.value)}
-                                            className={`${styles.select} ${errors[`passenger_${passenger.id}_documentType`] ? `is-invalid ${styles.inputError}` : ''}`}
-                                        >
-                                            <option value="">Select</option>
-                                            <option value="P">Passport</option>
-                                            <option value="N">ID Card</option>
-                                            <option value="O">Other</option>
-                                        </select>
-                                        {errors[`passenger_${passenger.id}_documentType`] && (
-                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_documentType`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Document Number <span className={styles.required}>*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={passenger.documentNumber}
-                                            onChange={(e) => handlePassengerChange(passenger.id, 'documentNumber', e.target.value)}
-                                            placeholder="Document number"
-                                            autoComplete="off"
-                                            className={`${styles.input} ${errors[`passenger_${passenger.id}_documentNumber`] ? `is-invalid ${styles.inputError}` : ''}`}
-                                        />
-                                        {errors[`passenger_${passenger.id}_documentNumber`] && (
-                                            <p className={styles.errorText}>{errors[`passenger_${passenger.id}_documentNumber`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.fieldGroup}>
-                                        <label className={styles.label}>
-                                            Document Expiry <span className={styles.required}>*</span>
-                                        </label>
-                                        <DateInput
-                                            minDate={new Date()}
-                                            placeholder="Document expiry"
-                                            clearable="true"
-                                            error={errors[`passenger_${passenger.id}_documentExpiry`]}
-                                            value={passenger.documentExpiry}
-                                            onChange={(date) => handlePassengerChange(passenger.id, 'documentExpiry', date)}
-                                            classNames={{ root: styles.dateInput }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                <div className={styles.importantSection}>
-                    <h3 className={styles.importantTitle}>Important Information</h3>
-                    <ul className={styles.importantList}>
-                        <li>Please arrive at the airport at least 3 hours before international flights and 2 hours before domestic flights.</li>
-                        <li>Valid passport and visa (if required) must be presented at check-in.</li>
-                        <li>Check-in closes 60 minutes before departure for international flights and 45 minutes for domestic flights.</li>
-                        <li>Baggage allowance is subject to airline terms and conditions.</li>
-                        <li>Flight timings are subject to change. Please confirm with the airline 24 hours before departure.</li>
-                        <li>This is an electronic ticket. No paper ticket is required for travel.</li>
-                    </ul>
-                </div>
-
-                <div className={styles.footer}>
-                    <div className={styles.termsRow}>
-                        <input
-                            className={`${styles.termsCheckbox} ${errors.terms ? 'is-invalid' : ''}`}
-                            type="checkbox"
-                            id="terms"
-                            checked={termsAccepted}
-                            onChange={(e) => {
-                                setTermsAccepted(e.target.checked);
-                                if (e.target.checked && errors.terms) {
-                                    setErrors(prev => {
-                                        const newErrors = { ...prev };
-                                        delete newErrors.terms;
-                                        return newErrors;
-                                    });
-                                }
-                            }}
-                        />
-                        <label className={styles.termsLabel} htmlFor="terms">
-                            I agree to the{' '}
-                            <Link href="/terms-and-conditions" target="_blank" className={styles.termsLink}>
-                                terms and conditions
-                            </Link>
-                            . <span className={styles.required}>*</span>
-                        </label>
-                    </div>
-                    {errors.terms && <p className={styles.errorText}>{errors.terms}</p>}
-
-                    <button
-                        type="button"
-                        className={styles.submitBtn}
-                        onClick={handleSubmit}
-                        disabled={loading}
-                    >
-                        {loading ? 'Processing...' : 'Confirm Booking'}
-                    </button>
-                </div>
+                {errors.terms && <div className={styles.errorText}>{errors.terms}</div>}
+            </div>
+            )}
+            <div className={styles.submitWrap}>
+                <button
+                    onClick={handleSubmit}
+                    type="submit"
+                    className={styles.submitBtn}
+                    disabled={isPassengersStep && continueLoading}
+                >
+                    {isPassengersStep && typeof onContinue === 'function'
+                        ? continueLoading
+                            ? 'Loading options…'
+                            : 'Continue'
+                        : 'Confirm Booking'}
+                </button>
+            </div>
         </div>
     )
 }

@@ -18,6 +18,14 @@ import { Notifications } from "@mantine/notifications";
 import NextTopLoader from "nextjs-toploader";
 import Script from "next/script";
 import VipCookieConsent from "@/components/CookieConsent";
+import { Playfair_Display } from "next/font/google";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-playfair",
+  display: "swap",
+});
 
 export const metadata = {
   metadataBase: new URL("https://umrahtech.net"),
@@ -53,7 +61,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={playfair.variable} suppressHydrationWarning>
       <head>
         {/* <link rel="preconnect" href="https://www.googletagmanager.com" /> */}
         {/* <link rel="dns-prefetch" href="https://www.googletagmanager.com" /> */}

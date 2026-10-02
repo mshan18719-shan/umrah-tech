@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Modal } from '@mantine/core';
+import { Drawer } from '@mantine/core';
 import Image from 'next/image';
 import { IoMdClose } from 'react-icons/io';
 import airline from '@/util/airlines.json';
@@ -139,18 +139,23 @@ export default function PolicyModal({ opened, onClose, flightDetails, segmentGro
     );
 
     return (
-        <Modal
+        <Drawer
             opened={opened}
             onClose={onClose}
+            position="right"
+            size={640}
             withCloseButton={false}
             padding={0}
-            size="auto"
-            centered
-            overlayProps={{ backgroundOpacity: 0.5, blur: 3 }}
+            overlayProps={{ backgroundOpacity: 0.45, blur: 2 }}
+            transitionProps={{ duration: 220, timingFunction: 'ease' }}
             classNames={{
+                root: styles.drawerRoot,
                 content: styles.modalContent,
                 body: styles.modalBody,
+                inner: styles.drawerInner,
+                overlay: styles.drawerOverlay,
             }}
+            zIndex={110000}
         >
             <div className={styles.wrapper}>
                 <div className={styles.header}>
@@ -214,6 +219,6 @@ export default function PolicyModal({ opened, onClose, flightDetails, segmentGro
                     {(activeTab === 'reschedule' || activeTab === 'cancellation') && renderFareRules()}
                 </div>
             </div>
-        </Modal>
+        </Drawer>
     );
 }

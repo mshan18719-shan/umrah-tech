@@ -1,14 +1,8 @@
 'use client';
 
-import { Playfair_Display } from 'next/font/google';
 import { Accordion } from '@mantine/core';
 import { FaChevronDown } from 'react-icons/fa';
 import styles from './Faqsection.module.css';
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
 
 const faqData = [
   {
@@ -48,7 +42,7 @@ export default function FaqSection() {
     <section className={styles.section} aria-label="Frequently Asked Questions">
       <div className="container">
         <header className={styles.header}>
-          <h2 className={`${styles.title} ${playfair.className}`}>
+          <h2 className={`${styles.title} font-playfair`}>
             Frequently Asked Questions
           </h2>
           <p className={styles.subtitle}>

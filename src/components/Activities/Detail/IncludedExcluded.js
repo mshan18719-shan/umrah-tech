@@ -1,13 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Playfair_Display } from 'next/font/google';
 import styles from './IncludedExcluded.module.css';
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
 
 // CMS content sometimes includes empty <p> tags (just a <br>, &nbsp;, or
 // whitespace) used purely as visual spacing in the original editor. Since
@@ -25,7 +19,7 @@ export default function IncludedExcluded({ included, excluded }) {
   return (
     <section id="includeexclude" className={styles.wrapper}>
       <div className={styles.section}>
-        <h3 className={`${styles.sectionTitle} ${playfair.className}`}>What&apos;s Included</h3>
+        <h3 className={`${styles.sectionTitle} font-playfair`}>What&apos;s Included</h3>
         <div
           className={styles.content}
           dangerouslySetInnerHTML={{ __html: includedHtml }}
@@ -33,7 +27,7 @@ export default function IncludedExcluded({ included, excluded }) {
       </div>
 
       <div className={styles.section}>
-        <h3 className={`${styles.sectionTitle} ${playfair.className}`}>What&apos;s Not Included</h3>
+        <h3 className={`${styles.sectionTitle} font-playfair`}>What&apos;s Not Included</h3>
         <div
           className={`${styles.content} ${styles.excludedContent}`}
           dangerouslySetInnerHTML={{ __html: excludedHtml }}

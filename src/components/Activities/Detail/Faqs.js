@@ -2,14 +2,8 @@
 
 import React from 'react';
 import { Accordion } from '@mantine/core';
-import { Playfair_Display } from 'next/font/google';
 import { FaChevronDown } from 'react-icons/fa';
 import styles from './Faqs.module.css';
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
 
 const DEFAULT_FAQS = [
   {
@@ -64,7 +58,7 @@ export default function Faqs({ faqsList }) {
   return (
     <section id="faqs" className={styles.section}>
       <header className={styles.header}>
-        <h2 className={`${styles.title} ${playfair.className}`}>
+        <h2 className={`${styles.title} font-playfair`}>
           Frequently Asked Questions
         </h2>
         <p className={styles.subtitle}>FAQs about the Experience</p>

@@ -4,18 +4,12 @@ import { useEffect, useState } from 'react';
 import moment from 'moment';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Playfair_Display } from 'next/font/google';
 import { FaArrowLeft, FaArrowRight, FaMapMarkerAlt, FaStar, FaHotel } from 'react-icons/fa';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Navigation } from 'swiper/modules';
 import 'swiper/css/pagination';
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import styles from './TopHotels.module.css';
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
 
 const encodeProvider = (str) =>
   [...str].map((c) => (c.charCodeAt(0) + 3).toString(36)).join('');
@@ -143,7 +137,7 @@ export default function TopHotels() {
               <FaHotel className={styles.tagIcon} aria-hidden="true" />
               Haram-side Hotels
             </span>
-            <h2 className={`${styles.title} ${playfair.className}`}>
+            <h2 className={`${styles.title} font-playfair`}>
               Top-Rated Hotels
             </h2>
             <p className={styles.subtitle}>

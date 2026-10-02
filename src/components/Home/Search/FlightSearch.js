@@ -969,6 +969,7 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
                     params.append(`flight${index + 1}_date`, moment(flight.departureDate).format("YYYY-MM-DD"));
                 });
 
+                params.set('_ts', String(Date.now()));
                 if (onSearch) onSearch();
                 router.push(`/flights?${params.toString()}`);
             } else {
@@ -991,6 +992,7 @@ export default function FlightSearch({ onSearch, variant = 'home' }) {
                     CabinType: formData.cabinClass,
                     AirTripType: formData.flightType,
                 });
+                params.set('_ts', String(Date.now()));
                 if (onSearch) onSearch();
                 router.push(`/flights?${params.toString()}`);
             }

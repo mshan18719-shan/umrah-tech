@@ -437,7 +437,6 @@ export default function CheckoutForm({ packageData }) {
                             <option value="MR">Mr</option>
                             <option value="MRS">Mrs</option>
                             <option value="MISS">Miss</option>
-                            <option value="MS">Ms</option>
                             <option value="DR">Dr</option>
                         </select>
                         {errors.lead_title && <div className="invalid-feedback">{errors.lead_title}</div>}
@@ -601,9 +600,7 @@ export default function CheckoutForm({ packageData }) {
                                         <option value="MR">Mr</option>
                                         <option value="MRS">Mrs</option>
                                         <option value="MISS">Miss</option>
-                                        <option value="MS">Ms</option>
                                         <option value="DR">Dr</option>
-                                        <option value="MSTR">Master</option>
                                     </select>
                                     {errors[`passenger_${passenger.id}_title`] && <div className="invalid-feedback">{errors[`passenger_${passenger.id}_title`]}</div>}
                                 </div>

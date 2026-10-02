@@ -7,12 +7,13 @@ export default function AirlineFilter() {
     const { selectedAirlines, setSelectedAirlines, airlinesWithCounts, setCurrentPage } = useFlightList();
 
     const handleAirlineChange = (airlineCode) => {
+        const code = String(airlineCode || '').trim().toUpperCase();
         setSelectedAirlines(prev => {
-            if (prev.includes(airlineCode)) {
-                return prev.filter(a => a !== airlineCode);
-            } else {
-                return [...prev, airlineCode];
+            const normalizedPrev = prev.map((c) => String(c || '').trim().toUpperCase());
+            if (normalizedPrev.includes(code)) {
+                return normalizedPrev.filter(a => a !== code);
             }
+            return [...normalizedPrev, code];
         });
         setCurrentPage(1);
     };
@@ -31,7 +32,7 @@ export default function AirlineFilter() {
                                 <span className="flight-filter-checkbox-count">{airline.count}</span>
                             </span>
                         }
-                        checked={selectedAirlines.includes(airline.code)}
+                        checked={selectedAirlines.map((c) => String(c || '').trim().toUpperCase()).includes(String(airline.code || '').trim().toUpperCase())}
                         onChange={() => handleAirlineChange(airline.code)}
                     />
                 ))}

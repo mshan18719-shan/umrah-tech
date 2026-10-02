@@ -1,14 +1,8 @@
 'use client';
 
 import moment from 'moment';
-import { Playfair_Display } from 'next/font/google';
 import styles from './aboutUs.module.css';
 import Link from 'next/link';
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
-});
-
 const hajjYear = moment().add(1, 'year').format('YYYY');
 
 export default function AboutUs() {
@@ -16,7 +10,7 @@ export default function AboutUs() {
     <section className={styles.section}>
       <div className={`${styles.container} container`}>
         <header className={styles.header}>
-          <h2 className={`${styles.title} ${playfair.className}`}>
+          <h2 className={`${styles.title} font-playfair`}>
             <span className={styles.titleLine}>UmrahTech</span>
             <span className={styles.titleAccent}>Your Trusted Hajj & Umrah Travel Partner</span>
           </h2>

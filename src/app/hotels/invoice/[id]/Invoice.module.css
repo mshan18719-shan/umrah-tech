@@ -672,6 +672,18 @@
   text-align: right;
 }
 
+/* Passenger details: keep all columns left-aligned (override price table amounts) */
+.passengerDetailsTable th,
+.passengerDetailsTable td,
+.passengerDetailsTable th:nth-child(2),
+.passengerDetailsTable th:nth-child(3),
+.passengerDetailsTable th:nth-child(4),
+.passengerDetailsTable td:nth-child(2),
+.passengerDetailsTable td:nth-child(3),
+.passengerDetailsTable td:nth-child(4) {
+  text-align: left;
+}
+
 .priceTable td {
   padding: 12px 10px;
   font-size: 13px;
@@ -1161,6 +1173,112 @@
   border-radius: 6px;
   padding: 3px 8px;
   font-weight: 600;
+}
+
+.paxTicketRow {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #F7FAFD;
+  border-top: 1px solid #E8ECF3;
+}
+
+.paxTicketChip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+  max-width: 100%;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid #D5DCE8;
+  border-radius: 8px;
+}
+
+.paxTicketName {
+  font-size: 12px;
+  color: #1a2332;
+}
+
+.paxTicketMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #5A6478;
+}
+
+.additionalServicesBody {
+  padding: 14px 16px 16px;
+}
+
+.additionalServicesGroup + .additionalServicesGroup {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #D5DCE8;
+}
+
+.additionalServicesSubtitle {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1B3B6F;
+}
+
+.serviceCardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ancillaryServiceCard {
+  position: relative;
+  padding: 12px 14px;
+  background: #F7FAFD;
+  border: 1px solid #E5EAF2;
+  border-radius: 10px;
+  border-left: 3px solid #1B3B6F;
+}
+
+.ancillaryServicePrice {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1B3B6F;
+}
+
+.ancillaryServiceName {
+  margin: 0 0 4px;
+  padding-right: 64px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a2332;
+}
+
+.ancillaryServiceMeta {
+  margin: 0;
+  font-size: 12px;
+  color: #5A6478;
+  line-height: 1.4;
+}
+
+.ancillaryServiceRoute {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8B93A7;
+}
+
+@media (max-width: 768px) {
+  .serviceCardGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .typeBadge {

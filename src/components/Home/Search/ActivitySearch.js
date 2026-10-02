@@ -303,6 +303,7 @@ export default function ActivitySearch() {
     if (selectedLocation?.country) {
       queryParams.append('country', selectedLocation.country);
     }
+    queryParams.set('_ts', String(Date.now()));
     router.push(`/activities?${queryParams.toString()}`);
   };
 

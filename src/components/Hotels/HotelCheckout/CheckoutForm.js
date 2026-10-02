@@ -594,7 +594,6 @@ export default function CheckoutForm({
                             <option value="MR">Mr</option>
                             <option value="MRS">Mrs</option>
                             <option value="MISS">Miss</option>
-                            <option value="MS">Ms</option>
                             <option value="DR">Dr</option>
                         </select>
                         {errors.title && <div className="invalid-feedback">{errors.title}</div>}

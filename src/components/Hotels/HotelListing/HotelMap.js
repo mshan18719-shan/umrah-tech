@@ -221,9 +221,14 @@ function buildHotelGeocodeQueries(hotel, placeLabel, countryLabel) {
     return queries;
 }
 
-/** Places Autocomplete → Details (primary path for missing hotel coords) */
+/** Places Autocomplete → Details (primary path for missing hotel coords)
+ *  Currently unused while geocodeHotelNow is disabled — keep for re-enable.
+ */
 async function resolveViaPlacesApi(query) {
     if (!query) return null;
+    // Disabled Google Places lookup for missing hotel lat/lng — uncomment when needed
+    return null;
+    /*
     try {
         const tryAutocomplete = async (withTypes) => {
             const url = withTypes
@@ -250,6 +255,7 @@ async function resolveViaPlacesApi(query) {
     } catch {
         return null;
     }
+    */
 }
 
 const getGridCellSize = (zoom) => {
@@ -1254,6 +1260,8 @@ const HotelMap = forwardRef(function HotelMap(
         );
     }, []);
 
+    // Disabled: Google Places / Geocoder for missing hotel lat/lng.
+    // Uncomment the body below when you need auto-resolve again.
     const geocodeHotelNow = useCallback(
         async (hotel, { force = false } = {}) => {
             const key = hotelKey(hotel);
@@ -1262,6 +1270,9 @@ const HotelMap = forwardRef(function HotelMap(
             const existing = resolveCoords(hotel, key);
             if (existing && !force) return existing;
 
+            return null;
+
+            /*
             if (geocodeInflight.current.has(key)) {
                 return geocodeInflight.current.get(key);
             }
@@ -1316,8 +1327,9 @@ const HotelMap = forwardRef(function HotelMap(
             } finally {
                 geocodeInflight.current.delete(key);
             }
+            */
         },
-        [resolveCoords, placeLabel, countryLabel, countryCode, applyCoords]
+        [resolveCoords /*, placeLabel, countryLabel, countryCode, applyCoords */]
     );
 
     // Seed coords from session cache / corrected native coords
@@ -1339,7 +1351,9 @@ const HotelMap = forwardRef(function HotelMap(
         });
     }, [hotelIdsSignature, sourceHotels, resolveCoords]);
 
-    // Resolve missing lat/lng via Places API (primary) → Geocoder (optional)
+    // Disabled: Resolve missing lat/lng via Places API → Geocoder.
+    // Uncomment when auto-geocoding is needed again.
+    /*
     useEffect(() => {
         if (!modalChange || !hotelIdsSignature) return;
 
@@ -1388,6 +1402,7 @@ const HotelMap = forwardRef(function HotelMap(
         scriptLoaded,
         visibleCount,
     ]);
+    */
 
     // Keep overrides for hotels still in the list when the search result set changes
     useEffect(() => {
@@ -1466,9 +1481,9 @@ const HotelMap = forwardRef(function HotelMap(
     const handleSelectHotel = useCallback(
         (hotel) => {
             setSelectedHotel(hotel);
+            // Google Places lookup disabled inside geocodeHotelNow — uncomment body there when needed
             const key = hotelKey(hotel);
             if (!resolveCoords(hotel, key)) {
-                // Force Places lookup so the pill appears even if native coords were bad/missing
                 geocodeHotelNow(hotel, { force: true });
             }
         },
@@ -1496,6 +1511,7 @@ const HotelMap = forwardRef(function HotelMap(
                 return hotel;
             });
 
+            // Google Places lookup disabled inside geocodeHotelNow — uncomment body there when needed
             const key = hotelKey(hotel);
             if (!resolveCoords(hotel, key)) {
                 geocodeHotelNow(hotel);

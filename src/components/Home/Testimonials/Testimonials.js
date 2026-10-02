@@ -1,17 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-import { Playfair_Display } from 'next/font/google';
 import { FaStar } from 'react-icons/fa';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Navigation } from 'swiper/modules';
 import 'swiper/css/pagination';
 import styles from './Testimonials.module.css';
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
 
 // Static fallback data — replace with an API fetch once the endpoint is live.
 const testimonials = [
@@ -65,7 +59,7 @@ export default function Testimonials() {
             <FaStar className={styles.tagIcon} aria-hidden="true" />
             Testimonials
           </span>
-          <h2 className={`${styles.title} ${playfair.className}`}>
+          <h2 className={`${styles.title} font-playfair`}>
             Stories from Our Pilgrims
           </h2>
         </header>

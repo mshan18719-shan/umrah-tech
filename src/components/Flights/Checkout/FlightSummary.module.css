@@ -1,315 +1,298 @@
-/* ── Flight Summary Sidebar ─────────────────────────────────── */
 .summary {
+    --navy: #1b3b6f;
+    --navy-dark: #0f2a52;
+    --blue-light: #eef5ff;
+    --blue-border: #cfe0f5;
+    --ink: #111827;
+    --muted: #6b7280;
+    --line: #e8e4de;
+    --card: #ffffff;
+    --shadow: 0 4px 20px rgba(15, 35, 70, 0.08);
+
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    width: 100%;
-}
-
-.refundBanner {
-    padding: 12px 16px;
-    background: #fff9e1;
-    border-bottom: 1px solid #f5e6a8;
-    font-size: 0.875rem;
-    color: #333;
-    line-height: 1.45;
-}
-
-.refundBanner strong {
-    color: #d97706;
-    font-weight: 700;
-}
-.refundBannersuccess strong {
-    color: #53a63e !important;
-    font-weight: 700 !important;
-}
-/* ── Flight Card ─────────────────────────────────────────────── */
-.flightCard {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.routeRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    padding: 16px 18px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.2s ease;
-}
-
-.routeRow:hover {
-    background: #fafafa;
-}
-
-.routeInfo {
-    flex: 1;
+    gap: 14px;
     min-width: 0;
 }
 
-.routeText {
-    margin: 0 0 4px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #1a1a1a;
-    line-height: 1.35;
-}
-
-.routeMeta {
-    margin: 0;
-    font-size: 0.8125rem;
-    color: #707070;
-    line-height: 1.4;
-}
-
-.routeChevron {
-    flex-shrink: 0;
-    font-size: 1.1rem;
-    color: #bdbdbd;
-}
-
-.cardDividerDashed {
-    height: 0;
-    border-top: 1px dashed #e0e0e0;
-    margin: 0;
-}
-
-.cardDividerSolid {
-    height: 0;
-    border-top: 1px solid #e0e0e0;
-    margin: 0 0 4px;
-}
-
-.policyLink {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 14px 18px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #53a63e;
-    text-align: left;
-    transition: background 0.2s ease;
-}
-
-.policyLink:hover {
-    background: #f8fdf6;
-}
-
-.policyIcon {
-    flex-shrink: 0;
-    font-size: 1.125rem;
-}
-
-/* ── Price Card ──────────────────────────────────────────────── */
-.priceCard {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
+.fare {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
     overflow: hidden;
+    box-shadow: var(--shadow);
+    min-width: 0;
 }
 
-.priceHeader {
+.status {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #ecfdf5;
+    border-bottom: 1px solid #d1fae5;
+    font-size: 0.84rem;
+    line-height: 1.4;
+    color: #065f46;
+}
+
+.status strong {
+    color: #047857;
+    font-weight: 700;
+}
+
+.statusWarn {
+    background: rgb(238, 245, 255);
+    border-bottom-color: #e6ecfc;
+    color: #9a3412;
+}
+
+.statusWarn strong {
+    color: #c2410c;
+}
+
+.statusDot {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.16);
+}
+
+.statusWarn .statusDot {
+    background: #f97316;
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.16);
+}
+
+.policyBtn {
+    display: flex;
+    align-items: center;
     gap: 12px;
     width: 100%;
-    padding: 16px 18px;
+    padding: 14px 16px;
+    border: 0;
     background: transparent;
-    border: none;
-    cursor: pointer;
     text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: var(--navy);
+    transition: background 0.15s ease;
 }
 
-.priceHeaderLeft {
-    display: flex;
+.policyBtn:hover {
+    background: var(--blue-light);
+}
+
+.policyBtn:focus-visible,
+.fareHeader:focus-visible,
+.row:focus-visible {
+    outline: 2px solid var(--navy);
+    outline-offset: -2px;
+}
+
+.policyIconWrap {
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-}
-
-.priceLabel {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: #1a1a1a;
-}
-
-.priceChevron {
-    font-size: 1rem;
-    color: #666;
-}
-
-.priceHeaderRight {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--blue-light);
+    color: var(--navy);
+    font-size: 1.15rem;
+    border: 1px solid var(--blue-border);
 }
 
-.priceTotal {
-    font-size: 1.125rem;
+.policyText {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.88rem;
     font-weight: 700;
-    color: #1a1a1a;
-    white-space: nowrap;
 }
 
-.priceVatNote {
-    font-size: 0.68rem;
-    font-weight: 500;
-    color: #707070;
-    white-space: nowrap;
+.policyChevron {
+    flex-shrink: 0;
+    font-size: 1.05rem;
+    color: var(--navy);
 }
 
-.priceBody {
-    padding: 0 18px 16px;
+.fareDivider {
+    height: 0;
+    margin: 0 16px;
+    border-top: 1px dashed #d8dee8;
 }
 
-.priceRow {
+.fareHeader {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
-    padding: 12px 0;
+    width: 100%;
+    padding: 16px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
 }
 
-.priceRowLeft {
+.fareHeaderLeft {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-top: 4px;
+}
+
+.fareLabel {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.chevron {
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    color: var(--navy);
+}
+
+.fareHeaderRight {
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 2px;
     min-width: 0;
 }
 
-.priceRowTitle {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1a1a1a;
+.fareTotal {
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--navy);
+    font-variant-numeric: tabular-nums;
 }
 
-.priceRowSub {
-    font-size: 0.8125rem;
-    color: #707070;
+.fareNote {
+    font-size: 0.72rem;
+    color: var(--muted);
 }
 
-.priceRowAmount {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    white-space: nowrap;
-    flex-shrink: 0;
+.fareBody {
+    padding: 4px 16px 16px;
+    border-top: 1px solid rgba(27, 59, 111, 0.08);
+    background: #f8f9fc;
 }
 
-.taxRow {
+.row,
+.detailRow,
+.feeRow {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 8px 0 4px;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
 }
 
-.taxToggle {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0;
+.row {
+    width: 100%;
+    padding: 8px 0;
+    border: 0;
     background: transparent;
-    border: none;
+    text-align: left;
     cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1a1a1a;
+    font: inherit;
 }
 
-.taxChevron {
-    font-size: 0.875rem;
-    color: #666;
+.rowStatic {
+    cursor: default;
+}
+
+.rowLabel {
+    min-width: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.leader {
+    flex: 1;
+    min-width: 12px;
+    border-bottom: 1px dotted #c5cdd8;
+    transform: translateY(-3px);
+}
+
+.rowAmount {
+    flex-shrink: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.row .chevron {
+    align-self: center;
+}
+
+.details {
+    margin: 0 0 8px 6px;
+    padding-left: 12px;
+    border-left: 2px solid var(--blue-border);
+}
+
+.detailRow {
+    padding: 3px 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.detailRow .leader {
+    border-bottom-color: #d8dee8;
+}
+
+.detailAmount {
+    flex-shrink: 0;
+    font-weight: 600;
+    color: #4b5563;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 .taxNote {
     margin: 0 0 8px;
-    padding-left: 0;
     font-size: 0.75rem;
-    color: #707070;
-    line-height: 1.45;
+    line-height: 1.4;
+    color: var(--muted);
 }
 
-.bookingFeeRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+.addons {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed #d8dee8;
+}
+
+.feeRow {
+    margin-top: 10px;
     padding-top: 12px;
+    border-top: 1px dashed #d8dee8;
 }
 
-.bookingFeeLabel {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1a1a1a;
-}
-
-.bookingFeeValue {
-    font-size: 0.875rem;
+.feeFree {
+    flex-shrink: 0;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 0.8rem;
     font-weight: 700;
-    color: #53a63e;
 }
 
-/* ── Responsive ──────────────────────────────────────────────── */
-@media (min-width: 768px) {
-    .summarySticky {
-        position: sticky;
-        top: 24px;
-        z-index: 2;
-    }
+.travelerGroup + .travelerGroup {
+    margin-top: 4px;
 }
 
-@media (max-width: 767px) {
-    .summarySticky {
-        margin-bottom: 24px;
-    }
-}
-
-@media (max-width: 575px) {
-    .routeRow,
-    .priceHeader {
-        padding: 14px 14px;
-    }
-
-    .policyLink,
-    .priceBody {
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
-    .routeText {
-        font-size: 0.875rem;
-    }
-
-    .priceTotal {
-        font-size: 1rem;
-    }
-
-    .priceRow {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-
-    .priceRowAmount {
-        align-self: flex-end;
-    }
-
-    .taxRow {
-        flex-wrap: wrap;
+@media (max-width: 575.98px) {
+    .fareTotal {
+        font-size: 1.3rem;
     }
 }

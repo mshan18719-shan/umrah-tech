@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import moment from 'moment';
 import Image from 'next/image';
 import { FaPlane } from 'react-icons/fa';
 import airline from '@/util/airlines.json';
+import FlightDetail from '@/components/Flights/FlightDetail';
 import { groupSegments } from './flightHelpers';
 import styles from './FlightReviewHero.module.css';
 
@@ -22,17 +23,25 @@ function getStopLabel(group) {
 }
 
 function getLegBadgeClass(tripType, idx) {
-    if (tripType === 'multicity') return styles.legBadgeOther;
+    const trip = String(tripType || '').toLowerCase().replace(/[\s_-]+/g, '');
+    if (trip === 'multicity' || trip === 'multi') return styles.legBadgeOther;
     return idx === 0 ? styles.legBadgeDeparture : styles.legBadgeReturn;
 }
 
 export default function FlightReviewHero({ flightDetails }) {
+    const [detailOpen, setDetailOpen] = useState(false);
+
     if (!flightDetails?.segments?.length) return null;
 
     const segmentGroups = groupSegments(flightDetails);
 
     return (
-        <section className={styles.reviewCard} aria-label="Flight booking review">
+        <>
+            <header className={styles.reviewHeader}>
+                <h1 className={styles.reviewTitle}>Review Your Booking</h1>
+                <p className={styles.reviewSubtitle}>Hotel, Flight, Transfers, Visa Services.</p>
+            </header>
+            <section className={styles.reviewCard} aria-label="Flight booking review">
             {segmentGroups.map((group, idx) => {
                 const firstSegment = group.segments[0];
                 const lastSegment = group.segments[group.segments.length - 1];
@@ -53,9 +62,8 @@ export default function FlightReviewHero({ flightDetails }) {
                 const logoSrc = firstSegment.airline?.logo_url || airlineData?.logo;
 
                 return (
-                    <div >
+                    <div key={idx}>
                         <div
-                            key={idx}
                             className={`${styles.legSection} ${idx < segmentGroups.length - 1 ? styles.legSectionDivider : ''}`}
                         >
                             <div className={styles.legHeader}>
@@ -129,6 +137,24 @@ export default function FlightReviewHero({ flightDetails }) {
                     </div>
                 );
             })}
-        </section >
+
+            {/* <div className={styles.heroFooter}> */}
+                <button
+                    type="button"
+                    className={styles.detailBtn}
+                    onClick={() => setDetailOpen(true)}
+                >
+                   Flight Detail
+                </button>
+            {/* </div> */}
+
+            <FlightDetail
+                flightdata={flightDetails}
+                hideTrigger
+                showFlights={detailOpen}
+                onClose={() => setDetailOpen(false)}
+            />
+            </section>
+        </>
     );
 }

@@ -49,8 +49,7 @@ function canCancelBooking(booking) {
     null;
 
   return (
-    booking?.booking_status?.toLowerCase() === "confirmed" &&
-    booking?.payment_status?.toLowerCase() === "paid" &&
+    booking?.booking_status?.toLowerCase() !== "cancelled" &&
     checkIn &&
     moment(checkIn).isValid() &&
     moment(checkIn).isAfter(moment(), "day")

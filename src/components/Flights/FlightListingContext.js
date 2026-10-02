@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import moment from "moment";
 import { createContext, useContext, useState, useMemo } from "react";
 const FlightContext = createContext();
-import { useCurrency } from "@/util/currency";
 import { getOutboundLegTimes, getSlotForHour } from "./Filters/flightTimeSlots";
 import { groupSegments } from "./Checkout/flightHelpers";
 
@@ -57,9 +56,22 @@ const getMaxLayoverTime = (flight) => {
     if (legs.length === 0) return 0;
     return Math.max(...legs.map(leg => calculateLayoverTime(leg.segments)));
 };
+
+const normalizeAirlineCode = (code) => String(code || "").trim().toUpperCase();
+
+/** Marketing airline shown on the card (first segment of outbound / first leg). */
+const getPrimaryMarketingAirline = (flight) => {
+    const legs = getFlightLegs(flight);
+    const firstSegment = legs[0]?.segments?.[0] || flight?.segments?.[0] || null;
+    const code = normalizeAirlineCode(firstSegment?.airline?.code);
+    if (!code) return null;
+    return {
+        code,
+        name: firstSegment?.airline?.name || code,
+    };
+};
 export function FlightProvider({ children, flights, infiniteScroll = false }) {
     const [convertedFlights, setConvertedFlights] = useState([]);
-    const { currency, rates } = useCurrency();
 
     // Filter states
     const [selectedAirlines, setSelectedAirlines] = useState([]);
@@ -95,13 +107,28 @@ export function FlightProvider({ children, flights, infiniteScroll = false }) {
             setMaxLayover(maxLay);
             setLayoverRange([minLay, maxLay]);
 
+            // New search results → clear all applied filters
+            setSelectedAirlines([]);
+            setSelectedStops([]);
+            setSelectedCabinClass([]);
             setSelectedDepartureSlots([]);
             setSelectedArrivalSlots([]);
+            setSort("recommended");
+            setCurrentPage(1);
+            setVisibleCount(10);
             setConvertedFlights(flights);
         } else {
             setConvertedFlights([]);
+            setSelectedAirlines([]);
+            setSelectedStops([]);
+            setSelectedCabinClass([]);
+            setSelectedDepartureSlots([]);
+            setSelectedArrivalSlots([]);
+            setSort("recommended");
+            setCurrentPage(1);
+            setVisibleCount(10);
         }
-    }, [flights, rates, currency]);
+    }, [flights]);
 
     const resetFilters = () => {
         setSelectedAirlines([]);
@@ -120,13 +147,13 @@ export function FlightProvider({ children, flights, infiniteScroll = false }) {
     const filteredFlights = useMemo(() => {
         let result = [...convertedFlights];
 
-        // Filter by Airlines
+        // Filter by Airlines (same primary marketing airline used for counts / card)
         if (selectedAirlines.length > 0) {
-            result = result.filter((flight) =>
-                flight.segments?.some((segment) =>
-                    selectedAirlines.includes(segment.airline?.code)
-                )
-            );
+            const selected = new Set(selectedAirlines.map(normalizeAirlineCode).filter(Boolean));
+            result = result.filter((flight) => {
+                const primary = getPrimaryMarketingAirline(flight);
+                return primary && selected.has(primary.code);
+            });
         }
 
         // Filter by Stops
@@ -242,33 +269,24 @@ export function FlightProvider({ children, flights, infiniteScroll = false }) {
         sort,
         convertedFlights.length,
     ]);
-    // Get unique airlines with counts
+    // Airline counts: one flight → one primary marketing airline (matches filter + card)
     const airlinesWithCounts = useMemo(() => {
         const airlineCounts = {};
         convertedFlights.forEach((flight) => {
-            // Get unique airlines in this flight
-            const uniqueAirlines = new Set();
-            flight.segments?.forEach((segment) => {
-                const code = segment.airline?.code || segment.operating_airline?.code;
-                const name = segment.operating_airline?.name || segment.airline?.name;
-                if (code) {
-                    uniqueAirlines.add(JSON.stringify({ code, name }));
-                }
-            });
-            // Increment count for each unique airline in this flight
-            uniqueAirlines.forEach(airlineStr => {
-                const airline = JSON.parse(airlineStr);
-                if (!airlineCounts[airline.code]) {
-                    airlineCounts[airline.code] = { name: airline.name, count: 0 };
-                }
-                airlineCounts[airline.code].count++;
-            });
+            const primary = getPrimaryMarketingAirline(flight);
+            if (!primary) return;
+            if (!airlineCounts[primary.code]) {
+                airlineCounts[primary.code] = { name: primary.name, count: 0 };
+            }
+            airlineCounts[primary.code].count += 1;
         });
-        return Object.entries(airlineCounts).map(([code, data]) => ({
-            code,
-            name: data.name || code,
-            count: data.count
-        }));
+        return Object.entries(airlineCounts)
+            .map(([code, data]) => ({
+                code,
+                name: data.name || code,
+                count: data.count,
+            }))
+            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
     }, [convertedFlights]);
 
     // Get stops with counts

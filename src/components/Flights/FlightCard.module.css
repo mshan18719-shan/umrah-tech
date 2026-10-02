@@ -23,7 +23,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.55rem 0.85rem;
-    margin-bottom: 0.85rem;
+    margin: 0 1.15rem 0.85rem;
     border-radius: 10px;
     background: linear-gradient(135deg, #eff6ff, #f0f9ff);
     border: 1px solid #bfdbfe;

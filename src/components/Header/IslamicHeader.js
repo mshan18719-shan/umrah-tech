@@ -77,7 +77,7 @@ export default function IslamicHeader() {
                             </div>
                             <div className={`${styles.islamicTopBarItem} d-none d-md-flex align-items-center gap-2`}>
                                 <IoIosMailUnread className={styles.islamicTopBarIcon} />
-                                <a href="mailto:info@umrahTech.net"><span className={styles.islamicTopBarText}>info@aUmerahtech.net</span></a>
+                                <a href="mailto:info@umrahTech.net"><span className={styles.islamicTopBarText}>info@Umerahtech.net</span></a>
                             </div>
 
                             {/* <div className={`${styles.islamicTopBarItem} d-none d-md-flex align-items-center gap-2`}>

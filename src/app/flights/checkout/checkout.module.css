@@ -1,5 +1,33 @@
 /* Flight checkout — navy theme (aligned with hotels / transfers) */
 
+.heroFullWidth {
+    width: 100%;
+    margin-bottom: 0.25rem;
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.85rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #1b3b6f;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.backLink:hover {
+    text-decoration: underline;
+}
+
+.summarySticky {
+    position: sticky;
+    top: 1.25rem;
+}
+
 .flight-checkout-page {
     --ck-navy: #1b3b6f;
     --ck-navy-dark: #0f2a52;
@@ -374,3 +402,107 @@
         padding-right: 1.1rem;
     }
 }
+
+/* Shared checkout card / overview helpers (CSS modules) */
+.formCard {
+    background: #fff;
+    border: 1px solid #e8e4de;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(15, 35, 70, 0.08);
+    padding: 1.25rem 1.35rem;
+}
+
+.section {
+    margin: 0;
+}
+
+.sectionTitle {
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1b3b6f;
+}
+
+.seatDetailBlocks {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.seatDetailBlock {
+    border: 1px solid #e8e4de;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    background: #f8f9fc;
+}
+
+.seatDetailRoute {
+    margin: 0 0 0.65rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1b3b6f;
+}
+
+.seatDetailList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.seatDetailRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.seatDetailName {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #0d1e3d;
+}
+
+.seatDetailAssigned {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #1b3b6f;
+}
+
+.seatDetailPrice {
+    margin-left: 0.25rem;
+    font-weight: 700;
+}
+
+.seatAirlineBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    background: #e8f4fd;
+    border: 1px solid #cfe0f5;
+    color: #9a3412;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: help;
+}
+
+.seatAirlineIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3b82c4;
+    color: #fff;
+    font-size: 0.55rem;
+}
+

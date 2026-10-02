@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import moment from 'moment';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Playfair_Display } from 'next/font/google';
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -19,11 +18,6 @@ import { Pagination, Navigation } from 'swiper/modules';
 import 'swiper/css/pagination';
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import styles from './TopActivities.module.css';
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
 
 const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 
@@ -103,7 +97,7 @@ export default function TopActivities() {
       <div className="container">
         <header className={styles.header}>
           <span className={styles.tag}>Activities</span>
-          <h2 className={`${styles.title} ${playfair.className}`}>
+          <h2 className={`${styles.title} font-playfair`}>
            Experiences Worth Discovering
           </h2>
           <p className={styles.subtitle}>

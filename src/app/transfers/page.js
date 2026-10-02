@@ -57,6 +57,7 @@ function TransferPageContent() {
 
     const getTransfers = async (params) => {
         try {
+            const { _ts, ...searchPayload } = params || {};
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/transfers/search`,
                 {
@@ -66,7 +67,7 @@ function TransferPageContent() {
                         // 'ngrok-skip-browser-warning': 'true',
                     },
                     cache: 'no-store',
-                    body: JSON.stringify(params),
+                    body: JSON.stringify(searchPayload),
                 }
             );
 

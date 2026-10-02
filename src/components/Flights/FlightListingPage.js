@@ -179,6 +179,7 @@ export default function FlightListingPage() {
     useEffect(() => {
         async function getFlights() {
             setIsLoading(true);
+            setFlightList([]);
             const airTripType = searchParams.get('AirTripType');
             const isPackageMode = searchParams.get("packageMode");
             const isEditMode = searchParams.get("edit");

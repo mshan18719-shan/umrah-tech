@@ -96,7 +96,11 @@ export default function PackageSearch({
             });
             return;
         }
-        router.push(`/${formData.category}?date=${formatDateParam(formData.date)}`);
+        const params = new URLSearchParams({
+            date: formatDateParam(formData.date),
+            _ts: String(Date.now()),
+        });
+        router.push(`/${formData.category}?${params.toString()}`);
         onSearch?.();
     };
 

@@ -1,0 +1,130 @@
+.timerPill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    background: #eaf4fb;
+    border-radius: 14px;
+    border: none;
+}
+
+.timerPillUrgent {
+    background: #fff3e0;
+}
+
+.timerPillExpired {
+    background: #fdeaea;
+    flex-wrap: wrap;
+}
+
+.timerIcon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #3b82c4;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+}
+
+.timerPillUrgent .timerIcon {
+    background: #d97706;
+}
+
+.timerPillExpired .timerIcon {
+    background: #dc2626;
+}
+
+.timerText {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.timerLabel {
+    color: #3b82c4;
+    font-weight: 500;
+}
+
+.timerPillUrgent .timerLabel {
+    color: #c2410c;
+}
+
+.timerPillExpired .timerLabel {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.timerValue {
+    color: #1e293b;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.timerPillUrgent .timerValue {
+    color: #9a3412;
+}
+
+.expiredRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.searchBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #004c4c;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.searchBtn:hover {
+    background: #003838;
+}
+
+.modalTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #004c4c;
+}
+
+.modalBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modalBody p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.55;
+}
+
+.modalBody .searchBtn {
+    align-self: flex-start;
+    margin-top: 4px;
+}

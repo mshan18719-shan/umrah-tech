@@ -7,8 +7,8 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import FlightBookingDetailLoader from '@/components/Loader/FlightBookinfDetailLoader'
 import Image from 'next/image'
-import { MdFlight, MdLuggage } from 'react-icons/md'
-import { groupSegments } from '@/components/Flights/Checkout/flightHelpers'
+import { MdAirlineSeatReclineExtra, MdConfirmationNumber, MdFlight, MdLuggage } from 'react-icons/md'
+import { groupSegments, getFlightBookingAncillaries, getSegmentPassengerRows } from '@/components/Flights/Checkout/flightHelpers'
 
 export default function Page() {
   const voucherRef = useRef()
@@ -251,6 +251,26 @@ export default function Page() {
     return (Number(price) * Number(voucherDetail?.pricing?.supplier_to_display_rate)).toFixed(2)
   }
 
+  const formatServicePrice = (serviceCurrency, price) => {
+    const amount = Number(price)
+    if (!Number.isFinite(amount)) return '—'
+    if (amount <= 0) return 'Included'
+
+    const displayCurrency =
+      voucherDetail?.pricing?.display_currency || serviceCurrency || ''
+    const serviceCur = String(serviceCurrency || '').toUpperCase()
+    const displayCur = String(displayCurrency || '').toUpperCase()
+    const rate = Number(voucherDetail?.pricing?.supplier_to_display_rate)
+
+    const alreadyInDisplay = Boolean(displayCur && serviceCur && displayCur === serviceCur)
+    const converted =
+      alreadyInDisplay || !(rate > 0)
+        ? amount.toFixed(2)
+        : (amount * rate).toFixed(2)
+
+    return `${displayCurrency || serviceCurrency || ''} ${converted}`.trim()
+  }
+
   const formatDuration = (segment) => {
     const mins = Number(segment?.duration)
     if (!Number.isFinite(mins) || mins < 0) return '—'
@@ -285,7 +305,27 @@ export default function Page() {
     }).filter((g) => g?.segments?.length)
   }
 
-  const renderSegmentCard = (segment, segIndex) => {
+  const bookingAncillaries = getFlightBookingAncillaries(voucherDetail)
+
+  const getSegmentIndex = (segment) => {
+    const segments = Array.isArray(voucherDetail?.segments) ? voucherDetail.segments : []
+    const key = segment?.segment_key
+    if (key) {
+      const byKey = segments.findIndex((s) => s?.segment_key === key)
+      if (byKey >= 0) return byKey
+    }
+    const idx = segments.indexOf(segment)
+    return idx >= 0 ? idx : 0
+  }
+
+  const formatBaggageValue = (value) => {
+    if (value == null || value === '') return '—'
+    if (Array.isArray(value)) return value.filter(Boolean).join(', ') || '—'
+    if (typeof value === 'object') return value.name || value.label || value.code || '—'
+    return String(value)
+  }
+
+  const renderSegmentCard = (segment, key) => {
     const departure = getSegmentDeparture(segment)
     const arrival = getSegmentArrival(segment)
     const departAt = getDepartAt(segment)
@@ -296,8 +336,16 @@ export default function Page() {
     const cabinLabel = getCabinClassLabel(
       segment.cabin_class || voucherDetail?.flight_details?.cabin_class
     )
+    const segmentIndex = getSegmentIndex(segment)
+    const segmentPassengerRows = getSegmentPassengerRows(
+      voucherDetail,
+      segment,
+      segmentIndex,
+      bookingAncillaries,
+    )
+
     return (
-      <div key={segIndex} className={styles.flightSegmentCard}>
+      <div key={key} className={styles.flightSegmentCard}>
         <div className={styles.airlineRow}>
           {segment.airline?.logo_url && (
             <img src={segment.airline.logo_url} alt={getAirlineName(segment.airline)} className={styles.airlineLogo} />
@@ -341,17 +389,49 @@ export default function Page() {
             </p>
           </div>
         </div>
+        {segmentPassengerRows.length > 0 && (
+          <div className={styles.paxTicketRow}>
+            <span className={styles.baggageTitle}>
+              <MdConfirmationNumber size={14} /> Tickets &amp; Seats:
+            </span>
+            {segmentPassengerRows.map((row) => (
+              <span
+                key={`${segmentIndex}-${row.passengerIndex}`}
+                className={styles.paxTicketChip}
+              >
+                <strong className={styles.paxTicketName}>{row.passengerName}</strong>
+                {row.ticketNumber ? (
+                  <span className={styles.paxTicketMeta}>E-Ticket: {row.ticketNumber}</span>
+                ) : null}
+                {row.seatName ? (
+                  <span className={styles.paxTicketMeta}>
+                    <MdAirlineSeatReclineExtra size={12} /> Seat: {row.seatName}
+                  </span>
+                ) : null}
+              </span>
+            ))}
+          </div>
+        )}
         {(segment?.baggage_info?.adult || segment?.baggage_info?.child || segment?.baggage_info?.infant) && (
           <div className={styles.baggageRow}>
             <span className={styles.baggageTitle}><MdLuggage size={14} /> Baggage:</span>
             {segment?.baggage_info?.adult && (
-              <span className={styles.baggageChip}>Adult: {segment.baggage_info.adult.cabin} | {segment.baggage_info.adult.checked}</span>
+              <span className={styles.baggageChip}>
+                Adult: {formatBaggageValue(segment.baggage_info.adult.cabin)} |{' '}
+                {formatBaggageValue(segment.baggage_info.adult.checked)}
+              </span>
             )}
             {segment?.baggage_info?.child && (
-              <span className={styles.baggageChip}>Child: {segment.baggage_info.child.cabin} | {segment.baggage_info.child.checked}</span>
+              <span className={styles.baggageChip}>
+                Child: {formatBaggageValue(segment.baggage_info.child.cabin)} |{' '}
+                {formatBaggageValue(segment.baggage_info.child.checked)}
+              </span>
             )}
             {segment?.baggage_info?.infant && (
-              <span className={styles.baggageChip}>Infant: {segment.baggage_info.infant.cabin} | {segment.baggage_info.infant.checked}</span>
+              <span className={styles.baggageChip}>
+                Infant: {formatBaggageValue(segment.baggage_info.infant.cabin)} |{' '}
+                {formatBaggageValue(segment.baggage_info.infant.checked)}
+              </span>
             )}
           </div>
         )}
@@ -391,6 +471,13 @@ export default function Page() {
   const grandTotal = Number(voucherDetail?.pricing?.amount || 0)
   const baseFare = Number(voucherDetail?.pricing?.base_amount || 0) + Number(voucherDetail?.pricing?.total_markup_amount || 0)
   const taxAmt = Number(voucherDetail?.pricing?.tax_amount || 0)
+  const baseDisplay = Number(convertToCustomerCurrency(baseFare))
+  const taxDisplay = Number(convertToCustomerCurrency(taxAmt))
+  // Keep breakdown reconciled with grand total (ancillaries may be in a different supplier currency)
+  const additionalServicesDisplay = Math.max(
+    0,
+    Number((grandTotal - baseDisplay - taxDisplay).toFixed(2))
+  )
   const amountPaid = paymentStatus === 'paid' || paymentStatus === 'completed' ? grandTotal : 0
   const remaining = Math.max(grandTotal - amountPaid, 0)
   const refNo = voucherDetail?.booking_reference || id
@@ -543,6 +630,77 @@ export default function Page() {
               </section>
             )}
 
+            {bookingAncillaries.hasAncillaries && (
+              <section className={styles.section}>
+                <div className={styles.sectionHead}>
+                  <div className={styles.sectionHeadLeft}>
+                    <span className={styles.sectionIcon}><MdLuggage size={14} /></span>
+                    <h3 className={styles.sectionTitle}>Additional Services</h3>
+                  </div>
+                </div>
+                <div className={styles.additionalServicesBody}>
+                  {bookingAncillaries.bagItems.length > 0 && (
+                    <div className={styles.additionalServicesGroup}>
+                      <p className={styles.additionalServicesSubtitle}>Extra Baggage</p>
+                      <div className={styles.serviceCardGrid}>
+                        {bookingAncillaries.bagItems.map((bag, bagIndex) => (
+                          <div
+                            key={`bag-${bag.passengerIndex}-${bag.ancillaryKey || bagIndex}`}
+                            className={styles.ancillaryServiceCard}
+                          >
+                            {bag.hasPrice !== false && (
+                              <span className={styles.ancillaryServicePrice}>
+                                {formatServicePrice(bag.currency, bag.price)}
+                              </span>
+                            )}
+                            <p className={styles.ancillaryServiceName}>{bag.passengerName}</p>
+                            <p className={styles.ancillaryServiceMeta}>{bag.label}</p>
+                            {(bag.flightLabels?.length > 0 || bag.routes?.length > 0) && (
+                              <p className={styles.ancillaryServiceRoute}>
+                                {(bag.flightLabels?.length > 0
+                                  ? bag.flightLabels.map((l) => l.replace(/\s+/g, ''))
+                                  : bag.routes
+                                ).join(' · ')}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {bookingAncillaries.seatItems.length > 0 && (
+                    <div className={styles.additionalServicesGroup}>
+                      <p className={styles.additionalServicesSubtitle}>Seat Selection</p>
+                      <div className={styles.serviceCardGrid}>
+                        {bookingAncillaries.seatItems.map((seat, seatIndex) => (
+                          <div
+                            key={`seat-${seat.passengerIndex}-${seat.segmentKey}-${seat.seatName}-${seatIndex}`}
+                            className={styles.ancillaryServiceCard}
+                          >
+                            {seat.hasPrice !== false && (
+                              <span className={styles.ancillaryServicePrice}>
+                                {formatServicePrice(seat.currency, seat.price)}
+                              </span>
+                            )}
+                            <p className={styles.ancillaryServiceName}>{seat.passengerName}</p>
+                            <p className={styles.ancillaryServiceMeta}>
+                              Seat {seat.seatName}
+                              {seat.position ? ` · ${seat.position}` : ''}
+                            </p>
+                            {(seat.route || seat.flightLabel) && (
+                              <p className={styles.ancillaryServiceRoute}>
+                                {[seat.flightLabel, seat.route].filter(Boolean).join(' · ')}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
             {/* Passengers */}
             {voucherDetail?.passenger_details?.length > 0 && (
               <section className={styles.section}>
@@ -554,7 +712,7 @@ export default function Page() {
                   <span className={styles.sectionRight}>{getTotalPassengers()}</span>
                 </div>
                 <div className={styles.priceTableWrap}>
-                  <table className={styles.priceTable}>
+                  <table className={`${styles.priceTable} ${styles.passengerDetailsTable}`}>
                     <thead>
                       <tr>
                         <th>#</th>
@@ -574,6 +732,7 @@ export default function Page() {
                         const cardType = getPassengerCardType(passenger)
                         const cardNum = getPassengerCardNum(passenger)
                         const cardExpiry = getPassengerCardExpiry(passenger)
+                        const pType = String(passenger.type || '').toLowerCase()
                         return (
                           <tr key={index}>
                             <td>{index + 1}</td>
@@ -582,13 +741,20 @@ export default function Page() {
                                 {passenger.title ? `${String(passenger.title).toUpperCase()} ` : ''}
                                 {passenger.firstName} {passenger.lastName}
                               </strong>
-                              {ticketNo ? (
-                                <div style={{ fontSize: '0.78rem', fontWeight: 500, color: '#6b7280', marginTop: 2 }}>
-                                  Ticket No: {ticketNo}
-                                </div>
-                              ) : null}
                             </td>
-                            <td>{formatPassengerType(passenger.type)}</td>
+                            <td>
+                              <span
+                                className={`${styles.typeBadge} ${
+                                  pType.includes('child')
+                                    ? styles.typeBadgeChild
+                                    : pType.includes('infant')
+                                      ? styles.typeBadgeInfant
+                                      : ''
+                                }`}
+                              >
+                                {formatPassengerType(passenger.type)}
+                              </span>
+                            </td>
                             <td>{formatGender(passenger.gender)}</td>
                             <td>{formatDateValue(passenger.dateOfBirth || passenger.date_of_birth || passenger.dob)}</td>
                             <td>{formatCardType(cardType)}</td>
@@ -631,14 +797,18 @@ export default function Page() {
                   <tbody>
                     <tr>
                       <td>Base Fare</td>
-                      {/* <td>{currency} {convertToCustomerCurrency(baseFare)}</td> */}
-                      <td>{currency} {convertToCustomerCurrency(baseFare)}</td>
+                      <td>{currency} {baseDisplay.toFixed(2)}</td>
                     </tr>
                     <tr>
                       <td>Taxes &amp; Fees</td>
-                      {/* <td>{currency} {convertToCustomerCurrency(taxAmt)}</td> */}
-                      <td>{currency} {convertToCustomerCurrency(taxAmt)}</td>
+                      <td>{currency} {taxDisplay.toFixed(2)}</td>
                     </tr>
+                    {additionalServicesDisplay > 0 && (
+                      <tr>
+                        <td>Additional Services</td>
+                        <td>{currency} {additionalServicesDisplay.toFixed(2)}</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

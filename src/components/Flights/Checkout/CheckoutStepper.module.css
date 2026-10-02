@@ -1,0 +1,180 @@
+.stepper {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid #e8edf3;
+    padding: 0.9rem 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.list {
+    list-style: none;
+    margin: 0;
+    padding: 0 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    min-width: 520px;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.chevronItem {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    list-style: none;
+}
+
+.chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #cbd5e1;
+    font-size: 1.15rem;
+    font-weight: 400;
+    line-height: 1;
+    user-select: none;
+    padding: 0 0.15rem;
+}
+
+.chevronDone {
+    color: #29abd8;
+}
+
+.stepBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.65rem;
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease, opacity 0.2s ease;
+    font-family: inherit;
+}
+
+.stepBtn:hover:not(:disabled) {
+    background: #f4f7fb;
+}
+
+.active .stepBtn {
+    background: #1b3b6f;
+    padding: 0.4rem 0.85rem 0.4rem 0.4rem;
+    cursor: default;
+}
+
+.active .stepBtn:hover {
+    background: #1b3b6f;
+}
+
+.stepBtn:disabled {
+    cursor: default;
+}
+
+.circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e8f0f8;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    line-height: 1;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.completed .circle {
+    background: #29abd8;
+    color: #fff;
+    font-size: 0.7rem;
+}
+
+.active .circle {
+    background: #fff;
+    color: #1b3b6f;
+}
+
+.label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+    line-height: 1.2;
+    transition: color 0.2s ease;
+}
+
+.completed .label {
+    color: #29abd8;
+    font-weight: 600;
+}
+
+.active .label {
+    color: #fff;
+    font-weight: 700;
+}
+
+.upcoming .label {
+    color: #94a3b8;
+}
+
+@media (max-width: 767px) {
+    .stepper {
+        padding: 0.75rem 0;
+        margin-bottom: 1.25rem;
+    }
+
+    .list {
+        justify-content: flex-start;
+        gap: 0.25rem;
+        padding: 0 0.15rem;
+        min-width: 460px;
+    }
+
+    .stepBtn {
+        gap: 0.4rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .active .stepBtn {
+        padding: 0.35rem 0.85rem 0.35rem 0.35rem;
+    }
+
+    .circle {
+        width: 26px;
+        height: 26px;
+        font-size: 0.75rem;
+    }
+
+    .label {
+        font-size: 0.82rem;
+    }
+
+    .chevron {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .list {
+        min-width: 420px;
+    }
+
+    .label {
+        font-size: 0.75rem;
+    }
+}

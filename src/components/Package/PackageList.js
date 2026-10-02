@@ -7,14 +7,8 @@ import { useSearchParams, useParams } from 'next/navigation';
 import PackagePagination from './PackagePagination';
 import Link from 'next/link';
 import { FaHome } from 'react-icons/fa';
-import { Playfair_Display } from 'next/font/google';
 import Filter from './Filter';
 import PackageSort, { sortPackages } from './PackageSort';
-
-const playfair = Playfair_Display({
-    weight: '700',
-    subsets: ['latin'],
-});
 
 function formatCategoryLabel(slug) {
     if (!slug) return 'packages';
@@ -46,7 +40,9 @@ export default function PackageList({ category_slug }) {
                 setProgress((prev) => (prev < 90 ? prev + 10 : prev));
             }, 200);
             try {
-                const query = searchParams.toString();
+                const queryParams = new URLSearchParams(searchParams.toString());
+                queryParams.delete('_ts');
+                const query = queryParams.toString();
                 const res = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/packages/search?category_slug=${resolvedSlug}${query ? `&${query}` : ''}`,
                     {
@@ -146,7 +142,7 @@ export default function PackageList({ category_slug }) {
                         <div>
                             {packageList.length === 0 ? (
                                 <div className="text-center packge-card-notfound">
-                                    <h3 className={playfair.className}>No Packages Found</h3>
+                                    <h3 className="font-playfair">No Packages Found</h3>
                                     <p>
                                         We couldn’t find any packages matching your search criteria.
                                         Try adjusting your filters or search again with different

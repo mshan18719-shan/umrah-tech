@@ -81,22 +81,36 @@ export default function Page() {
 
   useEffect(() => {
     setDescExpanded(false);
-    setNeedsReadMore(false);
     setFacilitiesModalOpen(false);
   }, [hotelDetails?.hotel_name, hotelDetails?.description]);
 
-  // Only show Read more when clamped text actually overflows (~4 lines)
+  // Only show View more when truncated content actually overflows
   useLayoutEffect(() => {
     if (!hotelDetails?.description && !plainDescription) {
       setNeedsReadMore(false);
-      return;
+      return undefined;
     }
-    if (descExpanded) return;
+    if (descExpanded) return undefined;
 
-    const el = descTextRef.current;
-    if (!el) return;
+    const measure = () => {
+      const el = descTextRef.current;
+      if (!el) {
+        setNeedsReadMore(false);
+        return;
+      }
+      // scrollHeight > clientHeight when max-height / line-clamp clips content
+      setNeedsReadMore(el.scrollHeight > el.clientHeight + 2);
+    };
 
-    setNeedsReadMore(el.scrollHeight > el.clientHeight + 1);
+    measure();
+    // Re-measure after layout/fonts settle (fixes late HTML paint)
+    const rafId = requestAnimationFrame(measure);
+    const tId = window.setTimeout(measure, 100);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.clearTimeout(tId);
+    };
   }, [hotelDetails?.description, plainDescription, descExpanded, isHtmlDescription]);
 
   useEffect(() => {

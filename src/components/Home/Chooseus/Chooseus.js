@@ -1,13 +1,7 @@
 'use client';
 
-import { Playfair_Display } from 'next/font/google';
 import { FaShieldAlt, FaClock, FaStar, FaGlobe } from 'react-icons/fa';
 import styles from './Chooseus.module.css';
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
 
 const features = [
   {
@@ -45,7 +39,7 @@ export default function Chooseus() {
     <section className={styles.section} aria-label="Why Choose Us">
       <div className="container">
         <header className={styles.header}>
-          <h2 className={`${styles.title} ${playfair.className}`}>
+          <h2 className={`${styles.title} font-playfair`}>
             Why Choose UmrahTech?
           </h2>
           <p className={styles.subtitle}>

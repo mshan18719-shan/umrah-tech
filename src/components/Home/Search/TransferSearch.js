@@ -334,6 +334,7 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
             queryParams.append('dropoffTime', moment(formData.dropoffDateTime).format('HH:mm:ss'));
         }
         queryParams.append('passengers', formData.adults);
+        queryParams.set('_ts', String(Date.now()));
         if (onSearch) onSearch();
         router.push(`/transfers?${queryParams.toString()}`);
     };

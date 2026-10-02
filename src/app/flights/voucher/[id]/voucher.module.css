@@ -865,3 +865,463 @@
   font-weight: 700;
   display: inline-flex;
 }
+
+/* ─────────────────────────────────────────
+   VOUCHER HEADER / SUMMARY
+───────────────────────────────────────── */
+.bannerImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.voucherWatermark {
+  background: #f9f6f1;
+  border-bottom: 1px solid #e6ddd0;
+  position: relative;
+  z-index: 1;
+}
+
+.fraunces {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.voucherBigTitle {
+  margin: 0;
+  padding: 1.4rem 2rem;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  color: #004c4c;
+  text-transform: uppercase;
+}
+
+.guestHeadingName {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.pendingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.22rem 0.8rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.packageInfoGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0;
+  padding: 1.2rem 1.5rem;
+}
+
+.packageInfoMain {
+  padding-right: 1.5rem;
+  border-right: 1px solid #e8e8e8;
+}
+
+.packageTitle {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.packageInfoDates {
+  padding-left: 1.5rem;
+}
+
+.tableScroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: #e8f4f4;
+  color: #004c4c;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.typeBadgeChild {
+  background: #fff4e5;
+  color: #9a5b00;
+}
+
+.typeBadgeInfant {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.nameCell,
+.typeCell,
+.contactCell {
+  vertical-align: top;
+}
+
+.passengerName {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.contactLine {
+  display: block;
+  font-size: 0.8rem;
+  color: #333;
+}
+
+.contactSubLine {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* ─────────────────────────────────────────
+   FLIGHT DETAIL CARDS + TICKETS / SEATS
+───────────────────────────────────────── */
+.flightGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.flightGroup + .flightGroup {
+  margin-top: 0.35rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.flightGroupLabel {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #004c4c;
+}
+
+.flightCard {
+  border: 1px solid #c49a2a;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.accomCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 1rem;
+  background: #f9f9f9;
+  border-bottom: 1px solid #ececec;
+}
+
+.flightHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.flightAirlineTitle {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.flightBadgeGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cityBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  background: #e8f4f4;
+  color: #004c4c;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.flightRouteRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.1rem 1rem;
+}
+
+.flightRouteCol {
+  min-width: 0;
+}
+
+.flightRouteColRight {
+  text-align: right;
+}
+
+.transferColLabel {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.transferColPlace {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.transferColDate {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #004c4c;
+}
+
+.flightMidCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.5rem;
+}
+
+.flightDurationText {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #666;
+  white-space: nowrap;
+}
+
+.flightClassText {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.flightMidLine {
+  width: 88px;
+  height: 2px;
+  background: linear-gradient(90deg, #c49a2a, #e8c55a, #c49a2a);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flightMidIcon {
+  font-size: 1.2rem;
+  color: #c49a2a;
+  background: #fff;
+  padding: 0 3px;
+  transform: rotate(90deg);
+}
+
+.paxTicketRow {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  background: #f7fafc;
+  border-top: 1px solid #eef2f6;
+}
+
+.paxTicketChip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 140px;
+  max-width: 100%;
+  padding: 0.45rem 0.7rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.paxTicketName {
+  font-size: 0.78rem;
+  color: #1a1a1a;
+}
+
+.paxTicketMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: #555;
+}
+
+/* ─────────────────────────────────────────
+   ADDITIONAL SERVICES
+───────────────────────────────────────── */
+.additionalServicesBody {
+  padding: 1.1rem 1.5rem 1.35rem;
+}
+
+.additionalServicesGroup + .additionalServicesGroup {
+  margin-top: 1.15rem;
+  padding-top: 1.1rem;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.additionalServicesSubtitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #004c4c;
+}
+
+.serviceCardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ancillaryServiceCard {
+  position: relative;
+  padding: 0.9rem 1rem;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  border-left: 3px solid #c49a2a;
+}
+
+.ancillaryServicePrice {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #004c4c;
+}
+
+.ancillaryServiceName {
+  margin: 0 0 0.3rem;
+  padding-right: 4.5rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ancillaryServiceMeta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #444;
+  line-height: 1.4;
+}
+
+.ancillaryServiceRoute {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #777;
+}
+
+@media print {
+  .pendingBadge {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: #f59e0b !important;
+    color: #ffffff !important;
+  }
+
+  .flightCard,
+  .ancillaryServiceCard,
+  .paxTicketChip {
+    page-break-inside: avoid;
+  }
+
+  .typeBadge,
+  .cityBadge,
+  .ancillaryServiceCard {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@media (max-width: 768px) {
+  .voucherBigTitle {
+    padding: 1.1rem 1rem 0.4rem;
+    text-align: center;
+  }
+
+  .packageInfoGrid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .packageInfoMain {
+    padding-right: 0;
+    border-right: none;
+    border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .packageInfoDates {
+    padding-left: 0;
+  }
+
+  .flightRouteRow {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .flightRouteColRight {
+    text-align: left;
+  }
+
+  .flightMidCol {
+    align-items: flex-start;
+  }
+
+  .flightMidLine {
+    width: 70px;
+  }
+
+  .serviceCardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .additionalServicesBody {
+    padding: 1rem;
+  }
+}

@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import moment from 'moment';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Playfair_Display } from 'next/font/google';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { GiGearStickPattern } from 'react-icons/gi';
 import { GoPerson } from 'react-icons/go';
@@ -15,11 +14,6 @@ import styles from './TopTransfers.module.css';
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import VehicleDetail from '@/components/Transfer/Listing/VehicleDetail';
 import { useTransferStore } from '@/components/Store/TransferStore';
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-});
-
 const SEARCH_PAYLOAD = {
   dropoffLocation: 'Madinah',
   fromCountry: 'Saudi Arabia',
@@ -190,7 +184,7 @@ export default function TopTransfers() {
       <div className="container">
         <header className={styles.header}>
           <span className={styles.tag}>Transfer</span>
-          <h2 className={`${styles.title} ${playfair.className}`}>
+          <h2 className={`${styles.title} font-playfair`}>
              Premium Transfers for Every Travel Need
           </h2>
           <p className={styles.subtitle}>

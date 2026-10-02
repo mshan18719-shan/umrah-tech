@@ -1,5 +1,8 @@
 /* globals.css */
 
+.font-playfair {
+    font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+}
 
 .gray-simple {
     background: #f1f5f8 !important;
@@ -1021,6 +1024,15 @@ a {
     margin: 0;
 }
 
+/* Block HTML (headings/paragraphs) — height clip keeps structure readable */
+.hotel-detail-about__html--truncated {
+    display: block;
+    max-height: calc(1.75em * 5.5);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Fallback if line-clamp doesn't expose overflow via scrollHeight */
 .hotel-detail-about__text--truncated {
     display: -webkit-box;
     -webkit-line-clamp: 4;
@@ -1030,14 +1042,6 @@ a {
     overflow: hidden;
     text-overflow: ellipsis;
     max-height: calc(1.75em * 4);
-}
-
-/* Block HTML (headings/paragraphs) — height clip keeps structure readable */
-.hotel-detail-about__html--truncated {
-    display: block;
-    max-height: calc(1.75em * 5.5);
-    overflow: hidden;
-    position: relative;
 }
 
 .hotel-detail-about__html :is(h2, h3, h4) {

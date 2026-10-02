@@ -461,15 +461,35 @@
 
 .typeBadge {
   display: inline-block;
-  background: #eef6ff;
-  color: #004c4ca2;
-  border: 1px solid #dbe9fa;
-  border-radius: 4px;
-  padding: 0.15rem 0.55rem;
-  font-size: 0.72rem;
+  font-size: 11px;
   font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
+  background: #E8F0FE;
+  color: #1B3B6F;
+}
+
+.typeBadgeChild {
+  background: #FFF4E5;
+  color: #B36B00;
+}
+
+.typeBadgeInfant {
+  background: #FEECEC;
+  color: #C0392B;
+}
+
+.passengerDetailsTable th,
+.passengerDetailsTable td,
+.passengerDetailsTable th:nth-child(2),
+.passengerDetailsTable th:nth-child(3),
+.passengerDetailsTable th:nth-child(4),
+.passengerDetailsTable td:nth-child(2),
+.passengerDetailsTable td:nth-child(3),
+.passengerDetailsTable td:nth-child(4) {
+  text-align: left;
 }
 
 .passengerContact {

@@ -75,8 +75,7 @@ function canCancelTransferBooking(booking) {
     null;
 
   return (
-    booking?.booking_status?.toLowerCase() === "confirmed" &&
-    booking?.payment_status?.toLowerCase() === "paid" &&
+    booking?.booking_status?.toLowerCase() !== "cancelled" &&
     pickupDate &&
     moment(pickupDate).isValid() &&
     moment(pickupDate).isAfter(moment(), "day")

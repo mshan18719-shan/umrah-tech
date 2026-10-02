@@ -1,15 +1,10 @@
 'use client'
 import { useEffect, useState } from "react";
-import { Playfair_Display } from 'next/font/google';
 import { FaStar } from 'react-icons/fa';
 import PackageSlider from "./PackageSlider";
 import { Loader } from '@mantine/core';
 import styles from './PackageCategories.module.css';
 
-const playfair = Playfair_Display({
-    subsets: ['latin'],
-    weight: ['600', '700'],
-});
 export default function PackageCategories({ categories, initialSlug, initialPackages }) {
     const [activeSlug, setActiveSlug] = useState(initialSlug);
     const [packagesList, setPackagesList] = useState(initialPackages);
@@ -45,7 +40,7 @@ export default function PackageCategories({ categories, initialSlug, initialPack
                         <FaStar className={styles.tagIcon} aria-hidden="true" />
                         Featured Packages
                     </span>
-                    <h2 className={`${styles.title} ${playfair.className}`}>
+                    <h2 className={`${styles.title} font-playfair`}>
                         Featured Spiritual Journeys
                     </h2>
                     <p className={styles.subtitle}>

@@ -354,8 +354,7 @@ export default function ActivityBookingsPage() {
                 ? moment(travelDateRaw).format("MMM DD, YYYY")
                 : moment(booking?.created_at).format("MMM DD, YYYY");
               const canCancel =
-                st === "confirmed" &&
-                booking?.payment_status?.toLowerCase() === "paid" &&
+                st !== "cancelled" &&
                 travelDateRaw &&
                 moment(travelDateRaw).isValid() &&
                 moment(travelDateRaw).isAfter(moment(), "day");

@@ -1,0 +1,1405 @@
+/* ==========================================================================
+   AdditionalDetail – baggage + seat selection
+   Restyled to match the checkout design system (navy / soft blue / light grey).
+   Class names are unchanged, so AdditionalDetail.js works as-is.
+   ========================================================================== */
+
+   .wrapper {
+    --navy: #1b3b6f;
+    --navy-deep: #0f2a52;
+    --blue: #3b82c4;
+    --tint: #eef5ff;
+    --tint-line: #d6e4f7;
+    --ink: #111827;
+    --muted: #6b7280;
+    --faint: #9ca3af;
+    --line: #e5e7eb;
+    --card-line: #e8e4de;
+    --field: #f3f4f6;
+    --surface: #f7f9fc;
+    --amber-bg: #fff4e5;
+    --amber-line: #f5c27a;
+    --amber-ink: #9a5b0a;
+    --danger: #e53935;
+    --ring: 0 0 0 3px rgba(27, 59, 111, 0.14);
+
+    width: 100%;
+}
+
+/* ---------- Card shell ---------- */
+
+.card {
+    background: #fff;
+    border: 1px solid var(--card-line);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(15, 35, 70, 0.08);
+}
+
+.cardFixed {
+    display: flex;
+    flex-direction: column;
+    max-height: 80em;
+}
+
+.header {
+    padding: 1.25rem 1.35rem 1rem;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+}
+
+.sectionHeaderBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sectionIconWrap {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sectionIcon {
+    display: inline-flex;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.sectionIcon_baggage,
+.sectionIcon_seat {
+    background: var(--tint);
+    color: var(--navy);
+    border: 1px solid var(--tint-line);
+}
+
+.sectionIconBadge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.45rem;
+    border: 2px solid #fff;
+    box-sizing: content-box;
+}
+
+.sectionHeaderText {
+    min-width: 0;
+    flex: 1;
+}
+
+.sectionHeading {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.3;
+}
+
+.sectionDescription {
+    margin: 2px 0 0;
+    font-size: 0.8125rem;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.bagSaveTip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    background: var(--tint);
+    border: 1px solid var(--tint-line);
+}
+
+.bagSaveTipIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-size: 0.5rem;
+}
+
+.bagSaveTipText {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--navy);
+    line-height: 1.5;
+}
+
+/* ---------- Step tabs (only when both baggage + seats, non-embedded) ---------- */
+
+.steps {
+    display: flex;
+    gap: 10px;
+    padding: 1rem 1.35rem 0;
+    flex-wrap: wrap;
+}
+
+.stepTab {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.stepTab:hover:not(:disabled) {
+    border-color: var(--navy);
+}
+
+.stepTabActive {
+    border-color: var(--navy);
+    background: var(--tint);
+    box-shadow: var(--ring);
+}
+
+.stepTabDone {
+    border-color: var(--tint-line);
+}
+
+.stepTab:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.stepIndex {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: var(--field);
+    color: #4b5563;
+    flex-shrink: 0;
+}
+
+.stepTabActive .stepIndex,
+.stepTabDone .stepIndex {
+    background: var(--navy);
+    color: #fff;
+}
+
+.stepLabel {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.stepName {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.stepHint {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* ---------- Body / states ---------- */
+
+.body {
+    padding: 1.25rem 1.35rem 1.35rem;
+}
+
+.bodyFixed {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 0;
+}
+
+.loadingBox,
+.errorBox,
+.emptyBox {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.875rem;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px dashed var(--line);
+}
+
+.errorBox {
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+/* ---------- Seat picker bar (route + passenger) ---------- */
+
+.pickerBar {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--field);
+    position: relative;
+    z-index: 2;
+}
+
+.pickerHalf {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    position: relative;
+}
+
+.pickerDivider {
+    width: 1px;
+    background: var(--line);
+    flex-shrink: 0;
+}
+
+.pickerTrigger {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0.8rem 1rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 12px;
+    transition: background 0.2s ease;
+}
+
+.pickerTrigger:hover {
+    background: #fff;
+}
+
+.pickerTrigger[aria-expanded='true'] {
+    background: #fff;
+    box-shadow: inset 0 0 0 1.5px var(--navy);
+}
+
+.pickerMain {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+}
+
+.pickerTextStack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.pickerSub {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.pickerMeta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--faint);
+    flex-shrink: 0;
+}
+
+.pickerChevron {
+    font-size: 1rem;
+    color: var(--muted);
+}
+
+.pickerTrigger[aria-expanded='true'] .pickerChevron {
+    color: var(--navy);
+    transform: rotate(180deg);
+}
+
+.pickerMenu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(15, 35, 70, 0.14);
+    overflow: hidden;
+    z-index: 5;
+}
+
+.pickerMenuItem {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-bottom: 1px solid #f1f3f6;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.pickerMenuItem:last-child {
+    border-bottom: none;
+}
+
+.pickerMenuItem:hover {
+    background: var(--surface);
+}
+
+.pickerMenuItemActive {
+    background: var(--tint);
+}
+
+.pickerMenuItemActive .pickerMain,
+.pickerMenuItemActive span:first-child {
+    color: var(--navy);
+    font-weight: 700;
+}
+
+.pickerMenuCount {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--faint);
+    flex-shrink: 0;
+}
+
+/* ---------- Baggage ---------- */
+
+.bagStep {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.bagLegTabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.bagLegTab {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bagLegTab:hover {
+    border-color: var(--navy);
+}
+
+.bagLegTabActive {
+    border-color: var(--navy);
+    background: var(--tint);
+    box-shadow: var(--ring);
+}
+
+.bagLegTabTop {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.bagLegLabel {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.bagLegTabActive .bagLegLabel {
+    color: var(--navy);
+}
+
+.bagLegCount {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--navy);
+    background: #fff;
+    border: 1px solid var(--tint-line);
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+
+.bagLegRoute {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.35;
+}
+
+.bagLegHint {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.bagPassengerList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bagPassengerBlock {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bagPassengerBlockOpen {
+    border-color: var(--tint-line);
+    box-shadow: 0 4px 16px rgba(15, 35, 70, 0.07);
+}
+
+.bagPassengerHeader {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+}
+
+.bagPassengerHeader:hover {
+    background: var(--surface);
+}
+
+.bagPassengerHeaderText {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.bagPassengerName {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.bagPassengerMeta {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.bagPassengerHeaderRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.bagSelectedPill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--navy);
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.bagNonePill {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.bagPassengerChevron {
+    flex-shrink: 0;
+    font-size: 1.05rem;
+    color: var(--muted);
+    transition: transform 0.2s ease;
+}
+
+.bagPassengerChevronOpen {
+    transform: rotate(180deg);
+    color: var(--navy);
+}
+
+.bagPassengerBody {
+    padding: 0 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Included allowance */
+
+.includedBox {
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+}
+
+.includedHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.includedHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.includedBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--tint);
+    color: var(--navy);
+}
+
+.includedTitle {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.includedEmpty {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.includedItems {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.includedItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.6rem 0.75rem;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.includedIcon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.includedIconCabin {
+    background: var(--amber-bg);
+    color: var(--amber-ink);
+}
+
+.includedIconChecked {
+    background: var(--tint);
+    color: var(--navy);
+}
+
+.includedIconMuted {
+    background: var(--field);
+    color: var(--faint);
+}
+
+.includedLabel {
+    margin: 0 0 1px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--faint);
+}
+
+.includedValue {
+    margin: 0;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.35;
+}
+
+/* Extra-bag picker */
+
+.bagExtraHeader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.bagExtraActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bagAddMoreBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    margin: 0;
+    padding: 5px 12px 5px 6px;
+    border: 1px solid var(--tint-line);
+    border-radius: 999px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.bagAddMoreBtn:hover {
+    background: var(--tint);
+    border-color: var(--navy);
+}
+
+.bagAddMoreIcon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.bagAddMoreText {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.bagAddMoreText strong {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.bagAddMoreText span {
+    display: none;
+}
+
+.bagHideBtn {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.bagHideBtn:hover {
+    border-color: var(--navy);
+    color: var(--navy);
+}
+
+.bagExtraTitle {
+    margin: 0 0 2px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.bagExtraHint {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.bagFilterTabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    background: var(--field);
+    border-radius: 999px;
+}
+
+.bagFilterTab {
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.bagFilterTabActive {
+    background: #fff;
+    color: var(--navy);
+    box-shadow: 0 1px 3px rgba(15, 35, 70, 0.1);
+}
+
+.bagOptionList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.bagOptionRow {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 4px;
+    width: 100%;
+    margin: 0;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    min-height: 76px;
+}
+
+.bagOptionRow:hover {
+    background: var(--surface);
+    border-color: var(--navy);
+}
+
+.bagOptionRowSelected,
+.bagOptionRowSelected:hover {
+    background: var(--tint);
+    border-color: var(--navy);
+    box-shadow: var(--ring);
+}
+
+.bagOptionRadio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid #cbd5e1;
+    background: #fff;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    align-self: center;
+}
+
+.bagOptionRadioOn {
+    border-color: var(--navy);
+    background: radial-gradient(circle, var(--navy) 0 42%, #fff 46%);
+}
+
+.bagOptionMain {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    grid-row: 1 / span 2;
+    grid-column: 2;
+}
+
+.bagOptionTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.bagOptionTitle {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.25;
+}
+
+.bagOptionTag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.bagOptionTagCabin {
+    background: var(--amber-bg);
+    color: var(--amber-ink);
+}
+
+.bagOptionTagChecked {
+    background: var(--tint);
+    color: var(--navy);
+}
+
+.bagOptionSub {
+    font-size: 0.74rem;
+    color: var(--muted);
+    line-height: 1.35;
+}
+
+.bagOptionPrice {
+    grid-row: 1 / span 2;
+    grid-column: 3;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--navy);
+    white-space: nowrap;
+    text-align: right;
+    align-self: center;
+}
+
+.bagOptionPriceFree {
+    color: #15803d;
+}
+
+/* ---------- Seat layout ---------- */
+
+.seatLayout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.seatStickyTop {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #fff;
+    z-index: 2;
+}
+
+.seatLegend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    padding: 0.65rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.legendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: #4b5563;
+    font-weight: 600;
+}
+
+.legendSwatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid #cbd5e1;
+}
+
+.legendAvailable {
+    background: #fff;
+}
+
+.legendSelected {
+    background: var(--navy);
+    border-color: var(--navy);
+}
+
+.legendUnavailable {
+    background: #eceff3;
+    border-color: #dde2e9;
+    color: var(--faint);
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.legendExit {
+    background: var(--amber-bg);
+    border-color: var(--amber-line);
+}
+
+.seatScrollArea {
+    flex: 1;
+    min-height: 180px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #c3cddc transparent;
+}
+
+.seatScrollArea::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.seatScrollArea::-webkit-scrollbar-thumb {
+    background: #c3cddc;
+    border-radius: 999px;
+}
+
+.seatMapShell {
+    overflow-x: auto;
+    padding: 8px 4px 12px;
+    width: 100%;
+}
+
+.seatMap {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    min-width: max-content;
+    align-items: center;
+}
+
+.colHeaders {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 4px;
+    align-items: center;
+}
+
+.colHeader {
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.seatRow {
+    display: grid;
+    gap: 8px;
+    align-items: center;
+}
+
+.seatRowExit {
+    position: relative;
+}
+
+.exitMark {
+    width: 22px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.exitBadge {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 58px;
+    width: 18px;
+    padding: 4px 0;
+    border: 1px solid var(--amber-line);
+    border-radius: 4px;
+    background: var(--amber-bg);
+    color: var(--amber-ink);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1;
+}
+
+.rowLabel {
+    width: 36px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--faint);
+}
+
+.aisle {
+    width: 28px;
+}
+
+.seatCell {
+    position: relative;
+    width: 72px;
+    height: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.seatBtn {
+    width: 72px;
+    height: 64px;
+    border-radius: 12px 12px 6px 6px;
+    border: 1px solid #cfd8e6;
+    border-bottom-width: 3px;
+    background: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--navy);
+    padding: 0 3px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.seatBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: var(--navy);
+    background: var(--tint);
+}
+
+.seatPrice {
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    text-align: center;
+    padding: 0 2px;
+    word-break: break-word;
+}
+
+.seatCross {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #aab3c0;
+}
+
+.seatPassengerTag {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.seatBtnSelected,
+.seatBtnSelected:hover:not(:disabled) {
+    background: var(--navy);
+    border-color: var(--navy-deep);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(27, 59, 111, 0.3);
+}
+
+.seatBtnSelected .seatPrice,
+.seatBtnSelected .seatPassengerTag {
+    color: #fff;
+}
+
+.seatBtnUnavailable {
+    background: #eceff3;
+    border-color: #dde2e9;
+    color: var(--faint);
+    cursor: not-allowed;
+}
+
+.seatBtnExit:not(.seatBtnUnavailable):not(.seatBtnSelected) {
+    background: var(--amber-bg);
+    border-color: var(--amber-line);
+    color: var(--amber-ink);
+}
+
+.seatEmpty {
+    width: 72px;
+    height: 64px;
+}
+
+.seatTooltip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    z-index: 20;
+    min-width: 170px;
+    padding: 0.6rem 0.75rem;
+    background: var(--navy-deep);
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(15, 35, 70, 0.3);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.seatTooltipTitle {
+    margin: 0 0 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.seatTooltipRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 0.8rem;
+    color: #c9d6ea;
+}
+
+.seatTooltipRow span:last-child {
+    font-weight: 700;
+    color: #fff;
+}
+
+.seatStickyBottom {
+    flex-shrink: 0;
+    background: #fff;
+    padding-top: 4px;
+    z-index: 2;
+}
+
+/* ---------- Totals + footer ---------- */
+
+.selectionSummary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--tint-line);
+    border-radius: 12px;
+    background: var(--tint);
+}
+
+.summaryText {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--navy);
+}
+
+.summaryPrice {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.footerFixed {
+    flex-shrink: 0;
+    margin-top: 12px;
+    padding-bottom: 1.35rem;
+    background: #fff;
+}
+
+.btn {
+    min-height: 46px;
+    padding: 0.7rem 1.4rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnGhost {
+    background: #fff;
+    border-color: var(--line);
+    color: #374151;
+}
+
+.btnGhost:hover:not(:disabled) {
+    background: var(--surface);
+    border-color: var(--navy);
+}
+
+.btnPrimary {
+    background: var(--navy);
+    color: #fff;
+    margin-left: auto;
+    box-shadow: 0 4px 14px rgba(27, 59, 111, 0.28);
+}
+
+.btnPrimaryFull {
+    width: 100%;
+}
+
+.btnPrimary:hover:not(:disabled) {
+    background: var(--navy-deep);
+}
+
+/* ---------- Keyboard focus ---------- */
+
+.stepTab:focus-visible,
+.pickerTrigger:focus-visible,
+.pickerMenuItem:focus-visible,
+.bagLegTab:focus-visible,
+.bagPassengerHeader:focus-visible,
+.bagOptionRow:focus-visible,
+.bagAddMoreBtn:focus-visible,
+.bagHideBtn:focus-visible,
+.bagFilterTab:focus-visible,
+.seatBtn:focus-visible,
+.btn:focus-visible {
+    outline: 2px solid var(--navy);
+    outline-offset: 2px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 575px) {
+    .header,
+    .body,
+    .steps {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .bagOptionList,
+    .bagLegTabs {
+        grid-template-columns: 1fr;
+    }
+
+    .pickerBar {
+        flex-direction: column;
+    }
+
+    .pickerDivider {
+        width: 100%;
+        height: 1px;
+    }
+
+    .seatBtn,
+    .seatEmpty {
+        width: 58px;
+        height: 52px;
+    }
+
+    .seatPrice {
+        font-size: 0.58rem;
+    }
+
+    .seatCross {
+        font-size: 1.1rem;
+    }
+
+    .aisle {
+        width: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wrapper * {
+        transition: none !important;
+    }
+}

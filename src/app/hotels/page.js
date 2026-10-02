@@ -127,6 +127,7 @@ export default function Page() {
     const location = searchParams.get("location");
     const country = searchParams.get("country");
     const place = searchParams.get("place");
+    const searchRefreshTs = searchParams.get("_ts");
 
     const rooms = useMemo(() => {
         if (typeof window === 'undefined') return [];
@@ -238,6 +239,7 @@ export default function Page() {
         location,
         country,
         rooms,
+        searchRefreshTs,
     ]);
 
     useEffect(() => {

@@ -1,12 +1,34 @@
+.reviewHeader {
+    margin-bottom: 1rem;
+}
+
+.reviewTitle {
+    margin: 0 0 0.35rem;
+    font-family: var(--font-playfair, 'Playfair Display', Georgia, serif);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+    color: #1b3b6f;
+    letter-spacing: -0.01em;
+}
+
+.reviewSubtitle {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #6b7280;
+    font-weight: 400;
+}
+
 .reviewCard {
+    position: relative;
     background: #fff;
     border: 1px solid rgba(27, 59, 111, 0.12);
     border-radius: 14px;
     padding: 1rem 0 0;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
     box-shadow: 0 27px 59px 0 rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    padding-bottom: 2.5rem;
+    /* overflow: hidden; */
+    width: 100%;
 }
 
 .legSection {
@@ -61,9 +83,9 @@
 }
 
 .legBadgeOther {
-    background: #fef9c3;
-    color: #854d0e;
-    border: 1px solid #fde047;
+    background: #eef5ff;
+    color: #1b3b6f;
+    border: 1px solid #e6ecfc;
 }
 
 .legDate {
@@ -77,8 +99,7 @@
     align-items: center;
     gap: 1rem;
     min-width: 0;
-    width: 90%;
-    margin: 0 auto;
+    width: 100%;
 }
 
 .airlineCol {
@@ -244,6 +265,44 @@
     transform: rotate(320deg);
 }
 
+.heroFooter {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0.75rem 1.15rem 1rem;
+    border-top: 1px solid rgba(27, 59, 111, 0.1);
+    background: #f8f9fc;
+}
+
+.detailBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0.45rem 1.1rem;
+    border-radius: 10px;
+    border: 1.5px solid #1b3b6f;
+    background: #1b3b6f;
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    position: absolute;
+    bottom: -17px;
+    right: 60px;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.detailBtn:hover {
+    background: #143365;
+    box-shadow: 0 4px 12px rgba(27, 59, 111, 0.12);
+    transform: translateY(-1px);
+}
+
+.detailBtn:active {
+    transform: translateY(0);
+}
+
 @media (max-width: 991px) {
     .flightRow {
         flex-wrap: wrap;
@@ -263,7 +322,7 @@
 @media (max-width: 767px) {
     .reviewCard {
         border-radius: 12px;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
     }
 
     .legSection {
@@ -334,6 +393,10 @@
         width: 34px;
         height: 34px;
     }
+
+    .heroFooter {
+        padding: 0.65rem 0.85rem 0.85rem;
+    }
 }
 
 @media (max-width: 380px) {
@@ -344,9 +407,5 @@
 
     .airlineName {
         font-size: 0.75rem;
-    }
-
-    .flightRow {
-        width: 96%;
     }
 }

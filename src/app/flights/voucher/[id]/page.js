@@ -3,13 +3,17 @@ import React, { useRef, useEffect, useState } from 'react'
 import styles from '../../../hotels/voucher/[id]/Voucher.module.css'
 import moment from 'moment'
 import { FaUser, FaFileInvoice, FaHome, FaPhone, FaEnvelope, FaPrint, FaDownload, FaCheckCircle, FaCalendarAlt, FaUsers, FaHashtag } from 'react-icons/fa'
-import { MdFlight, MdLuggage } from 'react-icons/md'
+import { MdAirlineSeatReclineExtra, MdConfirmationNumber, MdFlight, MdLuggage } from 'react-icons/md'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import FlightBookingDetailLoader from '@/components/Loader/FlightBookinfDetailLoader'
 import Image from 'next/image'
 import { IoWarningOutline } from 'react-icons/io5'
-import { groupSegments } from '@/components/Flights/Checkout/flightHelpers'
+import {
+  groupSegments,
+  getFlightBookingAncillaries,
+  getSegmentPassengerRows,
+} from '@/components/Flights/Checkout/flightHelpers'
 
 export default function FlightVoucher() {
   const voucherRef = useRef()
@@ -234,7 +238,47 @@ export default function FlightVoucher() {
     }).filter((g) => g?.segments?.length)
   }
 
-  const renderSegmentCard = (segment, segIndex) => {
+  const bookingAncillaries = getFlightBookingAncillaries(voucherDetail)
+
+  const getSegmentIndex = (segment) => {
+    const segments = Array.isArray(voucherDetail?.segments) ? voucherDetail.segments : []
+    const key = segment?.segment_key
+    if (key) {
+      const byKey = segments.findIndex((s) => s?.segment_key === key)
+      if (byKey >= 0) return byKey
+    }
+    const idx = segments.indexOf(segment)
+    return idx >= 0 ? idx : 0
+  }
+
+  const formatServicePrice = (serviceCurrency, price) => {
+    const amount = Number(price)
+    if (!Number.isFinite(amount)) return '—'
+    if (amount <= 0) return 'Included'
+
+    const displayCurrency =
+      voucherDetail?.pricing?.display_currency || serviceCurrency || ''
+    const serviceCur = String(serviceCurrency || '').toUpperCase()
+    const displayCur = String(displayCurrency || '').toUpperCase()
+    const rate = Number(voucherDetail?.pricing?.supplier_to_display_rate)
+
+    const alreadyInDisplay = Boolean(displayCur && serviceCur && displayCur === serviceCur)
+    const converted =
+      alreadyInDisplay || !(rate > 0)
+        ? amount.toFixed(2)
+        : (amount * rate).toFixed(2)
+
+    return `${displayCurrency || serviceCurrency || ''} ${converted}`.trim()
+  }
+
+  const formatBaggageValue = (value) => {
+    if (value == null || value === '') return '—'
+    if (Array.isArray(value)) return value.filter(Boolean).join(', ') || '—'
+    if (typeof value === 'object') return value.name || value.label || value.code || '—'
+    return String(value)
+  }
+
+  const renderSegmentCard = (segment, key) => {
     const departure = getSegmentDeparture(segment)
     const arrival = getSegmentArrival(segment)
     const departAt = getDepartAt(segment)
@@ -245,8 +289,16 @@ export default function FlightVoucher() {
     const cabinLabel = getCabinClassLabel(
       segment.cabin_class || voucherDetail?.flight_details?.cabin_class
     )
+    const segmentIndex = getSegmentIndex(segment)
+    const segmentPassengerRows = getSegmentPassengerRows(
+      voucherDetail,
+      segment,
+      segmentIndex,
+      bookingAncillaries,
+    )
+
     return (
-      <div key={segIndex} className={styles.flightSegmentCard}>
+      <div key={key} className={styles.flightSegmentCard}>
         <div className={styles.airlineRow}>
           {segment.airline?.logo_url && (
             <img src={segment.airline.logo_url} alt={getAirlineName(segment.airline)} className={styles.airlineLogo} />
@@ -290,17 +342,49 @@ export default function FlightVoucher() {
             </p>
           </div>
         </div>
+        {segmentPassengerRows.length > 0 && (
+          <div className={styles.paxTicketRow}>
+            <span className={styles.baggageTitle}>
+              <MdConfirmationNumber size={14} /> Tickets &amp; Seats:
+            </span>
+            {segmentPassengerRows.map((row) => (
+              <span
+                key={`${segmentIndex}-${row.passengerIndex}`}
+                className={styles.paxTicketChip}
+              >
+                <strong className={styles.paxTicketName}>{row.passengerName}</strong>
+                {row.ticketNumber ? (
+                  <span className={styles.paxTicketMeta}>E-Ticket: {row.ticketNumber}</span>
+                ) : null}
+                {row.seatName ? (
+                  <span className={styles.paxTicketMeta}>
+                    <MdAirlineSeatReclineExtra size={12} /> Seat: {row.seatName}
+                  </span>
+                ) : null}
+              </span>
+            ))}
+          </div>
+        )}
         {(segment?.baggage_info?.adult || segment?.baggage_info?.child || segment?.baggage_info?.infant) && (
           <div className={styles.baggageRow}>
             <span className={styles.baggageTitle}><MdLuggage size={14} /> Baggage:</span>
             {segment?.baggage_info?.adult && (
-              <span className={styles.baggageChip}>Adult: {segment.baggage_info.adult.cabin} | {segment.baggage_info.adult.checked}</span>
+              <span className={styles.baggageChip}>
+                Adult: {formatBaggageValue(segment.baggage_info.adult.cabin)} |{' '}
+                {formatBaggageValue(segment.baggage_info.adult.checked)}
+              </span>
             )}
             {segment?.baggage_info?.child && (
-              <span className={styles.baggageChip}>Child: {segment.baggage_info.child.cabin} | {segment.baggage_info.child.checked}</span>
+              <span className={styles.baggageChip}>
+                Child: {formatBaggageValue(segment.baggage_info.child.cabin)} |{' '}
+                {formatBaggageValue(segment.baggage_info.child.checked)}
+              </span>
             )}
             {segment?.baggage_info?.infant && (
-              <span className={styles.baggageChip}>Infant: {segment.baggage_info.infant.cabin} | {segment.baggage_info.infant.checked}</span>
+              <span className={styles.baggageChip}>
+                Infant: {formatBaggageValue(segment.baggage_info.infant.cabin)} |{' '}
+                {formatBaggageValue(segment.baggage_info.infant.checked)}
+              </span>
             )}
           </div>
         )}
@@ -507,6 +591,76 @@ export default function FlightVoucher() {
                   </section>
                 )}
 
+                {bookingAncillaries.hasAncillaries && (
+                  <section className={styles.section}>
+                    <div className={styles.sectionTitleRow}>
+                      <span className={styles.sectionNum}>01b</span>
+                      <span className={styles.sectionIcon}><MdLuggage size={14} /></span>
+                      <h3 className={styles.sectionTitle}>Additional Services</h3>
+                    </div>
+                    <div className={styles.additionalServicesBody}>
+                      {bookingAncillaries.bagItems.length > 0 && (
+                        <div className={styles.additionalServicesGroup}>
+                          <p className={styles.additionalServicesSubtitle}>Extra Baggage</p>
+                          <div className={styles.serviceCardGrid}>
+                            {bookingAncillaries.bagItems.map((bag, bagIndex) => (
+                              <div
+                                key={`bag-${bag.passengerIndex}-${bag.ancillaryKey || bagIndex}`}
+                                className={styles.ancillaryServiceCard}
+                              >
+                                {bag.hasPrice !== false && (
+                                  <span className={styles.ancillaryServicePrice}>
+                                    {formatServicePrice(bag.currency, bag.price)}
+                                  </span>
+                                )}
+                                <p className={styles.ancillaryServiceName}>{bag.passengerName}</p>
+                                <p className={styles.ancillaryServiceMeta}>{bag.label}</p>
+                                {(bag.flightLabels?.length > 0 || bag.routes?.length > 0) && (
+                                  <p className={styles.ancillaryServiceRoute}>
+                                    {(bag.flightLabels?.length > 0
+                                      ? bag.flightLabels.map((l) => l.replace(/\s+/g, ''))
+                                      : bag.routes
+                                    ).join(' · ')}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {bookingAncillaries.seatItems.length > 0 && (
+                        <div className={styles.additionalServicesGroup}>
+                          <p className={styles.additionalServicesSubtitle}>Seat Selection</p>
+                          <div className={styles.serviceCardGrid}>
+                            {bookingAncillaries.seatItems.map((seat, seatIndex) => (
+                              <div
+                                key={`seat-${seat.passengerIndex}-${seat.segmentKey}-${seat.seatName}-${seatIndex}`}
+                                className={styles.ancillaryServiceCard}
+                              >
+                                {seat.hasPrice !== false && (
+                                  <span className={styles.ancillaryServicePrice}>
+                                    {formatServicePrice(seat.currency, seat.price)}
+                                  </span>
+                                )}
+                                <p className={styles.ancillaryServiceName}>{seat.passengerName}</p>
+                                <p className={styles.ancillaryServiceMeta}>
+                                  Seat {seat.seatName}
+                                  {seat.position ? ` · ${seat.position}` : ''}
+                                </p>
+                                {(seat.route || seat.flightLabel) && (
+                                  <p className={styles.ancillaryServiceRoute}>
+                                    {[seat.flightLabel, seat.route].filter(Boolean).join(' · ')}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
+
                 {/* 02 Booking By / Passengers */}
                 <section className={styles.section}>
                   <div className={styles.sectionTitleRow}>
@@ -558,11 +712,6 @@ export default function FlightVoucher() {
                               <td style={{ fontWeight: 700 }}>
                                 {passenger.title ? `${String(passenger.title).toUpperCase()} ` : ''}
                                 {passenger.firstName} {passenger.lastName}
-                                {ticketNo ? (
-                                  <div style={{ fontSize: '0.78rem', fontWeight: 500, color: '#6b7280', marginTop: 2 }}>
-                                    Ticket No: {ticketNo}
-                                  </div>
-                                ) : null}
                               </td>
                               <td>
                                 <span className={`${styles.typeBadge} ${pType.includes('child') ? styles.typeBadgeChild : pType.includes('infant') ? styles.typeBadgeInfant : ''}`}>

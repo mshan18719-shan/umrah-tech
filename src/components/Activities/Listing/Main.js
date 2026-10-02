@@ -290,16 +290,18 @@ function Main() {
       return;
     }
 
-    const params = new URLSearchParams(searchParams.toString());
+    // Fresh search URL only — drop any leftover filter query params
+    const params = new URLSearchParams();
     params.set('city', selectedLocation.value);
     if (selectedLocation.country) {
       params.set('country', selectedLocation.country);
-    } else {
-      params.delete('country');
     }
     if (selectedDate) {
       params.set('date', moment(selectedDate).format('YYYY-MM-DD'));
     }
+    params.set('_ts', String(Date.now()));
+    setActiveFilters([]);
+    setSortBy('recommended');
     router.push(`?${params.toString()}`);
     onSearchDone?.();
   };
@@ -384,8 +386,14 @@ function Main() {
   useEffect(() => {
     async function getActivities() {
       setIsLoading(true);
+      // New search → clear sidebar filters so previous duration/sort don't stick
+      setActiveFilters([]);
+      setSortBy('recommended');
+      setActivityList([]);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activities/search?${searchParams}`,
+        const apiQuery = new URLSearchParams(searchParams.toString());
+        apiQuery.delete('_ts');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activities/search?${apiQuery}`,
           {
             cache: 'no-store',
             headers: {
@@ -396,10 +404,13 @@ function Main() {
         const response = await res.json();
         setIsLoading(false)
         if (response.Success) {
-          setActivityList(response?.Content?.activities)
+          setActivityList(response?.Content?.activities || [])
+        } else {
+          setActivityList([])
         }
       } catch (error) {
         setIsLoading(false)
+        setActivityList([])
         console.log(error)
       }
     }

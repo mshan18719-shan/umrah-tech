@@ -109,8 +109,7 @@ function canCancelFlightBooking(booking) {
     null;
 
   return (
-    booking?.booking_status?.toLowerCase() === "confirmed" &&
-    booking?.payment_status?.toLowerCase() === "paid" &&
+    booking?.booking_status?.toLowerCase() !== "cancelled" &&
     departureDate &&
     moment(departureDate).isValid() &&
     moment(departureDate).isAfter(moment(), "day")
