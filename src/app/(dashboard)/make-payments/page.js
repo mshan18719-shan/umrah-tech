@@ -7,15 +7,22 @@ import {
   FaHome,
   FaFileInvoice,
 } from "react-icons/fa";
-import { FiFileText, FiCalendar, FiHash } from "react-icons/fi";
+import { FiFileText, FiCalendar, FiHash, FiDollarSign } from "react-icons/fi";
 import { BsUpcScan } from "react-icons/bs";
-import { MdPayments } from "react-icons/md";
+import { MdPayments, MdOutlineCurrencyExchange } from "react-icons/md";
 import { useSession } from "next-auth/react";
 import { Select } from "@mantine/core";
 import moment from "moment";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+const CURRENCY_OPTIONS = [
+  { value: "GBP", label: "GBP" },
+  { value: "EUR", label: "EUR" },
+  { value: "USD", label: "USD" },
+  { value: "SAR", label: "SAR" },
+];
 
 function page() {
   const { data: session } = useSession();
@@ -24,6 +31,8 @@ function page() {
   const [bookingref, setBookingRef] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [transactionId, setTransactionId] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [currency, setCurrency] = useState("GBP");
   const [image, setImage] = useState(null);
   const [date, setDate] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -68,6 +77,14 @@ function page() {
       setErrorMessage("Please enter a Transaction ID.");
       return;
     }
+    if (!paymentAmount || Number(paymentAmount) <= 0) {
+      setErrorMessage("Please enter a valid payment amount.");
+      return;
+    }
+    if (!currency) {
+      setErrorMessage("Please select a currency.");
+      return;
+    }
     if (!date) {
       setErrorMessage("Please select a payment date.");
       return;
@@ -84,6 +101,8 @@ function page() {
       formtoSendData.append("service_type", serviceType);
       formtoSendData.append("booking_reference", bookingref);
       formtoSendData.append("transaction_id", transactionId);
+      formtoSendData.append("payment_amount", String(paymentAmount));
+      formtoSendData.append("currency", currency);
       formtoSendData.append("invoice_snapshot", image);
       formtoSendData.append("payment_date", moment(date).format("YYYY-MM-DD"));
       formtoSendData.append("email", email);
@@ -113,6 +132,8 @@ function page() {
         setServiceType("");
         setBookingRef("");
         setTransactionId("");
+        setPaymentAmount("");
+        setCurrency("GBP");
         setDate(null);
         handleRemoveImage();
         fetchinvoice();
@@ -131,9 +152,30 @@ function page() {
 
   const handleBookingSelect = (value) => {
     const selected = bookingids?.find((item) => item.invoice_number === value);
+    if (!selected) return;
     setInvoiceNo(selected.id);
     setBookingRef(selected?.invoice_number || "");
     setServiceType(selected?.type || "");
+
+    // Prefill from booking when API provides amount / currency
+    const amount =
+      selected?.payment_amount ??
+      selected?.grand_total ??
+      selected?.amount ??
+      selected?.total ??
+      selected?.customer_total ??
+      "";
+    const bookingCurrency =
+      selected?.currency ??
+      selected?.customer_currency ??
+      selected?.display_currency ??
+      "";
+    if (amount !== "" && amount != null) {
+      setPaymentAmount(String(amount));
+    }
+    if (bookingCurrency) {
+      setCurrency(String(bookingCurrency).toUpperCase());
+    }
   };
 
   const fetchinvoice = async () => {
@@ -178,6 +220,8 @@ function page() {
               setSubmitted(false);
               setInvoiceNo("");
               setTransactionId("");
+              setPaymentAmount("");
+              setCurrency("GBP");
               handleRemoveImage();
             }}
             className="mp-btn mp-btn-primary"
@@ -237,6 +281,49 @@ function page() {
                   placeholder="TXN-20240227-00123"
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="mp-field-card">
+              <div className="mp-field-icon">
+                <FiDollarSign />
+              </div>
+              <div className="mp-field-body">
+                <label className="mp-field-label">
+                  Payment Amount <span className="mp-required">*</span>
+                </label>
+                <input
+                  type="number"
+                  className="mp-text-input"
+                  name="payment_amount"
+                  placeholder="e.g. 250.00"
+                  min="0"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="mp-field-card">
+              <div className="mp-field-icon">
+                <MdOutlineCurrencyExchange />
+              </div>
+              <div className="mp-field-body">
+                <label className="mp-field-label">
+                  Currency <span className="mp-required">*</span>
+                </label>
+                <Select
+                  placeholder="Select currency..."
+                  value={currency}
+                  onChange={(value) => setCurrency(value || "GBP")}
+                  data={
+                    CURRENCY_OPTIONS.some((c) => c.value === currency)
+                      ? CURRENCY_OPTIONS
+                      : [...CURRENCY_OPTIONS, { value: currency, label: currency }]
+                  }
+                  classNames={{ input: "mp-mantine-input" }}
                 />
               </div>
             </div>

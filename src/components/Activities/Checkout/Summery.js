@@ -1,10 +1,56 @@
 import React from 'react'
+import moment from 'moment';
 import PriceDisplay from '@/components/Currency/PriceDisplay';
 import { LuBadgeCheck, LuShield } from 'react-icons/lu';
 import { CiHeart } from 'react-icons/ci';
 import { MdOutlinePercent } from 'react-icons/md';
 import { IoInformation, IoCheckmarkCircle, IoCloseCircle, IoTimeOutline } from 'react-icons/io5';
-import { resolveCancellationPolicy } from '@/components/Activities/Detail/cancellationPolicyUtils';
+import {
+  formatDeadlineDate,
+  formatPolicyTimeText,
+  getPolicyCharge,
+  getPolicyHours,
+  isFromAmountPolicyStyle,
+  resolveCancellationPolicies,
+} from '@/components/Activities/Detail/cancellationPolicyUtils';
+
+const PAX_LABELS = {
+  ADULT: 'Adult',
+  CHILD: 'Child',
+  SENIOR: 'Senior',
+  INFANT: 'Infant',
+};
+
+function formatAgeRange(ageFrom, ageTo) {
+  if (ageFrom == null && ageTo == null) return '';
+  const to = ageTo != null && ageTo >= 999 ? '99+' : ageTo;
+  if (ageFrom != null && to != null) return `(age ${ageFrom}–${to})`;
+  if (ageFrom != null) return `(age ${ageFrom}+)`;
+  return '';
+}
+
+function formatSessionLabel(codeOrName) {
+  if (!codeOrName) return '';
+  const value = typeof codeOrName === 'object'
+    ? (codeOrName.name || codeOrName.code)
+    : codeOrName;
+  if (!value) return '';
+  const parsed = moment(value, ['HH:mm', 'H:mm', 'hh:mm A'], true);
+  return parsed.isValid() ? parsed.format('h:mm A') : String(value);
+}
+
+function resolveCheckoutTiming(activityDetail) {
+  const modality = activityDetail?.modality;
+  if (modality?.session) {
+    return formatSessionLabel(modality.session);
+  }
+  if (activityDetail?.timing_label) return activityDetail.timing_label;
+  if (activityDetail?.start_time && activityDetail?.end_time) {
+    return `${formatSessionLabel(activityDetail.start_time)} – ${formatSessionLabel(activityDetail.end_time)}`;
+  }
+  if (activityDetail?.start_time) return formatSessionLabel(activityDetail.start_time);
+  return null;
+}
 
 export default function Summery({ activityDetail, totalGuests = 0 }) {
   const totalPeople = Number(activityDetail?.adults || 0) + Number(activityDetail?.children || 0);
@@ -12,18 +58,23 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
   const perPersonTotal = guestsCount > 0
     ? Number(activityDetail?.grand_total || 0) / guestsCount
     : Number(activityDetail?.grand_total || 0);
+  const modality = activityDetail?.modality;
+  const selectedPax = Array.isArray(modality?.selected_pax)
+    ? modality.selected_pax
+    : [];
+  const resolvedPolicy = resolveCancellationPolicies(activityDetail);
+  const checkoutTiming = resolveCheckoutTiming(activityDetail);
+  const hasCancellationInfo =
+    !!activityDetail?.cancellation_policy ||
+    !!activityDetail?.cancellation_policy_text ||
+    (Array.isArray(modality?.cancellation_policies) && modality.cancellation_policies.length > 0);
 
   const renderCancellationPolicy = () => {
-    const cancellationPolicy = resolveCancellationPolicy(
-      activityDetail?.cancellation_policy,
-      activityDetail?.cancellation_policy_text
-    );
+    const { cancel_policy, cancellation_policies } = resolvedPolicy;
 
-    if (!cancellationPolicy) {
+    if (!cancel_policy && (!cancellation_policies || cancellation_policies.length === 0)) {
       return null;
     }
-
-    const { cancel_policy, cancellation_policies } = cancellationPolicy;
 
     if (cancel_policy === 'non-refundable') {
       return (
@@ -37,8 +88,80 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
       );
     }
 
-    if (cancel_policy === 'refundable' && cancellation_policies && cancellation_policies.length > 0) {
-      const sortedPolicies = [...cancellation_policies].sort((a, b) => b.time_duration - a.time_duration);
+    if (cancellation_policies && cancellation_policies.length > 0) {
+      const travelDate = activityDetail?.travel_date;
+      const sessionCode = modality?.session?.code || modality?.session;
+
+      // API style: { from, amount, original_amount }
+      if (isFromAmountPolicyStyle(cancellation_policies)) {
+        const policy = cancellation_policies[0];
+        const dateLabel = formatDeadlineDate(policy);
+        const amount = Number(policy.amount ?? policy.original_amount ?? 0);
+
+        return (
+          <div>
+            <div className="policy-alert success">
+              <IoCheckmarkCircle size={22} className="mt-1 flex-shrink-0" />
+              <div>
+                <h6>Refundable Booking</h6>
+                <p>
+                  {dateLabel
+                    ? `Cancel free before ${dateLabel} and get a full refund.`
+                    : 'Free cancellation is available until the deadline below.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="summary-section-label mt-3">What happens if you cancel</div>
+
+            <div className="policy-timeline-item primary">
+              <div className="d-flex align-items-start gap-2">
+                <IoCheckmarkCircle size={18} className="mt-1 flex-shrink-0" style={{ color: '#22c55e' }} />
+                <div>
+                  <h6 className="mb-1 small fw-bold" style={{ color: '#16a34a' }}>
+                    {dateLabel ? `Before ${dateLabel}` : 'Before the deadline'}
+                  </h6>
+                  <p className="mb-0 small text-muted">
+                    Full refund. No cancellation fee.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="policy-timeline-item secondary">
+              <div className="d-flex align-items-start gap-2">
+                <IoTimeOutline size={18} className="mt-1 flex-shrink-0" style={{ color: '#dc2626' }} />
+                <div>
+                  <h6 className="mb-1 small fw-bold" style={{ color: '#dc2626' }}>
+                    {dateLabel ? `On or after ${dateLabel}` : 'After the deadline'}
+                  </h6>
+                  <p className="mb-1 small text-muted">
+                    Cancellation fee will be charged.
+                  </p>
+                  {amount > 0 && (
+                    <strong className="text-danger small">
+                      Fee: <PriceDisplay price={amount} currency={activityDetail?.currency} />
+                    </strong>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="policy-alert" style={{ background: '#fff9e6', color: '#7a5c00' }}>
+              <IoInformation size={18} className="mt-1 flex-shrink-0" />
+              <p className="small mb-0">
+                <strong>Tip:</strong> Cancel before the date above to get your money back.
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      const sortedPolicies = [...cancellation_policies].sort((a, b) => {
+        const hoursA = getPolicyHours(a, travelDate, sessionCode) ?? 0;
+        const hoursB = getPolicyHours(b, travelDate, sessionCode) ?? 0;
+        return hoursB - hoursA;
+      });
 
       return (
         <div>
@@ -53,23 +176,8 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
           <div className="summary-section-label mt-3">Cancellation Timeline</div>
 
           {sortedPolicies.map((policy, index) => {
-            const timeText = policy.time_duration >= 24
-              ? `${policy.time_duration / 24} day${policy.time_duration / 24 > 1 ? 's' : ''}`
-              : `${policy.time_duration} hour${policy.time_duration > 1 ? 's' : ''}`;
-
-            let refundText = '';
-            let refundAmount = '';
-            let refundDescription = '';
-
-            if (policy.type === 'percentage') {
-              const refundPercentage = 100 - policy.value;
-              refundText = `${policy.value}% Charge`;
-              refundDescription = `${policy.value}% cancellation charge applies. You will receive ${refundPercentage}% of the total booking amount back.`;
-            } else if (policy.type === 'fixed') {
-              refundText = `Cancellation Fee`;
-              refundAmount = policy.value;
-              refundDescription = `A fixed cancellation fee will be charged.`;
-            }
+            const timeText = formatPolicyTimeText(policy, travelDate, sessionCode);
+            const charge = getPolicyCharge(policy);
 
             return (
               <div
@@ -85,36 +193,37 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
                   <div className="flex-grow-1">
                     <div className="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
                       <h6 className="mb-0 small fw-bold" style={{ color: index === 0 ? '#16a34a' : '#374151' }}>
-                        {timeText} before activity
+                        {timeText}
                       </h6>
                       <span
                         className="badge"
                         style={{
-                          backgroundColor: policy.type === 'percentage' ? '#dcfce7' : '#fee2e2',
-                          color: policy.type === 'percentage' ? '#16a34a' : '#dc2626',
+                          backgroundColor: charge.isFree ? '#dcfce7' : '#fee2e2',
+                          color: charge.isFree ? '#16a34a' : '#dc2626',
                           fontSize: '0.72rem',
                         }}
                       >
-                        {refundText}
+                        {charge.refundText}
                       </span>
                     </div>
 
-                    <p className="mb-1 small text-muted">{refundDescription}</p>
+                    <p className="mb-1 small text-muted">{charge.refundDescription}</p>
 
-                    {policy.type === 'fixed' && (
+                    {charge.refundAmount != null && Number(charge.refundAmount) > 0 && (
                       <div className="mt-1">
                         <strong className="text-danger small">
-                          Cancellation Fee: <PriceDisplay price={refundAmount} currency={activityDetail?.currency} />
+                          Cancellation Fee:{' '}
+                          <PriceDisplay price={charge.refundAmount} currency={activityDetail?.currency} />
                         </strong>
                       </div>
                     )}
 
-                    {policy.type === 'percentage' && policy.value === 0 && (
+                    {charge.isFree && (
                       <div className="mt-1 small text-success">
                         <strong>✓ Full refund — No cancellation charges</strong>
                       </div>
                     )}
-                    {policy.type === 'percentage' && policy.value === 100 && (
+                    {charge.isFullCharge && (
                       <div className="mt-1 small text-danger">
                         <strong>⚠ No refund — 100% cancellation charge</strong>
                       </div>
@@ -200,28 +309,88 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
             </>
           )} */}
 
-          <hr className="summary-divider" />
-
-          {activityDetail?.adults > 0 && (
+          <div className="summary-section-label">Activity details</div>
+          {activityDetail?.travel_date && (
             <div className="summary-line">
-              <span className="line-label">
-                {activityDetail.adults} Adult{activityDetail.adults > 1 ? 's' : ''}
-              </span>
+              <span className="line-label">Date</span>
               <span className="line-value">
-                <PriceDisplay price={Number(activityDetail.price_per_adult) * Number(activityDetail.adults)} currency={activityDetail.currency} />
+                {moment(activityDetail.travel_date).format('ddd, MMM DD, YYYY')}
               </span>
             </div>
           )}
-
-          {activityDetail?.children > 0 && (
+          {checkoutTiming && (
             <div className="summary-line">
-              <span className="line-label">
-                {activityDetail.children} Child{activityDetail.children > 1 ? 'ren' : ''}
-              </span>
+              <span className="line-label">Timing</span>
+              <span className="line-value">{checkoutTiming}</span>
+            </div>
+          )}
+          {activityDetail?.duration && (
+            <div className="summary-line">
+              <span className="line-label">Duration</span>
+              <span className="line-value">{activityDetail.duration}</span>
+            </div>
+          )}
+          {(modality?.language?.description || modality?.language?.code) && (
+            <div className="summary-line">
+              <span className="line-label">Language</span>
               <span className="line-value">
-                <PriceDisplay price={Number(activityDetail.price_per_child) * Number(activityDetail.children)} currency={activityDetail.currency} />
+                {modality.language?.description || modality.language?.code}
               </span>
             </div>
+          )}
+          {modality?.name && (
+            <div className="summary-line">
+              <span className="line-label">Option</span>
+              <span className="line-value">{modality.name}</span>
+            </div>
+          )}
+
+          <hr className="summary-divider" />
+
+          {selectedPax.length > 0 ? (
+            selectedPax.map((pax, index) => {
+              const qty = Number(pax.quantity || 0);
+              const amount = Number(pax.amount || 0);
+              if (qty <= 0) return null;
+              return (
+                <div key={index} className="summary-line">
+                  <span className="line-label">
+                    {qty} {PAX_LABELS[pax.paxType] || pax.paxType}{' '}
+                    {formatAgeRange(pax.ageFrom, pax.ageTo)} ×{' '}
+                    <PriceDisplay price={amount} currency={activityDetail.currency} />
+                  </span>
+                  <span className="line-value">
+                    <PriceDisplay price={amount * qty} currency={activityDetail.currency} />
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <>
+              {activityDetail?.adults > 0 && (
+                <div className="summary-line">
+                  <span className="line-label">
+                    {activityDetail.adults} Adult{activityDetail.adults > 1 ? 's' : ''} ×{' '}
+                    <PriceDisplay price={Number(activityDetail.price_per_adult)} currency={activityDetail.currency} />
+                  </span>
+                  <span className="line-value">
+                    <PriceDisplay price={Number(activityDetail.price_per_adult) * Number(activityDetail.adults)} currency={activityDetail.currency} />
+                  </span>
+                </div>
+              )}
+
+              {activityDetail?.children > 0 && (
+                <div className="summary-line">
+                  <span className="line-label">
+                    {activityDetail.children} Child{activityDetail.children > 1 ? 'ren' : ''} ×{' '}
+                    <PriceDisplay price={Number(activityDetail.price_per_child)} currency={activityDetail.currency} />
+                  </span>
+                  <span className="line-value">
+                    <PriceDisplay price={Number(activityDetail.price_per_child) * Number(activityDetail.children)} currency={activityDetail.currency} />
+                  </span>
+                </div>
+              )}
+            </>
           )}
 
           <hr className="summary-divider" />
@@ -238,7 +407,7 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
       </div>
 
       {/* Cancellation Policy */}
-      {(activityDetail?.cancellation_policy || activityDetail?.cancellation_policy_text) && (
+      {hasCancellationInfo && (
         <div className='cancellation-card'>
           <div className='cancellation-card-header'>
             <h5>Cancellation Policy</h5>

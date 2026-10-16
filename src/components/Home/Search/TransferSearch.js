@@ -1,19 +1,32 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
 import { DateTimePicker } from "@mantine/dates";
-import { Select, SelectItem } from '@mantine/core';
+import { Popover } from '@mantine/core';
 import "@mantine/dates/styles.css";
 import { notifications } from "@mantine/notifications";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import moment from "moment";
-import { FaCalendarAlt, FaUsers } from "react-icons/fa";
+import { FaCalendarAlt, FaUsers, FaMinus, FaPlus, FaSearch } from "react-icons/fa";
 import { IoIosSwap } from "react-icons/io";
 import TransferLocationSelector from './TransferLocationSelector';
 import homeStyles from './FlightSearchHome.module.css';
 import listingStyles from './UmrahGetAwayListing.module.css';
-import { FaSearch } from 'react-icons/fa';
 
-const ADULT_OPTIONS = Array.from({ length: 16 }, (_, i) => i + 1);
+const parseCoord = (value) => {
+    const n = typeof value === 'function' ? value() : Number(value);
+    return Number.isFinite(n) ? n : null;
+};
+
+const getPassengerLabel = (adults, children, infants) => {
+    const parts = [];
+    const a = Number(adults) || 0;
+    const c = Number(children) || 0;
+    const i = Number(infants) || 0;
+    if (a > 0) parts.push(`${a} Adult${a !== 1 ? 's' : ''}`);
+    if (c > 0) parts.push(`${c} Child${c !== 1 ? 'ren' : ''}`);
+    if (i > 0) parts.push(`${i} Infant${i !== 1 ? 's' : ''}`);
+    return parts.length ? parts.join(', ') : 'Select passengers';
+};
 
 export default function TransferSearch({ onSearch, variant = 'home' }) {
     const isListing = variant === 'listing';
@@ -22,6 +35,7 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
     const searchParams = useSearchParams();
     const [isMobile, setIsMobile] = useState(false);
     const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+    const [popoverOpened, setPopoverOpened] = useState(false);
     const [formData, setFormData] = useState({
         tripType: "one-way",
         from: {
@@ -42,7 +56,9 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
         },
         pickupDateTime: null,
         dropoffDateTime: null,
-        adults: ''
+        adults: 1,
+        children: 0,
+        infants: 0,
     });
 
     useEffect(() => {
@@ -53,22 +69,28 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
         };
 
         if (pathname === '/transfers') {
-            const transferType = searchParams.get('transferType');
-            const fromLat = searchParams.get('fromLat');
-            const fromLng = searchParams.get('fromLng');
-            const pickupLocation = searchParams.get('pickupLocation');
+            const transferType = searchParams.get('transferType') || searchParams.get('transfertype');
+            const fromLat = searchParams.get('pickupLatitude') || searchParams.get('fromLat');
+            const fromLng = searchParams.get('pickupLongitude') || searchParams.get('fromLng');
+            const pickupLocation = searchParams.get('pickupLocation') || searchParams.get('pickuplocation');
             const fromCountry = searchParams.get('fromCountry');
-            const toLat = searchParams.get('toLat');
-            const toLng = searchParams.get('toLng');
-            const dropoffLocation = searchParams.get('dropoffLocation');
+            const toLat = searchParams.get('dropoffLatitude') || searchParams.get('toLat');
+            const toLng = searchParams.get('dropoffLongitude') || searchParams.get('toLng');
+            const dropoffLocation = searchParams.get('dropoffLocation') || searchParams.get('dropofflocation');
             const toCountry = searchParams.get('toCountry');
             const pickupDate = searchParams.get('pickupDate');
             const pickupTime = searchParams.get('pickupTime');
             const dropoffDate = searchParams.get('dropoffDate');
             const dropoffTime = searchParams.get('dropoffTime');
             const passengers = searchParams.get('passengers');
+            const adultsParam = searchParams.get('adults');
+            const childrenParam = searchParams.get('children');
+            const infantsParam = searchParams.get('infants');
 
             if (transferType || fromLat || toLat || pickupDate) {
+                const adults = adultsParam != null
+                    ? Math.max(1, Number(adultsParam) || 1)
+                    : Math.max(1, Number(passengers) || 1);
                 setFormData({
                     tripType: transferType || "one-way",
                     from: {
@@ -87,9 +109,15 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
                         city: dropoffLocation || "",
                         country: toCountry || ""
                     },
-                    pickupDateTime: pickupDate && pickupTime ? moment(`${pickupDate} ${pickupTime}`, 'YYYY-MM-DD HH:mm:ss').toDate() : null,
-                    dropoffDateTime: dropoffDate && dropoffTime ? moment(`${dropoffDate} ${dropoffTime}`, 'YYYY-MM-DD HH:mm:ss').toDate() : null,
-                    adults: passengers || ''
+                    pickupDateTime: pickupDate && pickupTime
+                        ? moment(`${pickupDate} ${pickupTime}`, ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD HH:mm']).toDate()
+                        : null,
+                    dropoffDateTime: dropoffDate && dropoffTime
+                        ? moment(`${dropoffDate} ${dropoffTime}`, ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD HH:mm']).toDate()
+                        : null,
+                    adults,
+                    children: Math.max(0, Number(childrenParam) || 0),
+                    infants: Math.max(0, Number(infantsParam) || 0),
                 });
             } else {
                 setFormData({
@@ -112,7 +140,9 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
                     },
                     pickupDateTime: null,
                     dropoffDateTime: null,
-                    adults: ''
+                    adults: 1,
+                    children: 0,
+                    infants: 0,
                 });
             }
         }
@@ -135,22 +165,52 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
         }));
     };
 
+    const handleCountChange = (type, increment) => {
+        setFormData((prev) => {
+            const next = { ...prev };
+            if (type === 'adults') {
+                next.adults = increment
+                    ? Math.min(16, Number(prev.adults) + 1)
+                    : Math.max(1, Number(prev.adults) - 1);
+            } else if (type === 'children') {
+                next.children = increment
+                    ? Math.min(16, Number(prev.children) + 1)
+                    : Math.max(0, Number(prev.children) - 1);
+            } else if (type === 'infants') {
+                next.infants = increment
+                    ? Math.min(16, Number(prev.infants) + 1)
+                    : Math.max(0, Number(prev.infants) - 1);
+            }
+            return next;
+        });
+    };
+
     const handleFromLocationChange = (e) => {
+        const name = e.target.value;
         setFormData((prev) => ({
             ...prev,
             from: {
-                ...prev.from,
-                name: e.target.value
+                id: "",
+                name,
+                lat: null,
+                lng: null,
+                city: "",
+                country: "",
             }
         }));
     };
 
     const handleToLocationChange = (e) => {
+        const name = e.target.value;
         setFormData((prev) => ({
             ...prev,
             to: {
-                ...prev.to,
-                name: e.target.value
+                id: "",
+                name,
+                lat: null,
+                lng: null,
+                city: "",
+                country: "",
             }
         }));
     };
@@ -169,8 +229,16 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
             return;
         }
 
-        const lat = place.geometry?.location?.lat;
-        const lng = place.geometry?.location?.lng;
+        const lat = parseCoord(place.geometry?.location?.lat);
+        const lng = parseCoord(place.geometry?.location?.lng);
+        if (lat == null || lng == null) {
+            notifications.show({
+                title: 'Location Error',
+                message: 'Could not get coordinates for this pickup location. Please select again.',
+                color: 'red',
+            });
+            return;
+        }
         const placeId = place.place_id;
         const placeName = place.displayName || place.formatted_address || place.name;
 
@@ -209,8 +277,16 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
             return;
         }
 
-        const lat = place.geometry?.location?.lat;
-        const lng = place.geometry?.location?.lng;
+        const lat = parseCoord(place.geometry?.location?.lat);
+        const lng = parseCoord(place.geometry?.location?.lng);
+        if (lat == null || lng == null) {
+            notifications.show({
+                title: 'Location Error',
+                message: 'Could not get coordinates for this drop-off location. Please select again.',
+                color: 'red',
+            });
+            return;
+        }
         const placeId = place.place_id;
         const placeName = place.displayName || place.formatted_address || place.name;
 
@@ -253,10 +329,35 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
             return false;
         }
 
+        if (parseCoord(formData.from.lat) == null || parseCoord(formData.from.lng) == null) {
+            notifications.show({
+                title: 'Validation Error',
+                message: isLoadingDetail
+                    ? 'Please wait while we load the pickup location details'
+                    : 'Please select a pickup location from the list so we can get its coordinates',
+                color: 'red',
+            });
+            return false;
+        }
+
         if (!formData.to.name && formData.tripType !== 'all-round') {
             notifications.show({
                 title: 'Validation Error',
                 message: 'Please select a drop-off location',
+                color: 'red',
+            });
+            return false;
+        }
+
+        if (
+            formData.tripType !== 'all-round' &&
+            (parseCoord(formData.to.lat) == null || parseCoord(formData.to.lng) == null)
+        ) {
+            notifications.show({
+                title: 'Validation Error',
+                message: isLoadingDetail
+                    ? 'Please wait while we load the drop-off location details'
+                    : 'Please select a drop-off location from the list so we can get its coordinates',
                 color: 'red',
             });
             return false;
@@ -271,10 +372,10 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
             return false;
         }
 
-        if (!formData.adults) {
+        if (!formData.adults || Number(formData.adults) < 1) {
             notifications.show({
                 title: 'Validation Error',
-                message: 'Please select number of adults',
+                message: 'Please select at least 1 adult',
                 color: 'red',
             });
             return false;
@@ -318,51 +419,166 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
             return;
         }
 
+        const adults = Math.max(1, Number(formData.adults) || 1);
+        const children = Math.max(0, Number(formData.children) || 0);
+        const infants = Math.max(0, Number(formData.infants) || 0);
+        const totalPassengers = adults + children + infants;
+        const fromLat = parseCoord(formData.from.lat);
+        const fromLng = parseCoord(formData.from.lng);
+        const toLat = parseCoord(formData.to.lat);
+        const toLng = parseCoord(formData.to.lng);
+
         const queryParams = new URLSearchParams();
-        queryParams.append('transferType', formData.tripType);
-        queryParams.append('fromLat', formData.from.lat);
-        queryParams.append('fromLng', formData.from.lng);
-        queryParams.append('pickupLocation', formData.from.name);
-        queryParams.append('fromCountry', formData.from.country);
-        queryParams.append('toLat', formData.to.lat);
-        queryParams.append('toLng', formData.to.lng);
-        queryParams.append('dropoffLocation', formData.to.name);
-        queryParams.append('pickupDate', moment(formData.pickupDateTime).format('YYYY-MM-DD'));
-        queryParams.append('pickupTime', moment(formData.pickupDateTime).format('HH:mm:ss'));
-        if (formData.dropoffDateTime) {
-            queryParams.append('dropoffDate', moment(formData.dropoffDateTime).format('YYYY-MM-DD'));
-            queryParams.append('dropoffTime', moment(formData.dropoffDateTime).format('HH:mm:ss'));
+        queryParams.set('transferType', formData.tripType);
+        queryParams.set('pickupLatitude', String(fromLat));
+        queryParams.set('pickupLongitude', String(fromLng));
+        queryParams.set('pickupLocation', formData.from.name || '');
+        // Keep legacy keys for checkout / map embeds
+        queryParams.set('fromLat', String(fromLat));
+        queryParams.set('fromLng', String(fromLng));
+        if (formData.from.country) {
+            queryParams.set('fromCountry', formData.from.country);
         }
-        queryParams.append('passengers', formData.adults);
+        if (formData.tripType !== 'all-round') {
+            queryParams.set('dropoffLatitude', String(toLat));
+            queryParams.set('dropoffLongitude', String(toLng));
+            queryParams.set('dropoffLocation', formData.to.name || '');
+            queryParams.set('toLat', String(toLat));
+            queryParams.set('toLng', String(toLng));
+            if (formData.to.country) {
+                queryParams.set('toCountry', formData.to.country);
+            }
+        }
+        queryParams.set('pickupDate', moment(formData.pickupDateTime).format('YYYY-MM-DD'));
+        queryParams.set('pickupTime', moment(formData.pickupDateTime).format('HH:mm'));
+        if (formData.dropoffDateTime) {
+            queryParams.set('dropoffDate', moment(formData.dropoffDateTime).format('YYYY-MM-DD'));
+            queryParams.set('dropoffTime', moment(formData.dropoffDateTime).format('HH:mm'));
+        }
+        queryParams.set('adults', String(adults));
+        queryParams.set('children', String(children));
+        queryParams.set('infants', String(infants));
+        queryParams.set('passengers', String(totalPassengers));
         queryParams.set('_ts', String(Date.now()));
         if (onSearch) onSearch();
         router.push(`/transfers?${queryParams.toString()}`);
     };
 
+    const passengerLabel = getPassengerLabel(formData.adults, formData.children, formData.infants);
+
+    const travelersPopoverContent = (
+        <div className="p-2" style={{ minWidth: 260 }}>
+            <div className="e484bb5b7a mt-2">
+                <div className="c5aae0350e">
+                    <label className="small mb-0 fw-semibold">Adults</label>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>Age 12+</div>
+                </div>
+                <div className="e301a14002">
+                    <div className="e301a14002">
+                        <button type="button" onClick={() => handleCountChange('adults', false)} className="adult-modal-btn"><FaMinus /></button>
+                        <span className="mx-2" aria-hidden="true">{formData.adults}</span>
+                        <button type="button" onClick={() => handleCountChange('adults', true)} className="adult-modal-btn"><FaPlus /></button>
+                    </div>
+                </div>
+            </div>
+            <div className="e484bb5b7a mt-3">
+                <div className="c5aae0350e">
+                    <label className="small mb-0 fw-semibold">Children</label>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>Age 2–11</div>
+                </div>
+                <div className="e301a14002">
+                    <div className="e301a14002">
+                        <button type="button" onClick={() => handleCountChange('children', false)} className="adult-modal-btn"><FaMinus /></button>
+                        <span className="mx-2" aria-hidden="true">{formData.children}</span>
+                        <button type="button" onClick={() => handleCountChange('children', true)} className="adult-modal-btn"><FaPlus /></button>
+                    </div>
+                </div>
+            </div>
+            <div className="e484bb5b7a mt-3">
+                <div className="c5aae0350e">
+                    <label className="small mb-0 fw-semibold">Infants</label>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>Under 2</div>
+                </div>
+                <div className="e301a14002">
+                    <div className="e301a14002">
+                        <button type="button" onClick={() => handleCountChange('infants', false)} className="adult-modal-btn"><FaMinus /></button>
+                        <span className="mx-2" aria-hidden="true">{formData.infants}</span>
+                        <button type="button" onClick={() => handleCountChange('infants', true)} className="adult-modal-btn"><FaPlus /></button>
+                    </div>
+                </div>
+            </div>
+            <button
+                onClick={() => setPopoverOpened(false)}
+                type="button"
+                className="btn mt-3 w-100 btn-outline-success"
+            >
+                Done
+            </button>
+        </div>
+    );
+
+    const travelersPopover = (
+        <Popover
+            width={300}
+            opened={popoverOpened}
+            onChange={setPopoverOpened}
+            position="bottom-end"
+            withArrow
+            shadow="md"
+            clickOutsideEvents={["mouseup", "touchend"]}
+        >
+            <Popover.Target>
+                <button
+                    type="button"
+                    className={homeStyles.filterPill}
+                    onClick={() => setPopoverOpened((o) => !o)}
+                    aria-label="Passengers"
+                    style={{
+                        minWidth: 160,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        cursor: 'pointer',
+                        border: '1px solid #e5e7eb',
+                        background: '#fff',
+                        borderRadius: 999,
+                        padding: '8px 14px',
+                        fontWeight: 600,
+                    }}
+                >
+                    <FaUsers size={14} />
+                    {passengerLabel}
+                </button>
+            </Popover.Target>
+            <Popover.Dropdown>
+                {travelersPopoverContent}
+            </Popover.Dropdown>
+        </Popover>
+    );
+
     const renderHomeFilters = () => (
         <div className={homeStyles.filtersRow}>
-            <Select
-                className={homeStyles.filterPill}
-                value={formData.tripType}
-                onChange={(value) => handleChange("tripType", value)}
-                data={[
-                    { value: "one-way", label: "One way" },
-                    { value: "return", label: "Return" },
-                    { value: "all-round", label: "All round" },
-                ]}
-                aria-label="Trip type"
-            />
-            <Select
-                className={homeStyles.filterPill}
-                value={formData.adults}
-                onChange={(value) => handleChange("adults", value)}
-                data={ADULT_OPTIONS.map((n) => ({
-                    value: String(n),
-                    label: String(n),
-                }))}
-                placeholder="Number of adults"
-                aria-label="Number of adults"
-            />
+            <div className="flight-type gap-2 d-flex search-radio-butons align-items-center">
+                <div
+                    onClick={() => handleChange("tripType", "one-way")}
+                    className={`${formData.tripType === 'one-way' ? 'active' : ''} small`}
+                >
+                    <span>One-Way</span>
+                </div>
+                <div
+                    onClick={() => handleChange("tripType", "return")}
+                    className={`${formData.tripType === 'return' ? 'active' : ''} small`}
+                >
+                    <span>Return</span>
+                </div>
+                <div
+                    onClick={() => handleChange("tripType", "all-round")}
+                    className={`${formData.tripType === 'all-round' ? 'active' : ''} small`}
+                >
+                    <span>All-Round</span>
+                </div>
+            </div>
+            {travelersPopover}
         </div>
     );
 
@@ -451,40 +667,36 @@ export default function TransferSearch({ onSearch, variant = 'home' }) {
     };
 
     const renderListingAdultsField = () => (
-        <div className={listingStyles.listingField}>
-            <div className={`${listingStyles.fieldIcon} ${listingStyles.iconNavy}`}><FaUsers /></div>
-            <div className={listingStyles.fieldBody}>
-                <span className={listingStyles.fieldLabel}>ADULTS</span>
-                <div className={listingStyles.fieldValue}>
-                    <Select
-                        className={listingStyles.selectInput}
-                        value={formData.adults}
-                        onChange={(value) => handleChange("adults", value)}
-                        data={ADULT_OPTIONS.map((n) => ({
-                            value: String(n),
-                            label: String(n),
-                        }))}
-                        placeholder="Select adults"
-                        aria-label="Number of adults"
-                        styles={{
-                            input: {
-                                WebkitAppearance: 'none',
-                                appearance: 'none',
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                boxShadow: 'none',
-                                minHeight: 'unset',
-                                height: 'auto',
-                                fontWeight: 700,
-                                fontSize: '0.88rem',
-                                padding: 0,
-                                color: '#1B3B6F',
-                            },
-                        }}
-                    />
+        <Popover
+            width={300}
+            opened={popoverOpened}
+            onChange={setPopoverOpened}
+            position="bottom-start"
+            withArrow
+            shadow="md"
+            clickOutsideEvents={["mouseup", "touchend"]}
+        >
+            <Popover.Target>
+                <div
+                    className={`${listingStyles.listingField} cursor-pointer`}
+                    onClick={() => setPopoverOpened((o) => !o)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && setPopoverOpened((o) => !o)}
+                >
+                    <div className={`${listingStyles.fieldIcon} ${listingStyles.iconNavy}`}><FaUsers /></div>
+                    <div className={listingStyles.fieldBody}>
+                        <span className={listingStyles.fieldLabel}>PASSENGERS</span>
+                        <button type="button" className={listingStyles.travelersBtn || listingStyles.fieldValue}>
+                            {passengerLabel}
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </Popover.Target>
+            <Popover.Dropdown>
+                {travelersPopoverContent}
+            </Popover.Dropdown>
+        </Popover>
     );
 
     const tripToggle = (

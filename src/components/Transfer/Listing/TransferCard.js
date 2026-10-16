@@ -119,9 +119,12 @@ export default function TransferCard({ transfers, searchParams }) {
       "";
     const luggage = item?.vehicle_details?.luggage_capacity;
     const passengers = item?.vehicle_details?.passenger_capacity;
-    const transmission = formatTransmission(
-      item?.vehicle_details?.transmission_type,
-    );
+    const isCustomProvider =
+      String(item?.provider || "").toLowerCase() === "custom" ||
+      String(item?.transfer_type_code || "").toUpperCase() === "CUSTOM";
+    const transmission = isCustomProvider
+      ? formatTransmission(item?.vehicle_details?.transmission_type)
+      : null;
 
     return (
       <article
@@ -185,10 +188,12 @@ export default function TransferCard({ transfers, searchParams }) {
               <PiSuitcaseRolling />
               {luggage ?? "—"}
             </span>
-            <span className={styles.featureTag} title="Transmission">
-              <GiGearStickPattern />
-              {transmission}
-            </span>
+            {isCustomProvider && transmission && transmission !== "—" && (
+              <span className={styles.featureTag} title="Transmission">
+                <GiGearStickPattern />
+                {transmission}
+              </span>
+            )}
             <span className={styles.featureTag} title="Passenger capacity">
               <GoPerson />
               {passengers ?? "—"}

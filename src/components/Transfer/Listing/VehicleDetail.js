@@ -141,7 +141,37 @@ export default function VehicleDetail({
     transfer?.vehicle_number ||
     null;
 
-  const includedItems = parseIncludedItems(transfer);
+  const hasExplicitInclusions = Boolean(
+    transfer?.included_items ||
+      transfer?.inclusions ||
+      transfer?.whats_included ||
+      transfer?.amenities
+  );
+  const includedItems = hasExplicitInclusions
+    ? parseIncludedItems(transfer)
+    : [];
+  const isCustomProvider =
+    String(transfer?.provider || "").toLowerCase() === "custom" ||
+    String(transfer?.transfer_type_code || "").toUpperCase() === "CUSTOM";
+  const transmissionType = isCustomProvider
+    ? vehicle?.transmission_type
+    : null;
+
+  const serviceInformation = Array.isArray(transfer?.service_information)
+    ? transfer.service_information.filter(
+        (item) => item && (item.name || item.description || item.value != null)
+      )
+    : [];
+
+  const additionalServices = (() => {
+    const raw =
+      transfer?.additional_services ||
+      transfer?.extra_services ||
+      transfer?.addons ||
+      transfer?.additionalServices;
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(Boolean);
+  })();
 
   const priceContent =
     transfer?.convertedCurrency && transfer?.convertedPrice != null ? (
@@ -223,7 +253,11 @@ export default function VehicleDetail({
           </div>
         </div>
 
-        <div className={styles.statsGrid}>
+        <div
+          className={`${styles.statsGrid}${
+            isCustomProvider && transmissionType ? "" : ` ${styles.statsGridTwo}`
+          }`}
+        >
           <div className={styles.statCard}>
             <GoPerson className={styles.statIcon} />
             <div>
@@ -233,37 +267,114 @@ export default function VehicleDetail({
           </div>
 
           <div className={styles.statCard}>
-            <PiSuitcaseRolling className="checkout-review-pill-icon" />
+            <PiSuitcaseRolling className={styles.statIcon} />
             <div>
-              <p className={styles.statValue}>{vehicle.luggage_capacity} </p>
+              <p className={styles.statValue}>{vehicle.luggage_capacity ?? "—"}</p>
               <p className={styles.statLabel}>
-                {reviewCount ? `${reviewCount} reviews` : 'bags'}
+                {reviewCount ? `${reviewCount} reviews` : "bags"}
               </p>
             </div>
           </div>
 
-          <div className={styles.statCard}>
-            <GiGearStickPattern className="checkout-review-pill-icon" />
-            <div>
-              <p className={styles.statValue}>{vehicle.transmission_type} </p>
-              <p className={styles.statLabel}>transmission</p>
+          {isCustomProvider && transmissionType ? (
+            <div className={styles.statCard}>
+              <GiGearStickPattern className={styles.statIcon} />
+              <div>
+                <p className={styles.statValue}>{capitalize(transmissionType)}</p>
+                <p className={styles.statLabel}>transmission</p>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
 
-        {/* <h5 className={styles.sectionTitle}>What&apos;s Included</h5>
-        <div className={styles.includedGrid}>
-          {includedItems.map((item) => (
-            <div key={item} className={styles.includedItem}>
-              <FaCheck className={styles.includedCheck} aria-hidden="true" />
-              <span>{item}</span>
+        {serviceInformation.length > 0 && (
+          <>
+            <h5 className={styles.sectionTitle}>Vehicle Information</h5>
+            <div className={styles.infoCardsGrid}>
+              {serviceInformation.map((item, idx) => (
+                <div
+                  key={item.id || `${item.name}-${idx}`}
+                  className={styles.infoCard}
+                >
+                  <span className={styles.infoCardIcon} aria-hidden="true">
+                    <MdOutlineAccessTime />
+                  </span>
+                  <div>
+                    <p className={styles.infoCardTitle}>{item.name || "Detail"}</p>
+                    <p className={styles.infoCardText}>
+                      {[item.value, item.description].filter(Boolean).join(" ")}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div> */}
+          </>
+        )}
+
+        {additionalServices.length > 0 && (
+          <>
+            <h5 className={styles.sectionTitle}>Additional Services</h5>
+            <div className={styles.includedGrid}>
+              {additionalServices.map((service, idx) => {
+                const label =
+                  typeof service === "string"
+                    ? service
+                    : service?.name ||
+                      service?.title ||
+                      service?.description ||
+                      service?.label ||
+                      "Service";
+                const detail =
+                  typeof service === "object"
+                    ? [service?.value, service?.description]
+                        .filter(Boolean)
+                        .filter((part) => part !== label)
+                        .join(" — ")
+                    : "";
+                return (
+                  <div key={service?.id || `${label}-${idx}`} className={styles.includedItem}>
+                    <FaCheck className={styles.includedCheck} aria-hidden="true" />
+                    <span>
+                      {label}
+                      {detail ? ` — ${detail}` : ""}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {includedItems.length > 0 && (
+          <>
+            <h5 className={styles.sectionTitle}>What&apos;s Included</h5>
+            <div className={styles.includedGrid}>
+              {includedItems.map((item) => (
+                <div key={item} className={styles.includedItem}>
+                  <FaCheck className={styles.includedCheck} aria-hidden="true" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {vehicle?.vehicle_description && (
           <p className="text-muted small mb-3">{vehicle.vehicle_description}</p>
         )}
+
+        {/* {transfer?.transfer_remarks && (
+          <div className={styles.policySection}>
+            <h5 className={styles.sectionTitle}>Remarks</h5>
+            <div className={`${styles.policyCard} ${styles.policyWarning}`}>
+              {typeof transfer.transfer_remarks === "string"
+                ? transfer.transfer_remarks
+                : Array.isArray(transfer.transfer_remarks)
+                  ? transfer.transfer_remarks.filter(Boolean).join(" ")
+                  : ""}
+            </div>
+          </div>
+        )} */}
 
         {transfer?.cancel_policy && (
           <div className={styles.policySection}>
@@ -318,7 +429,8 @@ export default function VehicleDetail({
             <p className={styles.footerPrice}>{priceContent}</p>
             <p className={styles.footerCaption}>VAT and taxes included</p>
 
-            {!isPackageMode && !isEditMode && (
+            {/* Quantity only for custom transfers (matches alhijaz booking rules) */}
+            {isCustomProvider && !isPackageMode && !isEditMode && (
               <div className={styles.quantityRow}>
                 <label htmlFor="vehicleQuantity" className={styles.quantityLabel}>
                   Quantity:

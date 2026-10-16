@@ -362,7 +362,7 @@ export default function TransferBookingsPage() {
                         <FaCar size={16} />
                       </div>
                       <div>
-                        <h6 className="hb-hotel-name">{booking?.transfer?.vehicle_name}</h6>
+                        <h6 className="hb-hotel-name">{booking?.vehicle_details?.name}</h6>
                         <p className="hb-hotel-location">
                           <FaMapMarkerAlt size={11} />
                           <span>{location}</span>
@@ -415,7 +415,7 @@ export default function TransferBookingsPage() {
                       <div>
                         <span className="hb-meta-label">Trip Type</span>
                         <strong>
-                          {booking?.transfer?.trip_type ||
+                          {booking?.booking_criteria?.transfer_type ||
                             "—"}
                         </strong>
                       </div>
@@ -440,7 +440,7 @@ export default function TransferBookingsPage() {
 
                     <div className="hb-card-actions">
                       <Link
-                        href={`/transfers/voucher/${booking?.booking_reference}`}
+                        href={`/transfers/voucher/${booking?.invoice_number || booking?.booking_reference}`}
                         target="_blank"
                         className="hb-btn hb-btn-light"
                       >
@@ -448,7 +448,7 @@ export default function TransferBookingsPage() {
                         Voucher
                       </Link>
                       <Link
-                        href={`/transfers/invoice/${booking?.booking_reference}`}
+                        href={`/transfers/invoice/${booking?.invoice_number || booking?.booking_reference}`}
                         target="_blank"
                         className="hb-btn hb-btn-primary"
                       >
@@ -462,7 +462,11 @@ export default function TransferBookingsPage() {
                             onClick={() =>
                               setCancelModal({
                                 opened: true,
-                                bookingReference: booking?.booking_reference,
+                                // Prefer booking_reference; fall back to invoice number when ref is null
+                                bookingReference:
+                                  booking?.booking_reference ||
+                                  booking?.invoice_number ||
+                                  "",
                                 provider: booking?.provider,
                               })
                             }

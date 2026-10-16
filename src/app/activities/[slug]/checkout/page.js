@@ -4,11 +4,31 @@ import { useActivityStore } from '@/components/Store/ActivityStore';
 import { FaStar, FaCar } from 'react-icons/fa';
 import { FaLocationDot } from 'react-icons/fa6';
 import { HiUserGroup } from "react-icons/hi";
+import { BiTimeFive } from "react-icons/bi";
+import { MdOutlineTranslate } from "react-icons/md";
+import moment from 'moment';
 import Summery from '@/components/Activities/Checkout/Summery';
 import DetailForm from '@/components/Activities/Checkout/DetailForm';
 import './checkout.css';
 
 export const dynamic = 'force-dynamic';
+
+const PAX_LABELS = {
+    ADULT: 'Adult',
+    CHILD: 'Child',
+    SENIOR: 'Senior',
+    INFANT: 'Infant',
+};
+
+function formatSessionLabel(codeOrName) {
+    if (!codeOrName) return '';
+    const value = typeof codeOrName === 'object'
+        ? (codeOrName.name || codeOrName.code)
+        : codeOrName;
+    if (!value) return '';
+    const parsed = moment(value, ['HH:mm', 'H:mm', 'hh:mm A'], true);
+    return parsed.isValid() ? parsed.format('hh:mm A') : String(value);
+}
 
 export default function page() {
     const { selectedActivity } = useActivityStore();
@@ -19,8 +39,23 @@ export default function page() {
     }, [selectedActivity]);
 
     const totalGuests = (activityDetail?.adults || 0) + (activityDetail?.children || 0);
+    const modality = activityDetail?.modality;
 
     const guestLabel = () => {
+        const modalityPax = modality?.selected_pax;
+        if (Array.isArray(modalityPax) && modalityPax.length > 0) {
+            return modalityPax
+                .filter((p) => Number(p.quantity) > 0)
+                .map((p) => {
+                    const label = PAX_LABELS[p.paxType] || p.paxType;
+                    const plural =
+                        p.quantity > 1
+                            ? (p.paxType === 'CHILD' ? 'ren' : 's')
+                            : '';
+                    return `${p.quantity} ${label}${plural}`;
+                })
+                .join(', ') || '0 Guests';
+        }
         const adults = activityDetail?.adults || 0;
         const children = activityDetail?.children || 0;
         const parts = [];
@@ -67,6 +102,12 @@ export default function page() {
                             )}
                         </div>
 
+                        {modality?.name && (
+                            <p className='checkout-review-desc' style={{ marginBottom: 6 }}>
+                                {modality.name}
+                            </p>
+                        )}
+
                         {locationLabel && (
                             <p className='checkout-review-location'>
                                 <FaLocationDot className='checkout-review-pin' />
@@ -81,8 +122,43 @@ export default function page() {
                             </div>
                         )}
 
-                        {(activityDetail?.duration || totalGuests > 0) && (
+                        {(activityDetail?.duration ||
+                            totalGuests > 0 ||
+                            modality?.session ||
+                            modality?.language ||
+                            activityDetail?.timing_label ||
+                            activityDetail?.start_time ||
+                            activityDetail?.travel_date) && (
                             <div className='checkout-review-pills'>
+                                {activityDetail?.travel_date && (
+                                    <div className='checkout-review-pill'>
+                                        <FaCar className='checkout-review-pill-icon' />
+                                        <span>
+                                            {moment(activityDetail.travel_date).format('ddd, MMM DD, YYYY')}
+                                        </span>
+                                    </div>
+                                )}
+                                {(modality?.session || activityDetail?.timing_label || activityDetail?.start_time) && (
+                                    <div className='checkout-review-pill'>
+                                        <BiTimeFive className='checkout-review-pill-icon' />
+                                        <span>
+                                            {modality?.session
+                                                ? formatSessionLabel(modality.session)
+                                                : (activityDetail?.timing_label ||
+                                                    formatSessionLabel(activityDetail?.start_time))}
+                                        </span>
+                                    </div>
+                                )}
+                                {modality?.language && (
+                                    <div className='checkout-review-pill'>
+                                        <MdOutlineTranslate className='checkout-review-pill-icon' />
+                                        <span>
+                                            {modality.language?.description ||
+                                                modality.language?.code ||
+                                                '—'}
+                                        </span>
+                                    </div>
+                                )}
                                 {activityDetail?.duration && (
                                     <div className='checkout-review-pill'>
                                         <FaCar className='checkout-review-pill-icon' />
@@ -92,7 +168,7 @@ export default function page() {
                                 {totalGuests > 0 && (
                                     <div className='checkout-review-pill'>
                                         <HiUserGroup className='checkout-review-pill-icon' />
-                                        <span>Pax {totalGuests}</span>
+                                        <span>{guestLabel()}</span>
                                     </div>
                                 )}
                             </div>
@@ -102,29 +178,6 @@ export default function page() {
 
                 <div className='row g-4 checkout-main-row'>
                     <div className='col-lg-8 col-12 order-2 order-lg-1'>
-
-                        {/* {activityDetail?.included_items && (
-                            <div className='checkout-included-card'>
-                                <h5>What&apos;s Included &amp; Excluded</h5>
-                                <div className='row g-3'>
-                                    <div className='col-md-6'>
-                                        <div className='included-col included'>
-                                            <h6>What&apos;s Included</h6>
-                                            <p className='col-subtitle'>Everything covered in your experience</p>
-                                            <div dangerouslySetInnerHTML={{ __html: activityDetail.included_items }} />
-                                        </div>
-                                    </div>
-                                    <div className='col-md-6'>
-                                        <div className='included-col excluded'>
-                                            <h6>What&apos;s Excluded</h6>
-                                            <p className='col-subtitle'>Items not covered in the price</p>
-                                            <div dangerouslySetInnerHTML={{ __html: activityDetail.excluded_items }} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )} */}
-
                         <div className='checkout-section-header'>
                             <h2>Checkout</h2>
                             <p>Complete your booking — enter passenger and payment details</p>

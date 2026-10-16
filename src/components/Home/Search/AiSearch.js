@@ -10,9 +10,34 @@ import HotelAiSearch from '../AiSearchesRes/HotelAiSearch';
 import FlightAiSearch from '../AiSearchesRes/FlightAirSearch';
 import UmrahGetawayAiSearch from '../AiSearchesRes/UmrahGetawayAiSearch';
 import TransferAiSearch from '../AiSearchesRes/TransferAiSearch';
+import ActivityAiSearch, {
+  buildActivitiesSearchHref,
+  hasActivitiesSearchReady,
+} from '../AiSearchesRes/ActivityAiSearch';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import SpeechRecognition, { useSpeechRecognition, } from "react-speech-recognition";
+
+function buildActivitiesListingHref({ city, date, country }) {
+  const queryParams = new URLSearchParams();
+  if (city) queryParams.append('city', city);
+  if (date) queryParams.append('date', date);
+  if (country) queryParams.append('country', country);
+  queryParams.set('_ts', String(Date.now()));
+  return `/activities?${queryParams.toString()}`;
+}
+
+function hasActivitiesCity(response) {
+  return Boolean(
+    response?.city ||
+    response?.destination?.city ||
+    response?.destinationCity ||
+    response?.city_name
+  );
+}
+
 export default function AiSearch({ categoryList }) {
+  const router = useRouter();
   const placeholders = [
   'Best airport transfers in Makkah & Madinah...',
   '4 or 5 star hotels near Haram with best price...',
@@ -87,7 +112,28 @@ export default function AiSearch({ categoryList }) {
       }
 
       const data = await res.json();
-      if (data.type === "activities" && data.missing_fields.length === 0) {
+      const activitiesReady =
+        data.type === 'activities' &&
+        (!data.missing_fields || data.missing_fields.length === 0) &&
+        hasActivitiesSearchReady(data);
+
+      // Same path as ActivitySearch: go straight to listing with city/date/country/_ts
+      if (activitiesReady) {
+        const href = buildActivitiesSearchHref(data);
+        if (href) {
+          setResponse(data);
+          setIsLoading(false);
+          router.push(href);
+          return;
+        }
+      }
+
+      // Only load destination chips when AI did not already resolve a city
+      if (
+        data.type === 'activities' &&
+        (!data.missing_fields || data.missing_fields.length === 0) &&
+        !hasActivitiesCity(data)
+      ) {
         await GetDestinations();
       }
       setResponse(data);
@@ -118,7 +164,14 @@ export default function AiSearch({ categoryList }) {
       );
       const data = await response.json();
       if (data.Success === true) {
-        const NewList = data.Content.destinations.map((item) => ({ id: item.id, value: item.city_slug, label: item.city }));
+        const NewList = data.Content.destinations
+          .filter((item) => item.city !== null)
+          .map((item) => ({
+            id: item.id,
+            value: item.city_slug,
+            label: item.city,
+            country: item.country,
+          }));
         const uniqueList = [
           ...new Map(NewList.map((item) => [item.value, item])).values(),
         ];
@@ -172,7 +225,7 @@ export default function AiSearch({ categoryList }) {
             <RiRobot2Line className={styles.aiIcon} />
           </div>
           <div>
-            <h6 className='mb-0 text-white fw-bold'>AI Travel Assistant</h6>
+            <h6 className={styles.aiHeaderTitle}>AI Travel Assistant</h6>
             <small className={styles.aiSubtitle}>Powered by Advanced AI</small>
           </div>
         </div>
@@ -249,7 +302,9 @@ export default function AiSearch({ categoryList }) {
                 </div>
               </div>
             </div>
-          ) : (response.type === 'activities' && response.missing_fields.length === 0 && destinationList) ? (
+          ) : (response.type === 'activities' && (!response.missing_fields || response.missing_fields.length === 0) && hasActivitiesSearchReady(response)) ? (
+            <ActivityAiSearch searchResponse={response} />
+          ) : (response.type === 'activities' && (!response.missing_fields || response.missing_fields.length === 0) && destinationList?.length > 0) ? (
             <div className={styles.aiResponseBox}>
               <div className={styles.aiResponseHeader}>
                 <RiRobot2Line size={20} />
@@ -259,15 +314,27 @@ export default function AiSearch({ categoryList }) {
                 <p className='mb-3'>Please select your preferred destination:</p>
                 <div className='d-flex flex-wrap gap-2'>
                   {destinationList.map((destination, index) => (
-                    <Link key={index} href={`/activities?city=${destination.value}&date=${response?.activityDate}`}>
-                      <button className={styles.aiSuggestionChip} >
+                    <Link
+                      key={index}
+                      href={buildActivitiesListingHref({
+                        city: destination.value,
+                        date: response?.activityDate || response?.date,
+                        country: destination.country || response?.country,
+                      })}
+                    >
+                      <button className={styles.aiSuggestionChip} type="button">
                         <LuSparkle className='me-1' />
                         {destination.label}
                       </button>
                     </Link>
                   ))}
-                  <Link href={`/activities?date=${response?.activityDate}`}>
-                    <button className={styles.aiSuggestionChip} >
+                  <Link
+                    href={buildActivitiesListingHref({
+                      date: response?.activityDate || response?.date,
+                      country: response?.country,
+                    })}
+                  >
+                    <button className={styles.aiSuggestionChip} type="button">
                       <LuSparkle className='me-1' />
                       All
                     </button>

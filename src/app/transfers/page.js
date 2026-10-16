@@ -57,7 +57,60 @@ function TransferPageContent() {
 
     const getTransfers = async (params) => {
         try {
-            const { _ts, ...searchPayload } = params || {};
+            const toNumber = (value) => {
+                const n = Number(value);
+                return Number.isFinite(n) ? n : null;
+            };
+
+            const adults = Math.max(1, toNumber(params?.adults) || toNumber(params?.passengers) || 1);
+            const children = Math.max(0, toNumber(params?.children) || 0);
+            const infants = Math.max(0, toNumber(params?.infants) || 0);
+            const passengers = Math.max(
+                adults + children + infants,
+                toNumber(params?.passengers) || 0
+            );
+
+            const pickupLatitude = toNumber(params?.pickupLatitude ?? params?.fromLat);
+            const pickupLongitude = toNumber(params?.pickupLongitude ?? params?.fromLng);
+            const dropoffLatitude = toNumber(params?.dropoffLatitude ?? params?.toLat);
+            const dropoffLongitude = toNumber(params?.dropoffLongitude ?? params?.toLng);
+
+            const transferType = params?.transferType || params?.transfertype || 'one-way';
+            const pickupLocation = params?.pickupLocation || params?.pickuplocation || '';
+            const dropoffLocation = params?.dropoffLocation || params?.dropofflocation || '';
+
+            // API expects camelCase keys + numeric coords / passenger counts
+            const searchPayload = {
+                transferType,
+                pickupLocation,
+                pickupLatitude,
+                pickupLongitude,
+                dropoffLocation,
+                dropoffLatitude,
+                dropoffLongitude,
+                pickupDate: params?.pickupDate || '',
+                pickupTime: params?.pickupTime
+                    ? String(params.pickupTime).slice(0, 5)
+                    : '',
+                adults,
+                children,
+                infants,
+                passengers,
+            };
+
+            if (params?.dropoffDate) {
+                searchPayload.dropoffDate = params.dropoffDate;
+            }
+            if (params?.dropoffTime) {
+                searchPayload.dropoffTime = String(params.dropoffTime).slice(0, 5);
+            }
+            if (params?.fromCountry) {
+                searchPayload.fromCountry = params.fromCountry;
+            }
+            if (params?.toCountry) {
+                searchPayload.toCountry = params.toCountry;
+            }
+
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/transfers/search`,
                 {
@@ -80,10 +133,23 @@ function TransferPageContent() {
     };
 
     useEffect(() => {
-        // if (!params?.fromLat || !params?.toLat) return;
+        const hasPickup =
+            params?.pickupLocation || params?.pickuplocation;
+        const hasType =
+            params?.transferType || params?.transfertype;
+        const hasCoords =
+            params?.pickupLatitude || params?.fromLat;
+
+        // Avoid empty-page validation errors before user searches
+        if (!hasPickup || !hasType || !hasCoords) {
+            setTransfers([]);
+            setLoading(false);
+            return;
+        }
 
         const fetchData = async () => {
             setLoading(true);
+            setTransfers([]);
             const result = await getTransfers(params);
             setTransfers(result);
             setLoading(false);

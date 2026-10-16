@@ -35,15 +35,27 @@ export default function Page() {
   }, [id]);
 
   const fetchDetails = async () => {
+    const lookupId = id != null ? String(id).trim() : "";
+    if (!lookupId || lookupId === "null" || lookupId === "undefined") {
+      setVoucherDetail({});
+      setErrorMessage("Booking not found");
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage("");
     try {
+      // API accepts invoice_number or booking_reference (Stripe success uses invoice_number)
       const responses = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/transfers/booking/details`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ booking_reference: id }),
+          body: JSON.stringify({
+            booking_reference: lookupId,
+            invoice_number: lookupId,
+          }),
         }
       );
       const res = await responses.json();
@@ -81,18 +93,98 @@ export default function Page() {
     ).toFixed(2);
   }
 
+  const formatClock = (time) => {
+    if (!time) return "";
+    const parsed = moment(time, ["HH:mm:ss", "HH:mm"], true);
+    return parsed.isValid() ? parsed.format("hh:mm A") : String(time);
+  };
+
+  const rawTransfer =
+    voucherDetail?.selected_transfers ?? voucherDetail?.transfer ?? {};
+  const transfer = Array.isArray(rawTransfer)
+    ? rawTransfer[0] || {}
+    : rawTransfer || {};
+  const criteria = voucherDetail?.booking_criteria || {};
+  const vehicle =
+    voucherDetail?.vehicle_details || transfer?.vehicle_details || {};
+  const vehicleCategory =
+    voucherDetail?.vehiclecategory || voucherDetail?.vehicle_category || {};
+  const pax = transfer?.paxes_distribution || {};
+  const lead = voucherDetail?.lead_passenger || {};
+  const isCustom =
+    String(transfer?.provider || voucherDetail?.provider || "").toLowerCase() ===
+      "custom" ||
+    String(transfer?.transfer_type_code || "").toUpperCase() === "CUSTOM";
+
+  const selectedExtras = (() => {
+    const fromSelectedTransfers = Array.isArray(voucherDetail?.selected_transfers)
+      ? voucherDetail.selected_transfers.flatMap((t) =>
+          Array.isArray(t?.selected_extras) ? t.selected_extras : []
+        )
+      : [];
+    const candidates = [
+      voucherDetail?.selected_extras,
+      transfer?.selected_extras,
+      fromSelectedTransfers,
+      voucherDetail?.additional_services,
+      transfer?.additional_services,
+      voucherDetail?.extras,
+    ];
+    for (const list of candidates) {
+      if (Array.isArray(list) && list.length) return list;
+    }
+    return [];
+  })();
+
   const pickupLabel =
     voucherDetail?.exact_pickup_point ||
-    voucherDetail?.booking_criteria?.pickup_location ||
+    criteria?.pickup_location ||
+    transfer?.from?.description ||
     "Pickup";
   const dropoffLabel =
     voucherDetail?.exact_dropoff_point ||
-    voucherDetail?.booking_criteria?.dropoff_location ||
+    criteria?.dropoff_location ||
+    transfer?.to?.description ||
     "Dropoff";
 
-  const guestCount = voucherDetail?.guest_details?.length
-    ? 1 + voucherDetail.guest_details.length
-    : 1;
+  const pickupDate = criteria?.pickup_date || transfer?.pickup_date;
+  const pickupTime = criteria?.pickup_time || transfer?.pickup_time;
+  const dropoffDate = criteria?.dropoff_date || transfer?.dropoff_date;
+  const dropoffTime = criteria?.dropoff_time || transfer?.dropoff_time;
+
+  const tripType = transfer?.trip_type || criteria?.transfer_type || "";
+  const vehicleName =
+    vehicle?.name ||
+    transfer?.vehicle_name ||
+    transfer?.vehicle?.name ||
+    vehicleCategory?.name ||
+    vehicle?.category ||
+    "";
+  const vehicleCategoryName =
+    vehicleCategory?.name ||
+    transfer?.vehicle_category ||
+    transfer?.vehicle?.category_name ||
+    vehicle?.category ||
+    "";
+  const passengerCapacity =
+    vehicle?.passenger_capacity ??
+    vehicle?.max_pax ??
+    vehicleCategory?.max_capacity ??
+    transfer?.service_information?.find((s) => s?.id === "MAXPAX")?.value ??
+    "—";
+  const luggageCapacity =
+    vehicle?.luggage_capacity ??
+    vehicleCategory?.luguage_capacity ??
+    vehicleCategory?.luggage_capacity ??
+    transfer?.service_information?.find((s) => s?.id === "LUGGAGE")?.value ??
+    "—";
+
+  const guestCount =
+    pax?.total ||
+    criteria?.passengers ||
+    (voucherDetail?.guest_details?.length
+      ? 1 + voucherDetail.guest_details.length
+      : 1);
 
   const cancelCards = useMemo(() => {
     const policy = voucherDetail?.cancellation_policies;
@@ -161,13 +253,24 @@ export default function Page() {
   const bookingStatus = (voucherDetail?.booking_status || "").toLowerCase();
   const refNo = voucherDetail?.booking_reference || id;
   const invoiceNo = voucherDetail?.invoice_number;
+  const documentLinkId =
+    voucherDetail?.invoice_number ||
+    voucherDetail?.booking_reference ||
+    (id && String(id) !== "null" ? id : null);
 
   const handlePrint = () => window.print();
 
   const isMultiTrip =
-    voucherDetail?.transfer?.trip_type === "all-around" ||
-    voucherDetail?.transfer?.trip_type === "all-round" ||
-    voucherDetail?.transfer?.trip_type === "return";
+    tripType === "all-around" ||
+    tripType === "all-round" ||
+    tripType === "return";
+
+  const displayCurrency =
+    voucherDetail?.pricing?.display_currency ||
+    voucherDetail?.pricing?.customer_currency ||
+    voucherDetail?.pricing?.currency ||
+    transfer?.currency ||
+    "";
 
   return (
     <div className={styles.pageWrap}>
@@ -186,7 +289,7 @@ export default function Page() {
               </span>
               <div className={styles.previewActions}>
                 <Link
-                  href={`/transfers/invoice/${voucherDetail?.booking_reference}`}
+                  href={`/transfers/invoice/${documentLinkId || id}`}
                   className={styles.linkChip}
                 >
                   <FaFileInvoice size={12} /> Invoice
@@ -300,10 +403,12 @@ export default function Page() {
                             Booking Date
                           </span>
                           <span className={styles.ticketItemValue}>
-                            {voucherDetail?.created_at
-                              ? moment(voucherDetail.created_at).format(
-                                "MMM DD, YYYY"
-                              )
+                            {voucherDetail?.created_at ||
+                            voucherDetail?.voucher?.creation_date
+                              ? moment(
+                                  voucherDetail?.created_at ||
+                                    voucherDetail?.voucher?.creation_date
+                                ).format("MMM DD, YYYY")
                               : "—"}
                           </span>
                         </div>
@@ -331,7 +436,25 @@ export default function Page() {
                           <span className={styles.ticketItemLabel}>Pax</span>
                           <span className={styles.ticketItemValue}>
                             {guestCount} Passenger
-                            {guestCount !== 1 ? "s" : ""}
+                            {Number(guestCount) !== 1 ? "s" : ""}
+                            {(pax?.adults != null ||
+                              pax?.children != null ||
+                              pax?.infants != null) && (
+                              <span style={{ display: "block", fontWeight: 500, color: "#6b7280", fontSize: 11 }}>
+                                {Number(pax.adults || 0)} Adult
+                                {Number(pax.adults || 0) !== 1 ? "s" : ""}
+                                {Number(pax.children || 0) > 0
+                                  ? `, ${pax.children} Child${
+                                      Number(pax.children) !== 1 ? "ren" : ""
+                                    }`
+                                  : ""}
+                                {Number(pax.infants || 0) > 0
+                                  ? `, ${pax.infants} Infant${
+                                      Number(pax.infants) !== 1 ? "s" : ""
+                                    }`
+                                  : ""}
+                              </span>
+                            )}
                           </span>
                         </div>
                       </div>
@@ -412,14 +535,8 @@ export default function Page() {
 
                   <div className={styles.typeBadges}>
                     <span className={styles.typeBadge}>
-                      {capitalize(voucherDetail?.transfer?.trip_type) ||
-                        "Transfer"}
+                      {capitalize(tripType) || "Transfer"}
                     </span>
-                    {/* <span className={`${styles.typeBadge} ${styles.typeBadgeAccent}`}>
-                      {capitalize(
-                        voucherDetail?.booking_criteria?.transfer_type
-                      ) || "Private"}
-                    </span> */}
                     {voucherDetail?.booked_qty > 1 && (
                       <span className={styles.typeBadge}>
                         Qty: {voucherDetail.booked_qty}
@@ -433,27 +550,19 @@ export default function Page() {
                         <span className={styles.routeLabel}>Pickup</span>
                         <p className={styles.routePlace}>{pickupLabel}</p>
                         <p className={styles.routeWhen}>
-                          {voucherDetail?.booking_criteria?.pickup_date
-                            ? moment(
-                              voucherDetail.booking_criteria.pickup_date
-                            ).format("MMM DD, YYYY")
+                          {pickupDate
+                            ? moment(pickupDate).format("MMM DD, YYYY")
                             : "—"}
-                          {voucherDetail?.booking_criteria?.pickup_time
-                            ? ` · ${moment(voucherDetail.booking_criteria.pickup_time, "HH:mm:ss").format("hh:mm A")}`
-                            : ""}
+                          {pickupTime ? ` · ${formatClock(pickupTime)}` : ""}
                         </p>
                       </div>
                       <div className={styles.routeBlock}>
                         <span className={styles.routeLabel}>Dropoff</span>
                         <p className={styles.routePlace}>{dropoffLabel}</p>
-                        {voucherDetail?.booking_criteria?.dropoff_date && (
+                        {dropoffDate && (
                           <p className={styles.routeWhen}>
-                            {moment(
-                              voucherDetail.booking_criteria.dropoff_date
-                            ).format("MMM DD, YYYY")}
-                            {voucherDetail?.booking_criteria?.dropoff_time
-                              ? ` · ${moment(voucherDetail.booking_criteria.dropoff_time, "HH:mm:ss").format("hh:mm A")}`
-                              : ""}
+                            {moment(dropoffDate).format("MMM DD, YYYY")}
+                            {dropoffTime ? ` · ${formatClock(dropoffTime)}` : ""}
                           </p>
                         )}
                       </div>
@@ -471,36 +580,41 @@ export default function Page() {
                         <tbody>
                           <tr>
                             <td style={{ fontWeight: 700 }}>
-                              {capitalize(voucherDetail?.transfer?.vehicle_name) ||
-                                capitalize(voucherDetail?.vehicle_details?.category) ||
+                              {capitalize(vehicleName) ||
+                                capitalize(vehicleCategoryName) ||
                                 "Transfer"}{" "}
                               × {voucherDetail?.booked_qty || 1}
                             </td>
-                            <td>
-                              {capitalize(voucherDetail?.transfer?.trip_type) ||
-                                capitalize(
-                                  voucherDetail?.booking_criteria?.transfer_type
-                                ) ||
-                                "—"}
-                            </td>
-                            <td>
-                              {voucherDetail?.vehicle_details
-                                ?.passenger_capacity || "—"}
-                            </td>
-                            <td>
-                              {voucherDetail?.vehicle_details
-                                ?.luggage_capacity || "—"}
-                            </td>
+                            <td>{capitalize(tripType) || "—"}</td>
+                            <td>{passengerCapacity}</td>
+                            <td>{luggageCapacity}</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
+                    {(isCustom && vehicle?.transmission_type) ||
+                    vehicle?.vehicle_description ? (
+                      <p className={styles.policyNote} style={{ marginTop: 10 }}>
+                        {isCustom && vehicle?.transmission_type ? (
+                          <>
+                            Transmission:{" "}
+                            <strong>{vehicle.transmission_type}</strong>
+                          </>
+                        ) : null}
+                        {isCustom &&
+                        vehicle?.transmission_type &&
+                        vehicle?.vehicle_description
+                          ? " · "
+                          : null}
+                        {vehicle?.vehicle_description || null}
+                      </p>
+                    ) : null}
                     <div className={styles.bookingGrid} style={{ marginTop: 12 }}>
                       <div>
                         <span className={styles.fieldLabel}>Exact Pickup</span>
                         <div className={styles.fieldValue}>
                           {voucherDetail?.exact_pickup_point ||
-                            voucherDetail?.booking_criteria?.pickup_location ||
+                            criteria?.pickup_location ||
                             "—"}
                         </div>
                       </div>
@@ -508,15 +622,14 @@ export default function Page() {
                         <span className={styles.fieldLabel}>Exact Dropoff</span>
                         <div className={styles.fieldValue}>
                           {voucherDetail?.exact_dropoff_point ||
-                            voucherDetail?.booking_criteria?.dropoff_location ||
+                            criteria?.dropoff_location ||
                             "—"}
                         </div>
                       </div>
                       <div>
                         <span className={styles.fieldLabel}>Category</span>
                         <div className={styles.fieldValue}>
-                          {capitalize(voucherDetail?.vehicle_details?.category) ||
-                            "—"}
+                          {capitalize(vehicleCategoryName) || "—"}
                         </div>
                       </div>
                     </div>
@@ -540,7 +653,57 @@ export default function Page() {
                       )}
                   </div>
 
-                  {isMultiTrip && voucherDetail?.transfer?.locations?.length > 0 && (
+                  {selectedExtras.length > 0 && (
+                    <div className={styles.serviceCard} style={{ marginTop: 14 }}>
+                      <div className={styles.serviceCardHead}>
+                        <span className={styles.serviceCardName}>
+                          Extra Services
+                        </span>
+                      </div>
+                      <div className={styles.additionalServicesBody}>
+                        <div className={styles.serviceCardGrid}>
+                          {selectedExtras.map((extra, index) => {
+                            const metaParts = [
+                              extra?.weight_kg,
+                              extra?.age,
+                            ].filter(Boolean);
+                            const amount = Number(extra?.amount || 0);
+                            return (
+                              <div
+                                key={extra?.code || index}
+                                className={styles.ancillaryServiceCard}
+                              >
+                                {amount > 0 ? (
+                                  <span className={styles.ancillaryServicePrice}>
+                                    {displayCurrency}{" "}
+                                    {convertToCustomerCurrency(amount)}
+                                  </span>
+                                ) : null}
+                                <p className={styles.ancillaryServiceName}>
+                                  {extra?.name ||
+                                    extra?.type ||
+                                    "Extra service"}
+                                </p>
+                                {metaParts.length > 0 ? (
+                                  <p className={styles.ancillaryServiceMeta}>
+                                    {metaParts.join(" · ")}
+                                  </p>
+                                ) : extra?.type &&
+                                  extra?.name &&
+                                  extra.type !== extra.name ? (
+                                  <p className={styles.ancillaryServiceMeta}>
+                                    {extra.type}
+                                  </p>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isMultiTrip && transfer?.locations?.length > 0 && (
                     <div className={styles.serviceCard}>
                       <div className={styles.serviceCardHead}>
                         <span className={styles.serviceCardName}>
@@ -557,15 +720,17 @@ export default function Page() {
                             </tr>
                           </thead>
                           <tbody>
-                            {voucherDetail.transfer.locations.map(
-                              (loc, index) => (
-                                <tr key={index}>
-                                  <td className={styles.srCell}>{index + 1}</td>
-                                  <td>{loc.pickup_address}</td>
-                                  <td>{loc.dropoff_address}</td>
-                                </tr>
-                              )
-                            )}
+                            {transfer.locations.map((loc, index) => (
+                              <tr key={index}>
+                                <td className={styles.srCell}>{index + 1}</td>
+                                <td>
+                                  {loc.pickup_address || loc.pickup || "—"}
+                                </td>
+                                <td>
+                                  {loc.dropoff_address || loc.dropoff || "—"}
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
@@ -586,41 +751,87 @@ export default function Page() {
                     <div>
                       <span className={styles.fieldLabel}>Full Name</span>
                       <div className={styles.fieldValue}>
-                        {voucherDetail?.lead_passenger?.title}{" "}
-                        {voucherDetail?.lead_passenger?.first_name}{" "}
-                        {voucherDetail?.lead_passenger?.last_name}
+                        {lead?.title} {lead?.first_name} {lead?.last_name}
                       </div>
                     </div>
                     <div>
                       <span className={styles.fieldLabel}>Email</span>
                       <div className={styles.fieldValue}>
-                        {voucherDetail?.lead_passenger?.email || "—"}
+                        {lead?.email || "—"}
                       </div>
                     </div>
                     <div>
                       <span className={styles.fieldLabel}>Phone</span>
                       <div className={styles.fieldValue}>
-                        {voucherDetail?.lead_passenger?.phone_number || "—"}
+                        {lead?.phone_number || "—"}
                       </div>
                     </div>
                     <div>
                       <span className={styles.fieldLabel}>Gender</span>
                       <div className={styles.fieldValue}>
-                        {capitalize(voucherDetail?.lead_passenger?.gender) ||
-                          "—"}
+                        {capitalize(lead?.gender) || "—"}
                       </div>
                     </div>
                     <div>
                       <span className={styles.fieldLabel}>Country</span>
                       <div className={styles.fieldValue}>
-                        {voucherDetail?.lead_passenger?.country || "—"}
+                        {lead?.country || "—"}
                       </div>
                     </div>
                     <div>
                       <span className={styles.fieldLabel}>Pickup Point</span>
                       <div className={styles.fieldValue}>{pickupLabel}</div>
                     </div>
+                    {lead?.address ? (
+                      <div>
+                        <span className={styles.fieldLabel}>Address</span>
+                        <div className={styles.fieldValue}>{lead.address}</div>
+                      </div>
+                    ) : null}
                   </div>
+
+                  {voucherDetail?.guest_details?.length > 0 && (
+                    <div className={styles.serviceCard} style={{ marginTop: 14 }}>
+                      <div className={styles.serviceCardHead}>
+                        <span className={styles.serviceCardName}>
+                          Additional Passengers
+                        </span>
+                      </div>
+                      <div className={styles.tableWrap}>
+                        <table className={styles.dataTable}>
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Name</th>
+                              <th>Gender</th>
+                              <th>Contact</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {voucherDetail.guest_details.map((guest, index) => (
+                              <tr key={index}>
+                                <td className={styles.srCell}>{index + 2}</td>
+                                <td style={{ fontWeight: 600 }}>
+                                  {guest.title ? `${guest.title} ` : ""}
+                                  {guest.first_name} {guest.last_name}
+                                </td>
+                                <td>{capitalize(guest.gender) || "—"}</td>
+                                <td>
+                                  {[
+                                    guest.email,
+                                    guest.phone_number || guest.phone,
+                                    guest.country,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ") || "—"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </section>
 
                 {/* 03 Cancellation */}
@@ -704,6 +915,13 @@ export default function Page() {
                         </span>
                         Luggage allowance is subject to the vehicle capacity
                         confirmed at booking.
+                      </li>
+                      <li>
+                        <span className={styles.infoCheck}>
+                          <FaCheckCircle size={10} />
+                        </span>
+                        Additional stops or route changes may incur extra
+                        charges.
                       </li>
                       <li>
                         <span className={styles.infoCheck}>

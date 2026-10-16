@@ -65,7 +65,8 @@ export default function Page() {
   }
 
   function convertToCustomerCurrency(price) {
-    if (!price || !voucherDetail.customer_exchange_rate)
+    if (price == null || price === "") return Number(0).toFixed(2);
+    if (!voucherDetail.customer_exchange_rate)
       return Number(price || 0).toFixed(2);
     if (voucherDetail.currency_code === voucherDetail.customer_currency)
       return Number(price).toFixed(2);
@@ -74,13 +75,130 @@ export default function Page() {
     ).toFixed(2);
   }
 
+  function formatChildUnderLabel(age) {
+    if (age == null || age === "") return "Child";
+    return `Children (under ${age})`;
+  }
+
+  function getChildrenAgeSummary() {
+    const details = voucherDetail?.other_passengers?.children_details || [];
+    if (!details.length) {
+      const count = Number(voucherDetail?.children || 0);
+      return count > 0 ? [{ label: "Children", count }] : [];
+    }
+    const counts = {};
+    details.forEach((child) => {
+      const label = formatChildUnderLabel(child?.age);
+      counts[label] = (counts[label] || 0) + 1;
+    });
+    return Object.entries(counts).map(([label, count]) => ({ label, count }));
+  }
+
+  function getModalityName() {
+    return (
+      voucherDetail?.modality?.name ||
+      voucherDetail?.voucher?.modality?.name ||
+      ""
+    );
+  }
+
+  function getStartTime() {
+    const modalityName = getModalityName();
+    const timeMatch = String(modalityName).match(/(\d{1,2}:\d{2})/);
+    if (timeMatch) {
+      const parsed = moment(timeMatch[1], ["HH:mm", "H:mm"], true);
+      if (parsed.isValid()) return parsed.format("hh:mm A");
+    }
+    const session =
+      voucherDetail?.modality?.session?.name ||
+      voucherDetail?.modality?.session?.code ||
+      voucherDetail?.modality?.session;
+    if (session) {
+      const parsed = moment(session, ["HH:mm", "H:mm", "hh:mm A"], true);
+      if (parsed.isValid()) return parsed.format("hh:mm A");
+      return String(session);
+    }
+    return "";
+  }
+
+  function getLanguageLabel() {
+    const langs =
+      voucherDetail?.languages || voucherDetail?.voucher?.languages || [];
+    if (!langs.length) {
+      const modalityLang =
+        voucherDetail?.modality?.language?.description ||
+        voucherDetail?.modality?.language?.code;
+      if (modalityLang) return String(modalityLang);
+      const modalityName = getModalityName().toLowerCase();
+      if (modalityName.includes("english") || modalityName.includes("eng"))
+        return "English";
+      return "";
+    }
+    return langs
+      .map((l) =>
+        l.description || (l.code === "en" ? "English" : String(l.code || "").toUpperCase())
+      )
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  function getCancellationPolicy() {
+    return (
+      voucherDetail?.cancellation_policy ||
+      voucherDetail?.cancellation_policies ||
+      voucherDetail?.activity?.cancellation_policy ||
+      null
+    );
+  }
+
+  function parseContractRemarks() {
+    const remarks =
+      voucherDetail?.contract_remarks ||
+      voucherDetail?.voucher?.contract_remarks ||
+      voucherDetail?.voucher?.comments ||
+      [];
+    const text = remarks.map((r) => r?.text).filter(Boolean).join(" ");
+    if (!text.trim()) return [];
+
+    return text
+      .split("//")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const sepIdx = part.indexOf(":");
+        if (sepIdx === -1) return { label: "", value: part };
+        return {
+          label: part.slice(0, sepIdx).trim(),
+          value: part.slice(sepIdx + 1).trim(),
+        };
+      })
+      .filter((item) => item.value);
+  }
+
+  const SUPPLIER_REMARK_LABELS = [
+    "supplier name",
+    "supplier emergency phone",
+    "supplier",
+    "voucher type",
+    "meeting point instructions",
+    "start/opening time",
+    "end/closing time",
+  ];
+
+  function getVisibleContractRemarks() {
+    return parseContractRemarks().filter(
+      (item) =>
+        !SUPPLIER_REMARK_LABELS.includes(String(item.label || "").toLowerCase())
+    );
+  }
+
   const getTotalPassengers = () => {
-    const adults = Number(voucherDetail?.adults || 0);
-    const children = Number(voucherDetail?.children || 0);
     const parts = [];
+    const adults = Number(voucherDetail?.adults || 0);
     if (adults > 0) parts.push(`${adults} Adult${adults !== 1 ? "s" : ""}`);
-    if (children > 0)
-      parts.push(`${children} Child${children !== 1 ? "ren" : ""}`);
+    getChildrenAgeSummary().forEach((item) => {
+      parts.push(`${item.count} ${item.label}`);
+    });
     return parts.join(", ") || "—";
   };
 
@@ -119,12 +237,18 @@ export default function Page() {
     for (let i = 0; i < childSlots; i++) {
       const guest = childrenDetails[i];
       const name = formatGuestName(guest);
+      const agePart =
+        guest?.age != null && guest?.age !== ""
+          ? ` · under ${guest.age}`
+          : "";
       childGuests.push({
         key: `child-${i}`,
         label: `Child ${i + 1}`,
         value: name
-          ? `${name}${guest?.gender ? ` · ${capitalize(guest.gender)}` : ""}`
-          : "Details not provided",
+          ? `${name}${guest?.gender ? ` · ${capitalize(guest.gender)}` : ""}${agePart}`
+          : guest?.age != null
+            ? `Under ${guest.age}`
+            : "Details not provided",
       });
     }
 
@@ -134,30 +258,72 @@ export default function Page() {
   const guestCount =
     Number(voucherDetail?.adults || 0) + Number(voucherDetail?.children || 0);
 
+  const modalityName = getModalityName();
+  const startTimeFromModality = getStartTime();
+  const languageLabel = getLanguageLabel();
+  const contractRemarkItems = getVisibleContractRemarks();
+  const allContractRemarks = parseContractRemarks();
+  const meetingPointRemark = allContractRemarks.find(
+    (item) => String(item.label || "").toLowerCase() === "meeting point"
+  )?.value;
+  const durationRemark = allContractRemarks.find(
+    (item) => String(item.label || "").toLowerCase() === "duration"
+  )?.value;
+  const childrenAgeSummary = getChildrenAgeSummary();
+  const activityDuration =
+    voucherDetail?.activity?.activity_duration || durationRemark || "";
+
   const cancelCards = useMemo(() => {
-    const policy = voucherDetail?.activity?.cancellation_policy;
-    const currency = voucherDetail?.customer_currency || "";
+    const policy = getCancellationPolicy();
+    const currency =
+      voucherDetail?.customer_currency ||
+      voucherDetail?.currency_code ||
+      "";
     if (!policy) return [];
-    if (
-      policy.cancel_policy === "refundable" &&
-      policy.cancellation_policies?.length
-    ) {
-      return policy.cancellation_policies.slice(0, 3).map((p) => ({
-        when: `${p.time_duration} HRS BEFORE`,
-        amount:
-          p.type === "percentage"
-            ? `${p.value}%`
-            : `${currency} ${convertToCustomerCurrency(p.value)}`,
-        desc:
-          p.type === "percentage"
-            ? "Of total booking value"
-            : "Fixed cancellation charge",
-      }));
+
+    const cancelPolicy = String(
+      policy.cancel_policy || policy.cancelPolicy || ""
+    ).toLowerCase();
+    const policies = Array.isArray(policy?.cancellation_policies)
+      ? policy.cancellation_policies
+      : Array.isArray(policy)
+        ? policy
+        : [];
+
+    if (cancelPolicy === "non-refundable" || cancelPolicy === "non_refundable") {
+      return [{ nonRefundable: true }];
     }
+
+    if (policies.length) {
+      return policies.slice(0, 3).map((p) => {
+        const fromRaw = p?.from || p?.dateFrom;
+        const from = fromRaw ? moment(fromRaw) : null;
+        const when = from?.isValid()
+          ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+          : p?.time_duration != null
+            ? `${p.time_duration} HRS BEFORE`
+            : "CANCELLATION";
+        const amountValue = p?.amount ?? p?.value ?? p?.fee ?? 0;
+        return {
+          when,
+          amount:
+            p?.type === "percentage"
+              ? `${p.value}%`
+              : `${currency} ${convertToCustomerCurrency(amountValue)}`,
+          desc:
+            p?.type === "percentage"
+              ? "Of total booking value"
+              : "Fixed cancellation charge",
+        };
+      });
+    }
+
+    if (cancelPolicy === "refundable") return [];
     return [{ nonRefundable: true }];
   }, [voucherDetail]);
 
   const activityTime = (() => {
+    if (startTimeFromModality) return startTimeFromModality;
     const openTime =
       voucherDetail?.activity?.open_hours?.[
         moment(voucherDetail?.travel_date).format("dddd").toLowerCase()
@@ -279,6 +445,11 @@ export default function Page() {
                       </span>
                     </div>
                     <p className={styles.ticketRef}>{refNo}</p>
+                    {voucherDetail?.provider_reference && (
+                      <p className={styles.summaryDesc} style={{ marginTop: 4, marginBottom: 0 }}>
+                        Provider ref: {voucherDetail.provider_reference}
+                      </p>
+                    )}
                     <div className={styles.ticketGrid}>
                       <div className={styles.ticketItem}>
                         <FaCalendarAlt
@@ -321,7 +492,7 @@ export default function Page() {
                         <div>
                           <span className={styles.ticketItemLabel}>pax</span>
                           <span className={styles.ticketItemValue}>
-                            {guestCount || getTotalPassengers()}
+                            {getTotalPassengers() || guestCount || "—"}
                           </span>
                         </div>
                       </div>
@@ -402,9 +573,18 @@ export default function Page() {
                     <h4 className={styles.activityTitle}>
                       {voucherDetail?.activity?.title || "—"}
                     </h4>
+                    {modalityName && (
+                      <p className={styles.summaryDesc} style={{ marginTop: 4 }}>
+                        {modalityName}
+                      </p>
+                    )}
                     <div className={styles.activityLocation}>
                       <FaLocationDot size={13} />
-                      <span>{voucherDetail?.activity?.address || "—"}</span>
+                      <span>
+                        {meetingPointRemark ||
+                          voucherDetail?.activity?.address ||
+                          "—"}
+                      </span>
                     </div>
                     {rating > 0 && (
                       <div className={styles.starsRow}>
@@ -423,12 +603,30 @@ export default function Page() {
                       </div>
                     )}
                     <div className={styles.metaGrid}>
+                      {modalityName && (
+                        <div>
+                          <span className={styles.fieldLabel}>Package</span>
+                          <div className={styles.fieldValue}>{modalityName}</div>
+                        </div>
+                      )}
                       <div>
-                        <span className={styles.fieldLabel}>Location</span>
+                        <span className={styles.fieldLabel}>
+                          {meetingPointRemark ? "Meeting Point" : "Location"}
+                        </span>
                         <div className={styles.fieldValue}>
-                          {voucherDetail?.activity?.address || "—"}
+                          {meetingPointRemark ||
+                            voucherDetail?.activity?.address ||
+                            "—"}
                         </div>
                       </div>
+                      {meetingPointRemark && voucherDetail?.activity?.address && (
+                        <div>
+                          <span className={styles.fieldLabel}>Address</span>
+                          <div className={styles.fieldValue}>
+                            {voucherDetail.activity.address}
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <span className={styles.fieldLabel}>Activity Date</span>
                         <div className={styles.fieldValue}>
@@ -437,14 +635,33 @@ export default function Page() {
                               "MMM DD, YYYY"
                             )
                             : "—"}
+                          {activityTime ? ` · ${activityTime}` : ""}
                         </div>
                       </div>
+                      {activityTime && (
+                        <div>
+                          <span className={styles.fieldLabel}>Start Time</span>
+                          <div className={styles.fieldValue}>{activityTime}</div>
+                        </div>
+                      )}
+                      {languageLabel && (
+                        <div>
+                          <span className={styles.fieldLabel}>Language</span>
+                          <div className={styles.fieldValue}>{languageLabel}</div>
+                        </div>
+                      )}
                       <div>
                         <span className={styles.fieldLabel}>Day</span>
                         <div className={styles.fieldValue}>
                           {voucherDetail?.travel_date
                             ? moment(voucherDetail.travel_date).format("dddd")
                             : "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <span className={styles.fieldLabel}>Duration</span>
+                        <div className={styles.fieldValue}>
+                          {activityDuration || "—"}
                         </div>
                       </div>
                       <div>
@@ -455,6 +672,26 @@ export default function Page() {
                       </div>
                     </div>
                   </div>
+
+                  {contractRemarkItems.length > 0 && (
+                    <div className={styles.serviceCard} style={{ marginTop: 14 }}>
+                      <div className={styles.serviceCardHead}>
+                        <span className={styles.serviceCardName}>
+                          Activity Information
+                        </span>
+                      </div>
+                      <div className={styles.bookingGrid} style={{ padding: 14 }}>
+                        {contractRemarkItems.map((item, index) => (
+                          <div key={index}>
+                            <span className={styles.fieldLabel}>
+                              {item.label || "Detail"}
+                            </span>
+                            <div className={styles.fieldValue}>{item.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {voucherDetail?.additional_services?.length > 0 && (
                     <div className={styles.serviceCard} style={{ marginTop: 14 }}>
@@ -516,7 +753,9 @@ export default function Page() {
                     <div>
                       <span className={styles.fieldLabel}>Phone</span>
                       <div className={styles.fieldValue}>
-                        {voucherDetail?.lead_phone || "—"}
+                        {[voucherDetail?.lead_phone_code, voucherDetail?.lead_phone]
+                          .filter(Boolean)
+                          .join(" ") || "—"}
                       </div>
                     </div>
                     <div>

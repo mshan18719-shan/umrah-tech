@@ -1,16 +1,15 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Pagination } from "@mantine/core";
+import { Modal, Pagination } from "@mantine/core";
 import {
   FaCheckCircle,
-  FaChevronDown,
   FaTimesCircle,
   FaClock,
+  FaImage,
 } from "react-icons/fa";
 import { AiOutlineBars } from "react-icons/ai";
 import { FiFileText, FiCalendar, FiHash } from "react-icons/fi";
 import moment from "moment";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -30,6 +29,35 @@ const statusTone = (status) => {
   return "default";
 };
 
+/** Resolve nested payload shapes from payment-requests API */
+function resolvePaymentFields(p) {
+  const nested = Array.isArray(p?.data) ? p.data[0] : (p?.data && typeof p.data === "object" ? p.data : null);
+  const source = nested || p || {};
+  return {
+    amount: source.amount ?? p?.amount ?? p?.payment_amount ?? null,
+    currency:
+      source.currency ||
+      source.currency_code ||
+      source.customer_currency ||
+      p?.currency ||
+      p?.currency_code ||
+      p?.customer_currency ||
+      "",
+    bookingReference: source.booking_reference ?? p?.booking_reference ?? null,
+    snapshotUrl:
+      source.invoice_snapshot_url ||
+      source.invoice_snapshot ||
+      p?.invoice_snapshot_url ||
+      p?.invoice_snapshot ||
+      null,
+    transactionId: source.transaction_id ?? p?.transaction_id ?? null,
+    paymentDate: source.payment_date ?? p?.payment_date ?? p?.created_at ?? null,
+    bookingType: source.booking_type ?? p?.booking_type ?? source.service_type ?? p?.service_type ?? null,
+    invoiceNumber: source.invoice_number ?? p?.invoice_number ?? null,
+    email: source.email ?? p?.email ?? p?.name ?? null,
+  };
+}
+
 function page() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -37,6 +65,7 @@ function page() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [activePage, setActivePage] = useState(1);
+  const [snapshotModal, setSnapshotModal] = useState({ opened: false, url: "", title: "" });
 
   const userName = session?.user?.name || "";
   const userInitial = userName?.charAt(0)?.toUpperCase() || "U";
@@ -112,8 +141,58 @@ function page() {
     activePage * PAGE_SIZE
   );
 
+  const openSnapshot = (url, title) => {
+    if (!url) return;
+    setSnapshotModal({ opened: true, url, title: title || "Payment Proof" });
+  };
+
+  const closeSnapshot = () => {
+    setSnapshotModal({ opened: false, url: "", title: "" });
+  };
+
   return (
     <div className="hb-page">
+      <Modal
+        opened={snapshotModal.opened}
+        onClose={closeSnapshot}
+        title={snapshotModal.title || "Payment Proof"}
+        centered
+        size="lg"
+        radius="md"
+        padding="md"
+      >
+        <div style={{ textAlign: "center" }}>
+          {snapshotModal.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={snapshotModal.url}
+              alt="Payment proof snapshot"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "70vh",
+                objectFit: "contain",
+                borderRadius: 8,
+              }}
+            />
+          ) : (
+            <p className="text-muted mb-0">No snapshot available.</p>
+          )}
+          {snapshotModal.url && (
+            <div className="mt-3">
+              <a
+                href={snapshotModal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hb-btn hb-btn-primary"
+                style={{ display: "inline-flex", textDecoration: "none" }}
+              >
+                Open in new tab
+              </a>
+            </div>
+          )}
+        </div>
+      </Modal>
+
       <div className="dash-topbar">
         <div>
           <h4 className="dash-topbar-title">My Payments</h4>
@@ -123,7 +202,6 @@ function page() {
         </div>
         <div className="d-flex align-items-center gap-2">
           <div className="dash-topbar-avatar">{userInitial}</div>
-          {/* <FaChevronDown size={11} style={{ color: "#8a8f98" }} /> */}
         </div>
       </div>
 
@@ -180,10 +258,14 @@ function page() {
             pagedPayments.map((p, i) => {
               const st = getStatus(p);
               const tone = statusTone(st);
-              const dateValue =
-                p?.payment_date || p?.created_at
-                  ? moment(p?.payment_date || p?.created_at).format("MMM DD, YYYY")
-                  : "—";
+              const fields = resolvePaymentFields(p);
+              const dateValue = fields.paymentDate
+                ? moment(fields.paymentDate).format("MMM DD, YYYY")
+                : "—";
+              const amountDisplay =
+                fields.amount != null && fields.amount !== ""
+                  ? `${fields.currency ? `${fields.currency} ` : ""}${fields.amount}`
+                  : "-";
 
               return (
                 <article key={p?.id || i} className="hb-card">
@@ -194,12 +276,12 @@ function page() {
                       </div>
                       <div>
                         <h6 className="hb-hotel-name">
-                          {p?.invoice_number || "Payment Request"}
-                          {p?.booking_type ? ` — ${p.booking_type}` : ""}
+                          {fields.invoiceNumber || "Payment Request"}
+                          {fields.bookingType ? ` — ${fields.bookingType}` : ""}
                         </h6>
                         <p className="hb-hotel-location">
                           <span>
-                            {p?.name || p?.email || "Payment submission"}
+                            {fields.email || "Payment submission"}
                           </span>
                         </p>
                       </div>
@@ -219,7 +301,30 @@ function page() {
                       </span>
                       <div>
                         <span className="hb-meta-label">Booking Ref</span>
-                        <strong>{p?.booking_reference || "—"}</strong>
+                        {fields.bookingReference ? (
+                          <strong>{fields.bookingReference}</strong>
+                        ) : fields.snapshotUrl ? (
+                          <button
+                            type="button"
+                            className="hb-btn hb-btn-light"
+                            style={{
+                              padding: "4px 10px",
+                              fontSize: "0.78rem",
+                              marginTop: 2,
+                            }}
+                            onClick={() =>
+                              openSnapshot(
+                                fields.snapshotUrl,
+                                fields.invoiceNumber || "Payment Proof"
+                              )
+                            }
+                          >
+                            <FaImage size={12} />
+                            View Snapshot
+                          </button>
+                        ) : (
+                          <strong>—</strong>
+                        )}
                       </div>
                     </div>
                     <div className="hb-meta-item">
@@ -228,7 +333,7 @@ function page() {
                       </span>
                       <div>
                         <span className="hb-meta-label">Transaction ID</span>
-                        <strong>{p?.transaction_id || "—"}</strong>
+                        <strong>{fields.transactionId || "—"}</strong>
                       </div>
                     </div>
                     <div className="hb-meta-item">
@@ -246,7 +351,7 @@ function page() {
                       </span>
                       <div>
                         <span className="hb-meta-label">Booking Type</span>
-                        <strong>{p?.booking_type || "—"}</strong>
+                        <strong>{fields.bookingType || "—"}</strong>
                       </div>
                     </div>
                   </div>
@@ -254,52 +359,26 @@ function page() {
                   <div className="hb-card-footer">
                     <div>
                       <span className="hb-amount-label">Total Amount</span>
-                      <div className="hb-amount">
-                        {p?.customer_currency || ""} {p?.amount ?? "-"}
-                      </div>
-                      {/* <div className={`hb-status hb-status-${tone}`}>
-                        Payment:{" "}
-                        {p?.payment_status
-                          ? p.payment_status.charAt(0).toUpperCase() +
-                          p.payment_status.slice(1)
-                          : "-"}
-                      </div> */}
+                      <div className="hb-amount">{amountDisplay}</div>
                     </div>
 
-                    {/* <div className="hb-card-actions">
-                        <Link
-                          href={voucherHref}
-                          target="_blank"
+                    {fields.snapshotUrl && fields.bookingReference && (
+                      <div className="hb-card-actions">
+                        <button
+                          type="button"
                           className="hb-btn hb-btn-light"
+                          onClick={() =>
+                            openSnapshot(
+                              fields.snapshotUrl,
+                              fields.invoiceNumber || "Payment Proof"
+                            )
+                          }
                         >
-                          <FaEye size={13} />
-                          Voucher
-                        </Link>
-                        <Link
-                          href={invoiceHref}
-                          target="_blank"
-                          className="hb-btn hb-btn-primary"
-                        >
-                          <FaDownload size={13} />
-                          Invoice
-                        </Link>
-                        {canCancel && (
-                          <button
-                            type="button"
-                            className="btn btn-danger"
-                            onClick={() =>
-                              setCancelModal({
-                                opened: true,
-                                bookingReference: booking?.booking_reference,
-                                provider: booking?.provider,
-                                bookingId: booking?.id || "",
-                              })
-                            }
-                          >
-                            Cancel Booking
-                          </button>
-                        )}
-                      </div> */}
+                          <FaImage size={13} />
+                          View Snapshot
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </article>
               );

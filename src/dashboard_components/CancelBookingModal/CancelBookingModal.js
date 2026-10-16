@@ -29,9 +29,34 @@ export default function CancelBookingModal({
             setError("Please enter a reason for cancellation.");
             return;
         }
+        if (!bookingReference) {
+            setError("Booking reference is missing. Cannot cancel this booking.");
+            return;
+        }
         setError("");
         setLoading(true);
         try {
+            const payload =
+                type === "hotel"
+                    ? {
+                          provider,
+                          cancellation_reason: reason.trim(),
+                          bookingReference,
+                          bookingId,
+                      }
+                    : type === "activity" || type === "package"
+                      ? {
+                            provider,
+                            cancellation_reason: reason.trim(),
+                            booking_reference: bookingReference,
+                            booking_id: bookingId,
+                        }
+                      : {
+                            provider,
+                            cancellation_reason: reason.trim(),
+                            booking_reference: bookingReference,
+                        };
+
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}${endPoint}`,
                 {
@@ -40,11 +65,7 @@ export default function CancelBookingModal({
                         "Content-Type": "application/json",
                         Accept: "application/json",
                     },
-                    body: JSON.stringify({
-                        provider,
-                        cancellation_reason: reason.trim(),
-                        ...(type === 'hotel' ? { bookingReference: bookingReference , bookingId} : type === 'activity'  || type === 'package' ? { booking_reference: bookingReference , booking_id: bookingId} :  {booking_reference: bookingReference}),
-                    }),
+                    body: JSON.stringify(payload),
                 },
             );
           

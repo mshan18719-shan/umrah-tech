@@ -35,9 +35,26 @@ function formatTransferDateTime(date, time) {
     return `${day.format('DD MMM YYYY')}, ${clock.format('hh:mm A')}`
 }
 
+function formatTransferServiceValue(service) {
+    const raw = service?.value
+    if (raw == null || raw === '') return '—'
+
+    const isTransferTime =
+        service?.id === 'TRFTIME' ||
+        /transfer\s*time/i.test(service?.name || '')
+
+    if (!isTransferTime) return String(raw)
+
+    const mins = Number(raw)
+    if (Number.isNaN(mins) || mins < 0) return String(raw)
+
+    return `${mins} min`
+}
+
 export default function Page() {
     const { selectedtransfer, updateTransferQuantity } = useTransferStore()
     const [showModal, setShowModal] = useState(false)
+    const [selectedExtras, setSelectedExtras] = useState([])
 
     if (!selectedtransfer || !selectedtransfer.searchParams) {
         return (
@@ -59,6 +76,16 @@ export default function Page() {
         ? `${vehicle?.name || 'Transfer'} (${transferTypeLabel})`
         : (vehicle?.name || 'Transfer')
 
+    const isCustom =
+        selectedtransfer?.provider === 'custom' ||
+        String(selectedtransfer?.transfer_type_code || '').toUpperCase() === 'CUSTOM'
+
+    const serviceInfo = Array.isArray(selectedtransfer?.service_information)
+        ? selectedtransfer.service_information.filter(
+            (item) => item && (item.name || item.value != null)
+        )
+        : []
+
     const rating =
         vehicle?.rating != null && vehicle?.rating !== ''
             ? Number(vehicle.rating).toFixed(1)
@@ -72,7 +99,12 @@ export default function Page() {
         ''
 
     const quantity = Number(selectedtransfer.quantity) || 1
-    const totalPrice = quantity * Number(selectedtransfer?.fare || 0)
+    const baseTotal = quantity * Number(selectedtransfer?.fare || 0)
+    const extrasTotal = selectedExtras.reduce(
+        (sum, extra) => sum + Number(extra?.amount || 0),
+        0
+    )
+    const totalPrice = baseTotal + extrasTotal
     const transferType = searchParams?.transferType || 'one-way'
     const pickupWhen = formatTransferDateTime(searchParams.pickupDate, searchParams.pickupTime)
     const returnWhen = formatTransferDateTime(searchParams.dropoffDate, searchParams.dropoffTime)
@@ -193,7 +225,7 @@ export default function Page() {
                                     <span>{vehicle.luggage_capacity}</span>
                                 </div>
                             )}
-                            {vehicle?.transmission_type && (
+                            {isCustom && vehicle?.transmission_type && (
                                 <div className="checkout-review-pill">
                                     <GiGearStickPattern className="checkout-review-pill-icon" />
                                     <span>{vehicle.transmission_type}</span>
@@ -242,7 +274,11 @@ export default function Page() {
                             <p>Complete your booking — enter passenger and payment details</p>
                         </div>
                         <div className="transfer-checkout-form-wrap">
-                            <CheckoutTransfer transferDetail={selectedtransfer} />
+                            <CheckoutTransfer
+                                transferDetail={selectedtransfer}
+                                selectedExtras={selectedExtras}
+                                onSelectedExtrasChange={setSelectedExtras}
+                            />
                         </div>
                     </div>
 
@@ -269,22 +305,33 @@ export default function Page() {
                                             <span className="transfer-info-value">{vehicle?.name || '—'}</span>
                                         </div>
 
-                                        <div className="transfer-info-row">
-                                            <span className="transfer-info-label">Quantity</span>
-                                            <select
-                                                id="checkoutTransferQuantity"
-                                                className="form-select transfer-info-quantity-select"
-                                                value={quantity}
-                                                onChange={handleQuantityChange}
-                                                aria-label="Transfer quantity"
-                                            >
-                                                <option value={1}>1</option>
-                                                <option value={2}>2</option>
-                                                <option value={3}>3</option>
-                                                <option value={4}>4</option>
-                                                <option value={5}>5</option>
-                                            </select>
-                                        </div>
+                                        {serviceInfo.map((service, index) => (
+                                            <div key={service?.id || index} className="transfer-info-row">
+                                                <span className="transfer-info-label">{service?.name || 'Service'}</span>
+                                                <span className="transfer-info-value">
+                                                    {formatTransferServiceValue(service)}
+                                                </span>
+                                            </div>
+                                        ))}
+
+                                        {isCustom && (
+                                            <div className="transfer-info-row">
+                                                <span className="transfer-info-label">Quantity</span>
+                                                <select
+                                                    id="checkoutTransferQuantity"
+                                                    className="form-select transfer-info-quantity-select"
+                                                    value={quantity}
+                                                    onChange={handleQuantityChange}
+                                                    aria-label="Transfer quantity"
+                                                >
+                                                    <option value={1}>1</option>
+                                                    <option value={2}>2</option>
+                                                    <option value={3}>3</option>
+                                                    <option value={4}>4</option>
+                                                    <option value={5}>5</option>
+                                                </select>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* <button
@@ -332,6 +379,23 @@ export default function Page() {
                                     )}
 
                                     <hr className="transfer-info-divider" />
+
+                                    <div className="transfer-info-price-rows">
+                                        <div className="transfer-info-price-row">
+                                            <span className="transfer-info-label">Transfer</span>
+                                            <span className="transfer-info-value">
+                                                <PriceDisplay price={baseTotal} currency={selectedtransfer?.currency} />
+                                            </span>
+                                        </div>
+                                        {selectedExtras.length > 0 && (
+                                            <div className="transfer-info-price-row">
+                                                <span className="transfer-info-label">Extra services</span>
+                                                <span className="transfer-info-value">
+                                                    <PriceDisplay price={extrasTotal} currency={selectedtransfer?.currency} />
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
 
                                     <div className="transfer-info-total">
                                         <span className="transfer-info-total-label">Total Price</span>

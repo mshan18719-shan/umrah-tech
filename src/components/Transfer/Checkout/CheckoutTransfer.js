@@ -19,6 +19,7 @@ import Autocomplete from "react-google-autocomplete";
 import LocationPicker from './LocationPicker';
 import LocationMapModal from './LocationMapModal';
 import { useJsApiLoader } from '@react-google-maps/api';
+import PriceDisplay from '@/components/Currency/PriceDisplay';
 
 const NAME_MAX = 35;
 const EMAIL_MAX = 200;
@@ -105,7 +106,11 @@ function computeNameErrors(leadFirst, leadLast, guests, { requireFilled = false 
     return { leadErrors, guestErrors };
 }
 
-export default function CheckoutTransfer({ transferDetail }) {
+export default function CheckoutTransfer({
+    transferDetail,
+    selectedExtras = [],
+    onSelectedExtrasChange,
+}) {
     const [errors, setErrors] = useState({});
     const router = useRouter();
     const { currency, rates } = useCurrency();
@@ -204,15 +209,19 @@ export default function CheckoutTransfer({ transferDetail }) {
         // Initialize location states from transferDetail
         if (transferDetail?.searchParams) {
             const sp = transferDetail.searchParams;
+            const pickupLat = sp.pickupLatitude ?? sp.fromLat;
+            const pickupLng = sp.pickupLongitude ?? sp.fromLng;
+            const dropoffLat = sp.dropoffLatitude ?? sp.toLat;
+            const dropoffLng = sp.dropoffLongitude ?? sp.toLng;
             setPickupLocation({
                 address: sp.pickupLocation || '',
-                lat: sp.fromLat != null ? Number(sp.fromLat) : null,
-                lng: sp.fromLng != null ? Number(sp.fromLng) : null,
+                lat: pickupLat != null && pickupLat !== '' ? Number(pickupLat) : null,
+                lng: pickupLng != null && pickupLng !== '' ? Number(pickupLng) : null,
             });
             setDropoffLocation({
                 address: sp.dropoffLocation || '',
-                lat: sp.toLat != null ? Number(sp.toLat) : null,
-                lng: sp.toLng != null ? Number(sp.toLng) : null,
+                lat: dropoffLat != null && dropoffLat !== '' ? Number(dropoffLat) : null,
+                lng: dropoffLng != null && dropoffLng !== '' ? Number(dropoffLng) : null,
             });
         }
     }, [transferDetail]);
@@ -540,7 +549,11 @@ export default function CheckoutTransfer({ transferDetail }) {
         // Calculate currency conversion
         const packageCurrency = transferDetail?.currency || 'GBP';
         const bookedQty = Math.max(1, Number(transferDetail?.quantity) || 1);
-        const grandTotal = bookedQty * Number(transferDetail?.fare || 0);
+        const extrasTotal = (selectedExtras || []).reduce(
+            (sum, extra) => sum + Number(extra?.amount || 0),
+            0
+        );
+        const grandTotal = bookedQty * Number(transferDetail?.fare || 0) + extrasTotal;
 
         let customerCurrency = currency;
         let customerExchangeRate = 1;
@@ -560,6 +573,25 @@ export default function CheckoutTransfer({ transferDetail }) {
             customerExchangeRate = 1;
             customerTotalAfterDiscount = grandTotal;
         }
+        const sp = transferDetail?.searchParams || {};
+        const adults = Math.max(1, Number(sp.adults) || Number(sp.passengers) || 1);
+        const children = Math.max(0, Number(sp.children) || 0);
+        const infants = Math.max(0, Number(sp.infants) || 0);
+        const passengers = Math.max(
+            adults + children + infants,
+            Number(sp.passengers) || 0
+        );
+
+        // Keep full offer on the transfer object (required by booking API / hotelbeds)
+        transferDetail.searchParams = {
+            ...sp,
+            adults,
+            children,
+            infants,
+            passengers,
+        };
+        transferDetail.selected_extras = selectedExtras || [];
+
         const request = {
             booked_qty: transferDetail?.quantity || 1,
             flight_number: formData.flightNumber || '',
@@ -580,17 +612,25 @@ export default function CheckoutTransfer({ transferDetail }) {
             phone_number: formData?.phoneCode + formData?.phone,
             gender: formData?.gender,
             guest_details: NewOtherPassenger,
-            pickup_location: transferDetail?.searchParams?.pickupLocation,
-            dropoff_location: transferDetail?.searchParams?.dropoffLocation,
-            pickup_date: transferDetail?.searchParams?.pickupDate,
-            pickup_time: transferDetail?.searchParams?.pickupTime,
-            dropoff_date: transferDetail?.searchParams?.dropoffDate || "",
-            dropoff_time: transferDetail?.searchParams?.dropoffTime || "",
-            passengers: transferDetail?.searchParams?.passengers,
-            transfer_type: transferDetail?.searchParams?.transferType,
+            pickup_location: sp.pickupLocation,
+            dropoff_location: sp.dropoffLocation,
+            pickup_date: sp.pickupDate,
+            pickup_time: sp.pickupTime,
+            dropoff_date: sp.dropoffDate || "",
+            dropoff_time: sp.dropoffTime || "",
+            passengers,
+            adults,
+            children,
+            infants,
+            transfer_type: sp.transferType || sp.transfertype,
+            pickup_latitude: Number(sp.pickupLatitude ?? sp.fromLat) || null,
+            pickup_longitude: Number(sp.pickupLongitude ?? sp.fromLng) || null,
+            dropoff_latitude: Number(sp.dropoffLatitude ?? sp.toLat) || null,
+            dropoff_longitude: Number(sp.dropoffLongitude ?? sp.toLng) || null,
             customer_currency: customerCurrency,
             customer_exchange_rate: customerExchangeRate,
             amount: customerTotalAfterDiscount,
+            selected_transfers: [transferDetail],
         };
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transfers/booking`, {
@@ -609,7 +649,10 @@ export default function CheckoutTransfer({ transferDetail }) {
                     setConfirmStatus("success");
                     setTimeout(() => {
                         setLoading(false);
-                        router.push(`/transfers/voucher/${response?.data?.booking_reference}`);
+                        const voucherId =
+                            response?.data?.invoice_number ||
+                            response?.data?.booking_reference;
+                        router.push(`/transfers/voucher/${voucherId}`);
                     }, 800);
                 } else {
                     await handlePayment(response?.data);
@@ -637,11 +680,13 @@ export default function CheckoutTransfer({ transferDetail }) {
     const handlePayment = async (data) => {
         const domain = window.location.origin;
         const checkoutUrl = window.location;
+        // Stripe checkout API expects invoice_number (same as alhijaz)
+        const invoiceNumber = data?.invoice_number || data?.booking_reference;
         const request = {
-            'booking_reference': data?.booking_reference,
-            'success_url': `${domain}/transfers/voucher/${data?.booking_reference}`,
-            'cancel_url': `${checkoutUrl}`
-        }
+            invoice_number: invoiceNumber,
+            success_url: `${domain}/transfers/voucher/${invoiceNumber}`,
+            cancel_url: `${checkoutUrl}`,
+        };
         localStorage.setItem('lead_details_fill', JSON.stringify(formData));
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transfers/booking/checkout`, {
@@ -785,6 +830,26 @@ export default function CheckoutTransfer({ transferDetail }) {
         );
     };
 
+    const availableExtras = Array.isArray(transferDetail?.extras) ? transferDetail.extras : [];
+
+    const getExtraMetaParts = (extra) => {
+        const parts = [];
+        if (extra?.weight_kg) parts.push(extra.weight_kg);
+        if (extra?.age) parts.push(extra.age);
+        return parts;
+    };
+
+    const toggleExtra = (extra) => {
+        if (!onSelectedExtrasChange) return;
+        const code = extra?.code;
+        const alreadySelected = selectedExtras.some((item) => item.code === code);
+        if (alreadySelected) {
+            onSelectedExtrasChange(selectedExtras.filter((item) => item.code !== code));
+        } else {
+            onSelectedExtrasChange([...selectedExtras, extra]);
+        }
+    };
+
     return (
 
         <div>
@@ -879,6 +944,62 @@ export default function CheckoutTransfer({ transferDetail }) {
                     </div>
                 </div>
             )}
+
+            {/* Extra Services */}
+            {availableExtras.length > 0 && (
+                <div className="rounded border p-3 mb-3 transfer-extras-card">
+                    <h5 className="mb-1">Extra Services</h5>
+                    <p className="text-muted small mb-3">
+                        Optional add-ons for your transfer. Selected extras will be added to the total price.
+                    </p>
+                    <div className="transfer-extras-list">
+                        {availableExtras.map((extra) => {
+                            const isSelected = selectedExtras.some((item) => item.code === extra.code);
+                            const metaParts = getExtraMetaParts(extra);
+                            return (
+                                <label
+                                    key={extra.code}
+                                    className={`transfer-extra-item${isSelected ? ' transfer-extra-item--active' : ''}`}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        className="form-check-input transfer-extra-checkbox"
+                                        checked={isSelected}
+                                        onChange={() => toggleExtra(extra)}
+                                    />
+                                    <div className="transfer-extra-content">
+                                        <div className="transfer-extra-info">
+                                            <span className="transfer-extra-name">
+                                                {extra.name || extra.type}
+                                            </span>
+                                            {metaParts.length > 0 ? (
+                                                <div className="transfer-extra-meta">
+                                                    {metaParts.map((part) => (
+                                                        <span key={part} className="transfer-extra-meta-tag">
+                                                            {part}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                extra.type && extra.name && extra.type !== extra.name ? (
+                                                    <span className="transfer-extra-meta-text">{extra.type}</span>
+                                                ) : null
+                                            )}
+                                        </div>
+                                        <span className="transfer-extra-price">
+                                            <PriceDisplay
+                                                price={Number(extra.amount || 0)}
+                                                currency={transferDetail?.currency}
+                                            />
+                                        </span>
+                                    </div>
+                                </label>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Lead Guest Info */}
             <div className="rounded border p-3">
                 <h5 className="mb-3">Lead Passenger Information</h5>

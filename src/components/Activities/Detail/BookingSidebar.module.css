@@ -298,6 +298,67 @@
   border-radius: 8px;
 }
 
+.sessionList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sessionOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.sessionOption:hover {
+  border-color: #1b3b6f;
+  color: #1b3b6f;
+  background: #f8fafc;
+}
+
+.sessionOptionActive {
+  border-color: #1b3b6f;
+  background: #1b3b6f;
+  color: #ffffff;
+}
+
+.sessionOptionActive:hover {
+  background: #0f2a52;
+  border-color: #0f2a52;
+  color: #ffffff;
+}
+
+.guaranteeBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.85rem;
+  border-radius: 10px;
+  background: #eef5ff;
+  border: 1px solid #cfe0f5;
+}
+
+.guaranteeIcon {
+  color: #1b3b6f;
+  flex-shrink: 0;
+}
+
+.guaranteeText {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1b3b6f;
+}
+
 .guestsTitle {
   font-size: 0.95rem;
   font-weight: 700;

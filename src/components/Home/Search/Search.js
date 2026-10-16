@@ -144,14 +144,14 @@ export default function Search() {
                 <button className={`nav-link ${activeTab === 'general-package-tab-pane' ? 'active' : ''} h-100`} id="general-package-tab" data-bs-toggle="tab" data-bs-target="#general-package-tab-pane" type="button" role="tab" aria-controls="general-package-tab-pane" aria-selected={activeTab === 'general-package-tab-pane'} onClick={() => handleTabChange('general-package-tab-pane')}>
                   <IoIosStarOutline size='25' /> {' '}Holiday Packages
                 </button>
-              </li>
+              </li> */}
 
               <li className="nav-item" role="presentation">
                 <button className={`nav-link ${activeTab === 'ai-tab-pane' ? 'active' : ''} h-100`} id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-tab-pane" type="button" role="tab" aria-controls="ai-tab-pane" aria-selected={activeTab === 'ai-tab-pane'} onClick={() => handleTabChange('ai-tab-pane')}>
                   <HiOutlineSparkles color='#ffffff' size='25' />
                   {' '}AI Mode
                 </button>
-              </li> */}
+              </li>
             </ul>
             <ul className={`nav nav-pills ${styles.mobilesearch} gap-2 lights medium px-0`} id="searchTabs" role="tablist">
               {/* <li className="nav-item" role="presentation">
@@ -195,14 +195,14 @@ export default function Search() {
                   <IoIosStarOutline color='#0b659b' size={46} />
                   <span className={styles.tabLabel}>Holiday Packages</span>
                 </button>
-              </li>
+              </li> */}
 
               <li className="nav-item" role="presentation">
                 <button className={`nav-link ${activeTab === 'ai-tab-pane' ? 'active' : ''} h-100 ${styles.mobileTab}`} id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-tab-pane" type="button" role="tab" aria-controls="ai-tab-pane" aria-selected={activeTab === 'ai-tab-pane'} onClick={() => handleTabChange('ai-tab-pane')}>
                   <HiOutlineSparkles color='#0b659b' size='40px' />
                   <span className={styles.tabLabel}>AI Mode</span>
                 </button>
-              </li> */}
+              </li>
             </ul>
           </div>
           {/* Tab Content */}

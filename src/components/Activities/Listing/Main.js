@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { FaSearch, FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { BsCalendar2Date } from "react-icons/bs";
-import { IoLocationSharp, IoTimeOutline } from "react-icons/io5";
+import { IoLocationSharp, IoTimeOutline, IoCheckmarkCircle } from "react-icons/io5";
 import { HiTicket } from "react-icons/hi2";
 import { MdEdit, MdLocationOn } from "react-icons/md";
 import Image from "next/image";
@@ -51,6 +51,27 @@ const getActivityDescription = (item) =>
   item?.content_text ||
   item?.content?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() ||
   '';
+
+/** Free cancellation if refundable and every cutoff is still in the future. */
+const hasFreeCancellation = (item, selectedDate) => {
+  const cancellationPolicy = item?.cancellation_policy;
+  if (!cancellationPolicy) return false;
+
+  const { cancel_policy, cancellation_policies } = cancellationPolicy;
+  if (cancel_policy === 'non-refundable') return false;
+  if (cancel_policy !== 'refundable') return false;
+  if (!cancellation_policies?.length) return true;
+
+  const activityDate = moment(selectedDate);
+  if (!activityDate.isValid()) return false;
+
+  const now = moment();
+  return cancellation_policies.every((policy) => {
+    const hours = Number(policy?.time_duration);
+    if (!Number.isFinite(hours)) return false;
+    return activityDate.clone().subtract(hours, 'hours').isAfter(now);
+  });
+};
 
 function SuggestionThumbnail({ label, photoUrl }) {
   const [loaded, setLoaded] = useState(false);
@@ -868,6 +889,8 @@ function Main() {
                     const activityType = formatActivityType(item.type);
                     const description = getActivityDescription(item);
                     const ratingValue = Number(item.rating_stars);
+                    const showFreeCancellation = hasFreeCancellation(item, selectedDate);
+                    const hasChildPrice = Number(item?.child_sale_price) > 0;
 
                     return (
                       <div className={styles.activityCard} key={item.id || item.slug || index}>
@@ -879,6 +902,9 @@ function Main() {
                             alt={item.title}
                             className={styles.cardImage}
                           />
+                          {String(item?.provider || '').toLowerCase() === 'custom' && (
+                            <span className={styles.customBadge}>CA</span>
+                          )}
                           {Number.isFinite(ratingValue) && ratingValue > 0 && (
                             <span className={styles.ratingBadge}>
                               <FaStar />
@@ -916,36 +942,48 @@ function Main() {
                                 {activityType}
                               </span>
                             )}
+                            {showFreeCancellation && (
+                              <span className={`${styles.featureTag} ${styles.freeCancelTag}`}>
+                                <IoCheckmarkCircle />
+                                Free Cancellation
+                              </span>
+                            )}
                           </div>
 
                           <div className={styles.cardFooter}>
                             <div className={styles.priceBlock}>
-                              <span className={styles.cardPriceLabel}>Per Person</span>
-                              <p className={styles.cardPriceValue}>
-                                <PriceDisplay price={item?.sale_price} currency={item?.currency_code} />
-                              </p>
+                              <div className={hasChildPrice ? styles.priceRow : undefined}>
+                                <div className={styles.priceItem}>
+                                  <span className={styles.cardPriceLabel}>Per Person</span>
+                                  <p className={styles.cardPriceValue}>
+                                    <PriceDisplay price={item?.sale_price} currency={item?.currency_code} />
+                                  </p>
+                                </div>
+                                {hasChildPrice && (
+                                  <div className={styles.priceItem}>
+                                    <span className={styles.cardPriceLabel}>Child</span>
+                                    <p className={styles.cardPriceValue}>
+                                      <PriceDisplay price={item.child_sale_price} currency={item?.currency_code} />
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
                               <span className={styles.cardPriceNote}>VAT &amp; taxes included</span>
                             </div>
-                            {item.provider !== 'hotelbeds' ? (
-                              <Link
-                                href={`/activities/${item.slug}?from=${moment(selectedDate).format('YYYY-MM-DD')}&to=${moment(selectedDate).format('YYYY-MM-DD')}&language=en`}
-                                className={styles.selectBtn}
-                                onClick={() => {
-                                  if (typeof window !== 'undefined') {
-                                    sessionStorage.setItem(
-                                      ACTIVITY_LISTING_RETURN_URL_KEY,
-                                      window.location.pathname + window.location.search
-                                    );
-                                  }
-                                }}
-                              >
-                                View Details
-                              </Link>
-                            ) : (
-                              <button disabled type="button" className={styles.selectBtn}>
-                                Coming Soon
-                              </button>
-                            )}
+                            <Link
+                              href={`/activities/${item.slug}?from=${moment(selectedDate).format('YYYY-MM-DD')}&to=${moment(selectedDate).format('YYYY-MM-DD')}&language=en`}
+                              className={styles.selectBtn}
+                              onClick={() => {
+                                if (typeof window !== 'undefined') {
+                                  sessionStorage.setItem(
+                                    ACTIVITY_LISTING_RETURN_URL_KEY,
+                                    window.location.pathname + window.location.search
+                                  );
+                                }
+                              }}
+                            >
+                              View Details
+                            </Link>
                           </div>
                         </div>
                       </div>

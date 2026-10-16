@@ -361,7 +361,7 @@ function Transfersarrivals({ activetab }) {
                           <Menu.Dropdown>
                             <Menu.Item leftSection={<FaEye size={14} />}>
                               <Link
-                                href={`/transfers/voucher/${booking?.booking_reference}`}
+                                 href={`/transfers/voucher/${booking?.invoice_number || booking?.booking_reference}`}
                                 target="_blank"
                                 className="text-dark"
                               >
@@ -370,7 +370,7 @@ function Transfersarrivals({ activetab }) {
                             </Menu.Item>
                             <Menu.Item leftSection={<FaEye size={14} />}>
                               <Link
-                                href={`/transfers/invoice/${booking?.booking_reference}`}
+                                href={`/transfers/invoice/${booking?.invoice_number || booking?.booking_reference}`}
                                 target="_blank"
                                 className="text-dark"
                               >

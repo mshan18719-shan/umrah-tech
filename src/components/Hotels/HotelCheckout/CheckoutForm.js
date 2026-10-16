@@ -834,24 +834,34 @@ export default function CheckoutForm({
                         An On Request room is not instantly confirmed and requires approval from the hotel before the booking can be finalized. Payment cannot be processed during checkout until confirmation.
                     </div>
                 ) : (
+
                     <div className="checkout-payment-tabs">
+                        {/* Card option — always available when not on request */}
                         <button
                             type="button"
-                            className={`checkout-payment-tab ${paymentMethod === "card" ? "is-active" : ""}`}
+                            className={`checkout-payment-tab ${paymentMethod === "card" ? "is-active" : ""
+                                }`}
                             onClick={() => setPaymentMethod("card")}
                         >
-                            <BiCreditCard size={18} />
+                            <BiCreditCard size={16} />
                             Debit / Credit Card
                         </button>
-                        <button
-                            type="button"
-                            className={`checkout-payment-tab ${paymentMethod === "bank" ? "is-active" : ""}`}
-                            onClick={() => setPaymentMethod("bank")}
-                        >
-                            <BsBank size={16} />
-                            Bank Transfer
-                        </button>
+
+                        {/* Bank Transfer — only for custom providers and check-in more than 3 days away */}
+                        {moment(data?.check_in).isAfter(moment().add(3, 'days')) &&
+                            data?.provider === 'custom' && (
+                                <button
+                                    type="button"
+                                    className={`checkout-payment-tab ${paymentMethod === "bank" ? "is-active" : ""
+                                        }`}
+                                    onClick={() => setPaymentMethod("bank")}
+                                >
+                                    <BsBank size={16} />
+                                    Bank Transfer
+                                </button>
+                            )}
                     </div>
+
                 )}
 
                 {paymentMethod === "card" && !roomOnRequest && (

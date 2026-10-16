@@ -34,15 +34,27 @@ export default function Page() {
   }, [id]);
 
   const fetchDetails = async () => {
+    const lookupId = id != null ? String(id).trim() : "";
+    if (!lookupId || lookupId === "null" || lookupId === "undefined") {
+      setInvoiceDetail({});
+      setErrorMessage("Booking not found");
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage("");
     try {
+      // API accepts invoice_number or booking_reference (Stripe/voucher URLs use invoice_number)
       const responses = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/transfers/booking/details`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ booking_reference: id }),
+          body: JSON.stringify({
+            booking_reference: lookupId,
+            invoice_number: lookupId,
+          }),
         }
       );
       const res = await responses.json();
@@ -89,19 +101,78 @@ export default function Page() {
       : perTransferPrice.toFixed(2);
   }
 
+  const formatClock = (time) => {
+    if (!time) return "";
+    const parsed = moment(time, ["HH:mm:ss", "HH:mm"], true);
+    return parsed.isValid() ? parsed.format("hh:mm A") : String(time);
+  };
+
   const handlePrint = () => window.print();
+
+  const rawTransfer =
+    invoiceDetail?.selected_transfers ?? invoiceDetail?.transfer ?? {};
+  const transfer = Array.isArray(rawTransfer)
+    ? rawTransfer[0] || {}
+    : rawTransfer || {};
+  const criteria = invoiceDetail?.booking_criteria || {};
+  const vehicle =
+    invoiceDetail?.vehicle_details || transfer?.vehicle_details || {};
+  const vehicleCategory =
+    invoiceDetail?.vehiclecategory || invoiceDetail?.vehicle_category || {};
+  const pax = transfer?.paxes_distribution || {};
+  const lead = invoiceDetail?.lead_passenger || {};
+  const isCustom =
+    String(transfer?.provider || invoiceDetail?.provider || "").toLowerCase() ===
+      "custom" ||
+    String(transfer?.transfer_type_code || "").toUpperCase() === "CUSTOM";
+
+  const selectedExtras = (() => {
+    const fromSelectedTransfers = Array.isArray(invoiceDetail?.selected_transfers)
+      ? invoiceDetail.selected_transfers.flatMap((t) =>
+          Array.isArray(t?.selected_extras) ? t.selected_extras : []
+        )
+      : [];
+    const candidates = [
+      invoiceDetail?.selected_extras,
+      transfer?.selected_extras,
+      fromSelectedTransfers,
+      invoiceDetail?.additional_services,
+      transfer?.additional_services,
+      invoiceDetail?.extras,
+    ];
+    for (const list of candidates) {
+      if (Array.isArray(list) && list.length) return list;
+    }
+    return [];
+  })();
 
   const currency =
     invoiceDetail?.pricing?.display_currency ||
+    invoiceDetail?.pricing?.customer_currency ||
     invoiceDetail?.pricing?.currency ||
+    transfer?.currency ||
     "";
   const grandTotal = Number(
-    invoiceDetail?.pricing?.amount_after_exchange ||
-      invoiceDetail?.pricing?.amount ||
-      invoiceDetail?.pricing?.original_amount ||
-      invoiceDetail?.pricing?.booking_amount ||
+    invoiceDetail?.pricing?.amount_in_display_currency ??
+      invoiceDetail?.pricing?.amount_after_exchange ??
+      invoiceDetail?.pricing?.final_amount ??
+      invoiceDetail?.pricing?.amount ??
+      invoiceDetail?.pricing?.original_amount ??
+      invoiceDetail?.pricing?.booking_amount ??
+      transfer?.fare ??
       0
   );
+
+  const extrasDisplayTotal = selectedExtras.reduce((sum, extra) => {
+    const raw = Number(extra?.amount || 0);
+    if (!raw) return sum;
+    return sum + Number(convertToCustomerCurrency(raw));
+  }, 0);
+  const transferLineTotal =
+    extrasDisplayTotal > 0 && extrasDisplayTotal <= grandTotal
+      ? Math.max(0, grandTotal - extrasDisplayTotal)
+      : grandTotal;
+
   const paymentStatus = (invoiceDetail?.payment_status || "").toLowerCase();
   const amountPaid =
     paymentStatus === "paid" || paymentStatus === "completed"
@@ -119,45 +190,93 @@ export default function Page() {
 
   const invoiceNo = invoiceDetail?.invoice_number || id || "—";
   const bookingReference = invoiceDetail?.booking_reference || id || "—";
+  const documentLinkId =
+    invoiceDetail?.invoice_number ||
+    invoiceDetail?.booking_reference ||
+    (id && String(id) !== "null" ? id : null);
 
   const pickupLabel =
     invoiceDetail?.exact_pickup_point ||
-    invoiceDetail?.booking_criteria?.pickup_location ||
+    criteria?.pickup_location ||
+    transfer?.from?.description ||
     "Pickup";
   const dropoffLabel =
     invoiceDetail?.exact_dropoff_point ||
-    invoiceDetail?.booking_criteria?.dropoff_location ||
+    criteria?.dropoff_location ||
+    transfer?.to?.description ||
     "Dropoff";
 
-  const pickupWhen = invoiceDetail?.booking_criteria?.pickup_date
-    ? `${moment(invoiceDetail.booking_criteria.pickup_date).format("MMM DD, YYYY")}${invoiceDetail?.booking_criteria?.pickup_time
-      ? ` · ${moment(invoiceDetail.booking_criteria.pickup_time, "HH:mm:ss").format("hh:mm A")}`
-      : ""
-    }`
+  const pickupDate = criteria?.pickup_date || transfer?.pickup_date;
+  const pickupTime = criteria?.pickup_time || transfer?.pickup_time;
+  const dropoffDate = criteria?.dropoff_date || transfer?.dropoff_date;
+  const dropoffTime = criteria?.dropoff_time || transfer?.dropoff_time;
+
+  const pickupWhen = pickupDate
+    ? `${moment(pickupDate).format("MMM DD, YYYY")}${
+        pickupTime ? ` · ${formatClock(pickupTime)}` : ""
+      }`
     : "—";
 
-  const dropoffWhen = invoiceDetail?.booking_criteria?.dropoff_date
-    ? `${moment(invoiceDetail.booking_criteria.dropoff_date).format("MMM DD, YYYY")}${invoiceDetail?.booking_criteria?.dropoff_time
-      ? ` · ${moment(invoiceDetail.booking_criteria.dropoff_time, "HH:mm:ss").format("hh:mm A")}`
-      : ""
-    }`
+  const dropoffWhen = dropoffDate
+    ? `${moment(dropoffDate).format("MMM DD, YYYY")}${
+        dropoffTime ? ` · ${formatClock(dropoffTime)}` : ""
+      }`
     : "";
+
+  const vehicleName =
+    vehicle?.name ||
+    transfer?.vehicle_name ||
+    transfer?.vehicle?.name ||
+    vehicleCategory?.name ||
+    vehicle?.category ||
+    "";
+  const vehicleCategoryName =
+    vehicleCategory?.name ||
+    transfer?.vehicle_category ||
+    transfer?.vehicle?.category_name ||
+    vehicle?.category ||
+    "";
+  const passengerCapacity =
+    vehicle?.passenger_capacity ??
+    vehicle?.max_pax ??
+    vehicleCategory?.max_capacity ??
+    transfer?.service_information?.find((s) => s?.id === "MAXPAX")?.value ??
+    "—";
+  const luggageCapacity =
+    vehicle?.luggage_capacity ??
+    vehicleCategory?.luguage_capacity ??
+    vehicleCategory?.luggage_capacity ??
+    transfer?.service_information?.find((s) => s?.id === "LUGGAGE")?.value ??
+    "—";
+  const tripType =
+    transfer?.trip_type || criteria?.transfer_type || "";
+  const totalPassengers =
+    pax?.total ||
+    criteria?.passengers ||
+    (1 + (invoiceDetail?.guest_details?.length || 0)) ||
+    1;
 
   const timelineStops = useMemo(() => {
     const multi =
-      invoiceDetail?.transfer?.trip_type === "all-around" ||
-      invoiceDetail?.transfer?.trip_type === "all-round" ||
-      invoiceDetail?.transfer?.trip_type === "return";
+      tripType === "all-around" ||
+      tripType === "all-round" ||
+      tripType === "return";
 
-    if (multi && invoiceDetail?.transfer?.locations?.length) {
+    if (multi && transfer?.locations?.length) {
       const stops = [];
-      invoiceDetail.transfer.locations.forEach((loc, index) => {
+      transfer.locations.forEach((loc, index) => {
         stops.push({
-          city: loc.pickup_address || `Stop ${index + 1} Pickup`,
+          city:
+            loc.pickup_address ||
+            loc.pickup ||
+            `Stop ${index + 1} Pickup`,
           when: "",
         });
         stops.push({
-          city: loc.dropoff_address || `Stop ${index + 1} Dropoff`,
+          city:
+            loc.dropoff_address ||
+            loc.dropoff ||
+            `Stop ${index + 1} Dropoff`,
           when: "",
         });
       });
@@ -169,7 +288,7 @@ export default function Page() {
       stops.push({ city: dropoffLabel, when: dropoffWhen });
     }
     return stops;
-  }, [invoiceDetail, pickupLabel, dropoffLabel, pickupWhen, dropoffWhen]);
+  }, [transfer, tripType, pickupLabel, dropoffLabel, pickupWhen, dropoffWhen]);
 
   const cancelCards = useMemo(() => {
     const policy = invoiceDetail?.cancellation_policies;
@@ -233,7 +352,7 @@ export default function Page() {
   }, [invoiceDetail, currency]);
 
   const qty = Number(invoiceDetail?.booked_qty || 1);
-  const unitRate = PerTransferPrice(grandTotal, qty);
+  const unitRate = PerTransferPrice(transferLineTotal, qty);
 
   const locationPairs = useMemo(() => {
     const pairs = [];
@@ -266,7 +385,7 @@ export default function Page() {
               <div className={styles.previewActions}>
                 <div className={styles.extraActions}>
                   <Link
-                    href={`/transfers/voucher/${invoiceDetail?.booking_reference}`}
+                    href={`/transfers/voucher/${documentLinkId || id}`}
                     className={styles.linkChip}
                   >
                     <FaFileInvoice size={12} /> Voucher
@@ -339,8 +458,12 @@ export default function Page() {
                     <div className={styles.metaItem}>
                       <span className={styles.metaLabel}>Date of Issue</span>
                       <span className={styles.metaValue}>
-                        {invoiceDetail?.created_at
-                          ? moment(invoiceDetail.created_at).format(
+                        {invoiceDetail?.created_at ||
+                        invoiceDetail?.voucher?.creation_date
+                          ? moment(
+                              invoiceDetail?.created_at ||
+                                invoiceDetail?.voucher?.creation_date
+                            ).format(
                             "MMMM DD, YYYY"
                           )
                           : "—"}
@@ -425,9 +548,15 @@ export default function Page() {
                       <div className={styles.field}>
                         <span className={styles.fieldLabel}>Country</span>
                         <div className={styles.fieldValue}>
-                          {invoiceDetail?.lead_passenger?.country || "—"}
+                          {lead?.country || "—"}
                         </div>
                       </div>
+                      {lead?.address ? (
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Address</span>
+                          <div className={styles.fieldValue}>{lead.address}</div>
+                        </div>
+                      ) : null}
                       <div className={styles.field}>
                         <span className={styles.fieldLabel}>
                           City / Pickup
@@ -437,9 +566,28 @@ export default function Page() {
                       <div className={styles.field}>
                         <span className={styles.fieldLabel}>Pax</span>
                         <div className={styles.fieldValue}>
-                          {invoiceDetail?.guest_details?.length
-                            ? `${1 + invoiceDetail.guest_details.length}`
-                            : "1"}
+                          {totalPassengers}
+                          {(pax?.adults != null ||
+                            pax?.children != null ||
+                            pax?.infants != null) && (
+                            <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                              {" "}
+                              (
+                              {Number(pax.adults || 0)} Adult
+                              {Number(pax.adults || 0) !== 1 ? "s" : ""}
+                              {Number(pax.children || 0) > 0
+                                ? `, ${pax.children} Child${
+                                    Number(pax.children) !== 1 ? "ren" : ""
+                                  }`
+                                : ""}
+                              {Number(pax.infants || 0) > 0
+                                ? `, ${pax.infants} Infant${
+                                    Number(pax.infants) !== 1 ? "s" : ""
+                                  }`
+                                : ""}
+                              )
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -460,11 +608,9 @@ export default function Page() {
                     <div>
                       <span className={styles.fieldLabel}>Service</span>
                       <h4 className={styles.serviceName}>
-                        {capitalize(invoiceDetail?.transfer?.vehicle_name) ||
-                          capitalize(invoiceDetail?.vehicle_details?.category) ||
-                          capitalize(
-                            invoiceDetail?.booking_criteria?.transfer_type
-                          ) ||
+                        {capitalize(vehicleName) ||
+                          capitalize(vehicleCategoryName) ||
+                          capitalize(tripType) ||
                           "Ground Transport"}
                       </h4>
                       <div className={styles.routeLine}>
@@ -489,31 +635,32 @@ export default function Page() {
                           Flight Number: {invoiceDetail.flight_number}
                         </p>
                       ) : null}
+                      {isCustom && vehicle?.transmission_type ? (
+                        <p className={styles.serviceNote}>
+                          Transmission: {vehicle.transmission_type}
+                        </p>
+                      ) : null}
+                      {vehicle?.vehicle_description ? (
+                        <p className={styles.serviceNote}>
+                          {vehicle.vehicle_description}
+                        </p>
+                      ) : null}
                       <div className={styles.vehicleChips}>
                         <span className={styles.chip}>
                           Qty: {invoiceDetail?.booked_qty || 1}
                         </span>
                         <span className={styles.chip}>
-                          {capitalize(invoiceDetail?.transfer?.trip_type) ||
-                            capitalize(
-                              invoiceDetail?.booking_criteria?.transfer_type
-                            ) ||
-                            "Transfer"}
+                          {capitalize(tripType) || "Transfer"}
                         </span>
                         <span className={styles.chip}>
-                          Pax:{" "}
-                          {invoiceDetail?.vehicle_details?.passenger_capacity ||
-                            "—"}
+                          Pax: {passengerCapacity}
                         </span>
                         <span className={styles.chip}>
-                          Luggage:{" "}
-                          {invoiceDetail?.vehicle_details?.luggage_capacity ||
-                            "—"}
+                          Luggage: {luggageCapacity}
                         </span>
-                        {invoiceDetail?.vehicle_details?.category ? (
+                        {vehicleCategoryName ? (
                           <span className={styles.chip}>
-                            Category:{" "}
-                            {capitalize(invoiceDetail.vehicle_details.category)}
+                            Category: {capitalize(vehicleCategoryName)}
                           </span>
                         ) : null}
                       </div>
@@ -676,13 +823,71 @@ export default function Page() {
                               Passenger {index + 2}
                             </span>
                             <div className={styles.fieldValue}>
+                              {guest.title ? `${guest.title} ` : ""}
                               {guest.first_name} {guest.last_name}
                               {guest.gender
                                 ? ` · ${capitalize(guest.gender)}`
                                 : ""}
+                              {guest.email ? ` · ${guest.email}` : ""}
+                              {guest.phone_number || guest.phone
+                                ? ` · ${guest.phone_number || guest.phone}`
+                                : ""}
+                              {guest.country ? ` · ${guest.country}` : ""}
                             </div>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* Extra Services */}
+                {selectedExtras.length > 0 && (
+                  <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                      <div className={styles.sectionHeadLeft}>
+                        <span className={styles.sectionIcon}>
+                          <FaReceipt size={11} />
+                        </span>
+                        <h3 className={styles.sectionTitle}>Extra Services</h3>
+                      </div>
+                    </div>
+                    <div className={styles.additionalServicesBody}>
+                      <div className={styles.serviceCardGrid}>
+                        {selectedExtras.map((extra, index) => {
+                          const metaParts = [
+                            extra?.weight_kg,
+                            extra?.age,
+                          ].filter(Boolean);
+                          const amount = Number(extra?.amount || 0);
+                          return (
+                            <div
+                              key={extra?.code || index}
+                              className={styles.ancillaryServiceCard}
+                            >
+                              {amount > 0 ? (
+                                <span className={styles.ancillaryServicePrice}>
+                                  {currency}{" "}
+                                  {convertToCustomerCurrency(amount)}
+                                </span>
+                              ) : null}
+                              <p className={styles.ancillaryServiceName}>
+                                {extra?.name || extra?.type || "Extra service"}
+                              </p>
+                              {metaParts.length > 0 ? (
+                                <p className={styles.ancillaryServiceMeta}>
+                                  {metaParts.join(" · ")}
+                                </p>
+                              ) : extra?.type &&
+                                extra?.name &&
+                                extra.type !== extra.name ? (
+                                <p className={styles.ancillaryServiceMeta}>
+                                  {extra.type}
+                                </p>
+                              ) : null}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </section>
@@ -711,24 +916,39 @@ export default function Page() {
                       <tbody>
                         <tr>
                           <td>
-                            {capitalize(invoiceDetail?.transfer?.vehicle_name) ||
-                              capitalize(invoiceDetail?.vehicle_details?.category) ||
+                            {capitalize(vehicleName) ||
+                              capitalize(vehicleCategoryName) ||
                               "Transfer"}{" "}
-                            —{" "}
-                            {capitalize(invoiceDetail?.transfer?.trip_type) ||
-                              capitalize(
-                                invoiceDetail?.booking_criteria?.transfer_type
-                              ) ||
-                              "Service"}
+                            — {capitalize(tripType) || "Service"}
                           </td>
                           <td>{qty}</td>
                           <td>
                             {currency} {unitRate}
                           </td>
                           <td>
-                            {currency} {Number(grandTotal).toFixed(2)}
+                            {currency} {Number(transferLineTotal).toFixed(2)}
                           </td>
                         </tr>
+                        {selectedExtras.map((extra, index) => {
+                          const amount = Number(extra?.amount || 0);
+                          if (!amount) return null;
+                          const display = convertToCustomerCurrency(amount);
+                          return (
+                            <tr key={extra?.code || `extra-${index}`}>
+                              <td>
+                                Extra —{" "}
+                                {extra?.name || extra?.type || "Service"}
+                              </td>
+                              <td>1</td>
+                              <td>
+                                {currency} {display}
+                              </td>
+                              <td>
+                                {currency} {display}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -817,6 +1037,12 @@ export default function Page() {
                       </span>
                       Luggage allowance is subject to the vehicle capacity
                       confirmed at the time of booking.
+                    </li>
+                    <li>
+                      <span className={styles.infoCheck}>
+                        <FaCheckCircle size={10} />
+                      </span>
+                      Additional stops or route changes may incur extra charges.
                     </li>
                     <li>
                       <span className={styles.infoCheck}>

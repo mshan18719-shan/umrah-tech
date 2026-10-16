@@ -63,7 +63,8 @@ export default function Page() {
   }
 
   function convertToCustomerCurrency(price) {
-    if (!price || !voucherDetail.customer_exchange_rate)
+    if (price == null || price === "") return Number(0).toFixed(2);
+    if (!voucherDetail.customer_exchange_rate)
       return Number(price || 0).toFixed(2);
     if (voucherDetail.currency_code === voucherDetail.customer_currency)
       return Number(price).toFixed(2);
@@ -72,13 +73,130 @@ export default function Page() {
     ).toFixed(2);
   }
 
+  function formatChildUnderLabel(age) {
+    if (age == null || age === "") return "Child";
+    return `Children (under ${age})`;
+  }
+
+  function getChildrenAgeSummary() {
+    const details = voucherDetail?.other_passengers?.children_details || [];
+    if (!details.length) {
+      const count = Number(voucherDetail?.children || 0);
+      return count > 0 ? [{ label: "Children", count }] : [];
+    }
+    const counts = {};
+    details.forEach((child) => {
+      const label = formatChildUnderLabel(child?.age);
+      counts[label] = (counts[label] || 0) + 1;
+    });
+    return Object.entries(counts).map(([label, count]) => ({ label, count }));
+  }
+
+  function getModalityName() {
+    return (
+      voucherDetail?.modality?.name ||
+      voucherDetail?.voucher?.modality?.name ||
+      ""
+    );
+  }
+
+  function getStartTime() {
+    const modalityName = getModalityName();
+    const timeMatch = String(modalityName).match(/(\d{1,2}:\d{2})/);
+    if (timeMatch) {
+      const parsed = moment(timeMatch[1], ["HH:mm", "H:mm"], true);
+      if (parsed.isValid()) return parsed.format("hh:mm A");
+    }
+    const session =
+      voucherDetail?.modality?.session?.name ||
+      voucherDetail?.modality?.session?.code ||
+      voucherDetail?.modality?.session;
+    if (session) {
+      const parsed = moment(session, ["HH:mm", "H:mm", "hh:mm A"], true);
+      if (parsed.isValid()) return parsed.format("hh:mm A");
+      return String(session);
+    }
+    return "";
+  }
+
+  function getLanguageLabel() {
+    const langs =
+      voucherDetail?.languages || voucherDetail?.voucher?.languages || [];
+    if (!langs.length) {
+      const modalityLang =
+        voucherDetail?.modality?.language?.description ||
+        voucherDetail?.modality?.language?.code;
+      if (modalityLang) return String(modalityLang);
+      const modalityName = getModalityName().toLowerCase();
+      if (modalityName.includes("english") || modalityName.includes("eng"))
+        return "English";
+      return "";
+    }
+    return langs
+      .map((l) =>
+        l.description || (l.code === "en" ? "English" : String(l.code || "").toUpperCase())
+      )
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  function getCancellationPolicy() {
+    return (
+      voucherDetail?.cancellation_policy ||
+      voucherDetail?.cancellation_policies ||
+      voucherDetail?.activity?.cancellation_policy ||
+      null
+    );
+  }
+
+  function parseContractRemarks() {
+    const remarks =
+      voucherDetail?.contract_remarks ||
+      voucherDetail?.voucher?.contract_remarks ||
+      voucherDetail?.voucher?.comments ||
+      [];
+    const text = remarks.map((r) => r?.text).filter(Boolean).join(" ");
+    if (!text.trim()) return [];
+
+    return text
+      .split("//")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const sepIdx = part.indexOf(":");
+        if (sepIdx === -1) return { label: "", value: part };
+        return {
+          label: part.slice(0, sepIdx).trim(),
+          value: part.slice(sepIdx + 1).trim(),
+        };
+      })
+      .filter((item) => item.value);
+  }
+
+  const SUPPLIER_REMARK_LABELS = [
+    "supplier name",
+    "supplier emergency phone",
+    "supplier",
+    "voucher type",
+    "meeting point instructions",
+    "start/opening time",
+    "end/closing time",
+  ];
+
+  function getVisibleContractRemarks() {
+    return parseContractRemarks().filter(
+      (item) =>
+        !SUPPLIER_REMARK_LABELS.includes(String(item.label || "").toLowerCase())
+    );
+  }
+
   const getTotalPassengers = () => {
-    const adults = Number(voucherDetail?.adults || 0);
-    const children = Number(voucherDetail?.children || 0);
     const parts = [];
+    const adults = Number(voucherDetail?.adults || 0);
     if (adults > 0) parts.push(`${adults} Adult${adults !== 1 ? "s" : ""}`);
-    if (children > 0)
-      parts.push(`${children} Child${children !== 1 ? "ren" : ""}`);
+    getChildrenAgeSummary().forEach((item) => {
+      parts.push(`${item.count} ${item.label}`);
+    });
     return parts.join(", ") || "—";
   };
 
@@ -117,12 +235,18 @@ export default function Page() {
     for (let i = 0; i < childSlots; i++) {
       const guest = childrenDetails[i];
       const name = formatGuestName(guest);
+      const agePart =
+        guest?.age != null && guest?.age !== ""
+          ? ` · under ${guest.age}`
+          : "";
       childGuests.push({
         key: `child-${i}`,
         label: `Child ${i + 1}`,
         value: name
-          ? `${name}${guest?.gender ? ` · ${capitalize(guest.gender)}` : ""}`
-          : "Details not provided",
+          ? `${name}${guest?.gender ? ` · ${capitalize(guest.gender)}` : ""}${agePart}`
+          : guest?.age != null
+            ? `Under ${guest.age}`
+            : "Details not provided",
       });
     }
 
@@ -131,14 +255,28 @@ export default function Page() {
 
   const handlePrint = () => window.print();
 
+  const modalityName = getModalityName();
+  const startTimeFromModality = getStartTime();
+  const languageLabel = getLanguageLabel();
+  const contractRemarkItems = getVisibleContractRemarks();
+  const allContractRemarks = parseContractRemarks();
+  const meetingPointRemark = allContractRemarks.find(
+    (item) => String(item.label || "").toLowerCase() === "meeting point"
+  )?.value;
+  const durationRemark = allContractRemarks.find(
+    (item) => String(item.label || "").toLowerCase() === "duration"
+  )?.value;
+  const childrenAgeSummary = getChildrenAgeSummary();
+
   const currency =
+    voucherDetail?.customer_currency ||
     voucherDetail?.currency_code ||
     voucherDetail?.currency_symbol ||
     voucherDetail?.currency ||
     voucherDetail?.client_currency ||
     "";
   const grandTotal = Number(
-    voucherDetail?.grand_total ?? voucherDetail?.customer_total ?? 0
+    voucherDetail?.customer_total ?? voucherDetail?.grand_total ?? 0
   );
   const paymentStatus = (voucherDetail?.payment_status || "").toLowerCase();
   const amountPaid =
@@ -163,6 +301,7 @@ export default function Page() {
     : "—";
 
   const activityTime = (() => {
+    if (startTimeFromModality) return startTimeFromModality;
     const openTime =
       voucherDetail?.activity?.open_hours?.[
         moment(voucherDetail?.travel_date).format("dddd").toLowerCase()
@@ -170,42 +309,89 @@ export default function Page() {
     return openTime ? moment(openTime, "HH:mm").format("hh:mm A") : "";
   })();
 
+  const activityDuration =
+    voucherDetail?.activity?.activity_duration || durationRemark || "";
+
   const cancelCards = useMemo(() => {
-    const policy = voucherDetail?.activity?.cancellation_policy;
+    const policy = getCancellationPolicy();
     if (!policy) return [];
-    if (
-      policy.cancel_policy === "refundable" &&
-      policy.cancellation_policies?.length
-    ) {
-      return policy.cancellation_policies.map((p) => ({
-        when: `${p.time_duration} HOURS BEFORE`,
-        amount:
-          p.type === "percentage"
-            ? `${p.value}%`
-            : `${currency} ${convertToCustomerCurrency(p.value)}`,
-        desc:
-          p.type === "percentage"
-            ? "Of total booking value"
-            : "Fixed cancellation charge",
-      }));
+
+    const cancelPolicy = String(
+      policy.cancel_policy || policy.cancelPolicy || ""
+    ).toLowerCase();
+    const policies = Array.isArray(policy?.cancellation_policies)
+      ? policy.cancellation_policies
+      : Array.isArray(policy)
+        ? policy
+        : [];
+
+    if (cancelPolicy === "non-refundable" || cancelPolicy === "non_refundable") {
+      return [{ nonRefundable: true }];
     }
+
+    if (policies.length) {
+      return policies.map((p) => {
+        const fromRaw = p?.from || p?.dateFrom;
+        const from = fromRaw ? moment(fromRaw) : null;
+        const when = from?.isValid()
+          ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+          : p?.time_duration != null
+            ? `${p.time_duration} HOURS BEFORE`
+            : "CANCELLATION";
+        const amountValue =
+          p?.amount ?? p?.value ?? p?.fee ?? 0;
+        const amount =
+          p?.type === "percentage"
+            ? `${p.value}%`
+            : `${currency} ${convertToCustomerCurrency(amountValue)}`;
+        return {
+          when,
+          amount,
+          desc:
+            p?.type === "percentage"
+              ? "Of total booking value"
+              : "Fixed cancellation charge",
+        };
+      });
+    }
+
+    if (cancelPolicy === "refundable") return [];
     return [{ nonRefundable: true }];
   }, [voucherDetail, currency]);
 
   const priceRows = useMemo(() => {
-    const formatMoney = (price) => Number(price || 0).toFixed(2);
-    const rows = [
-      {
-        description: `Activity — ${voucherDetail?.activity?.title || "Activity"} (Adult)`,
-        qty: Number(voucherDetail?.adults || 0),
+    const formatMoney = (price) => convertToCustomerCurrency(price);
+    const title = voucherDetail?.activity?.title || "Activity";
+    const rows = [];
+    const adults = Number(voucherDetail?.adults || 0);
+    if (adults > 0) {
+      rows.push({
+        description: `Activity — ${title} (Adult)`,
+        qty: adults,
         rate: formatMoney(voucherDetail?.activity?.sale_price),
         total: formatMoney(voucherDetail?.adult_price),
-      },
-    ];
-    if (Number(voucherDetail?.children) > 0) {
+      });
+    }
+
+    const childUnit = Number(voucherDetail?.activity?.child_sale_price || 0);
+    const childPriceField = Number(voucherDetail?.child_price || 0);
+    if (childrenAgeSummary.length > 0) {
+      childrenAgeSummary.forEach((band) => {
+        const qty = Number(band.count || 0);
+        if (qty <= 0) return;
+        const bandTotal =
+          childrenAgeSummary.length === 1 && childPriceField > 0
+            ? childPriceField
+            : childUnit * qty;
+        rows.push({
+          description: `Activity — ${title} (${band.label})`,
+          qty,
+          rate: formatMoney(childUnit || (qty ? bandTotal / qty : 0)),
+          total: formatMoney(bandTotal),
+        });
+      });
+    } else if (Number(voucherDetail?.children) > 0) {
       const childQty = Number(voucherDetail?.children || 0);
-      const childUnit = Number(voucherDetail?.activity?.child_sale_price || 0);
-      const childPriceField = Number(voucherDetail?.child_price || 0);
       const childTotal =
         childPriceField > 0 &&
         childUnit > 0 &&
@@ -213,12 +399,13 @@ export default function Page() {
           ? childUnit * childQty
           : childPriceField || childUnit * childQty;
       rows.push({
-        description: `Activity — ${voucherDetail?.activity?.title || "Activity"} (Child)`,
+        description: `Activity — ${title} (Child)`,
         qty: childQty,
         rate: formatMoney(childUnit || (childQty ? childTotal / childQty : 0)),
         total: formatMoney(childTotal),
       });
     }
+
     (voucherDetail?.additional_services || []).forEach((item) => {
       rows.push({
         description: item.name,
@@ -228,7 +415,7 @@ export default function Page() {
       });
     });
     return rows;
-  }, [voucherDetail]);
+  }, [voucherDetail, childrenAgeSummary]);
 
   const rating = Number(voucherDetail?.activity?.rating_stars || 0);
 
@@ -350,6 +537,14 @@ export default function Page() {
                       <span className={styles.metaLabel}>Booking ref</span>
                       <span className={styles.metaValue}>{refNo}</span>
                     </div>
+                    {voucherDetail?.provider_reference && (
+                      <div className={styles.metaItem}>
+                        <span className={styles.metaLabel}>Provider ref</span>
+                        <span className={styles.metaValue}>
+                          {voucherDetail.provider_reference}
+                        </span>
+                      </div>
+                    )}
                     {invoiceNo && <div className={styles.metaItem}>
                       <span className={styles.metaLabel}>Invoice No</span>
                       <span className={styles.metaValue}>{invoiceNo}</span>
@@ -401,7 +596,9 @@ export default function Page() {
                       <div className={styles.field}>
                         <span className={styles.fieldLabel}>Phone</span>
                         <div className={styles.fieldValue}>
-                          {voucherDetail?.lead_phone || "—"}
+                          {[voucherDetail?.lead_phone_code, voucherDetail?.lead_phone]
+                            .filter(Boolean)
+                            .join(" ") || "—"}
                         </div>
                       </div>
                       <div className={styles.field}>
@@ -477,12 +674,30 @@ export default function Page() {
                       </div>
                     )}
                     <div className={styles.activityMeta}>
+                      {modalityName && (
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Package</span>
+                          <div className={styles.fieldValue}>{modalityName}</div>
+                        </div>
+                      )}
                       <div className={styles.field}>
-                        <span className={styles.fieldLabel}>Location</span>
+                        <span className={styles.fieldLabel}>
+                          {meetingPointRemark ? "Meeting Point" : "Location"}
+                        </span>
                         <div className={styles.fieldValue}>
-                          {voucherDetail?.activity?.address || "—"}
+                          {meetingPointRemark ||
+                            voucherDetail?.activity?.address ||
+                            "—"}
                         </div>
                       </div>
+                      {meetingPointRemark && voucherDetail?.activity?.address && (
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Address</span>
+                          <div className={styles.fieldValue}>
+                            {voucherDetail.activity.address}
+                          </div>
+                        </div>
+                      )}
                       <div className={styles.field}>
                         <span className={styles.fieldLabel}>Activity Date</span>
                         <div className={styles.fieldValue}>
@@ -494,6 +709,18 @@ export default function Page() {
                           {activityTime ? ` · ${activityTime}` : ""}
                         </div>
                       </div>
+                      {activityTime && (
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Start Time</span>
+                          <div className={styles.fieldValue}>{activityTime}</div>
+                        </div>
+                      )}
+                      {languageLabel && (
+                        <div className={styles.field}>
+                          <span className={styles.fieldLabel}>Language</span>
+                          <div className={styles.fieldValue}>{languageLabel}</div>
+                        </div>
+                      )}
                       <div className={styles.field}>
                         <span className={styles.fieldLabel}>Day</span>
                         <div className={styles.fieldValue}>{travelDay}</div>
@@ -501,7 +728,7 @@ export default function Page() {
                       <div className={styles.field}>
                         <span className={styles.fieldLabel}>Duration</span>
                         <div className={styles.fieldValue}>
-                          {voucherDetail?.activity?.activity_duration || "—"}
+                          {activityDuration || "—"}
                         </div>
                       </div>
                       <div className={styles.field}>
@@ -513,12 +740,43 @@ export default function Page() {
                       <div className={styles.field}>
                         <span className={styles.fieldLabel}>Children</span>
                         <div className={styles.fieldValue}>
-                          {voucherDetail?.children || 0}
+                          {childrenAgeSummary.length > 0
+                            ? childrenAgeSummary
+                                .map((b) => `${b.count} ${b.label}`)
+                                .join(", ")
+                            : voucherDetail?.children || 0}
                         </div>
                       </div>
                     </div>
                   </div>
                 </section>
+
+                {contractRemarkItems.length > 0 && (
+                  <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                      <div className={styles.sectionHeadLeft}>
+                        <span className={styles.sectionIcon}>
+                          <FaInfoCircle size={11} />
+                        </span>
+                        <h3 className={styles.sectionTitle}>
+                          Activity Information
+                        </h3>
+                      </div>
+                    </div>
+                    <div className={styles.card}>
+                      <div className={styles.fieldGrid}>
+                        {contractRemarkItems.map((item, index) => (
+                          <div key={index} className={styles.field}>
+                            <span className={styles.fieldLabel}>
+                              {item.label || "Detail"}
+                            </span>
+                            <div className={styles.fieldValue}>{item.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+                )}
 
                 {/* Guests — pad slots to match booked counts */}
                 {(guestSlots.adultGuests.length > 0 ||

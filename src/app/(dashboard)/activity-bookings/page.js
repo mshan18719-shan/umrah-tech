@@ -435,7 +435,10 @@ export default function ActivityBookingsPage() {
                     <div>
                       <span className="hb-amount-label">Total Amount</span>
                       <div className="hb-amount">
-                        {booking?.customer_currency || ""}{" "}
+                        {booking?.customer_currency ||
+                          booking?.currency_code ||
+                          booking?.currency ||
+                          ""}{" "}
                         {booking?.grand_total ?? booking?.customer_total ?? "-"}
                       </div>
                       <div className={`hb-status hb-status-${tone}`}>

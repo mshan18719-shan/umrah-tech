@@ -71,6 +71,29 @@ function parseDistanceStringToMeters(distanceStr) {
     return match[2].toLowerCase() === "km" ? Math.round(value * 1000) : Math.round(value);
 }
 
+function normalizeCity(city) {
+    if (!city) return city;
+    const c = String(city).toLowerCase();
+    if (c === "makkah") return "Makkah";
+    if (c === "madinah" || c === "madina") return "Madinah";
+    return city.charAt(0).toUpperCase() + city.slice(1);
+}
+
+function cacheEntryFromResult(r) {
+    if (r && !r.error) {
+        return {
+            loading: false,
+            distance: r.distance,
+            walking: r.walking,
+            difficulty: r.difficulty,
+            distanceMeters: parseDistanceStringToMeters(r.distance),
+        };
+    }
+    return { loading: false, error: true };
+}
+
+const BULK_ROUTE_BATCH_SIZE = 10;
+
 function matchesDistanceFilter(meters, selectedRanges) {
     if (!selectedRanges.length) return true;
     if (!Number.isFinite(meters)) return false;
@@ -145,58 +168,78 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
     const [distanceCache, setDistanceCache] = useState({});
     const itemsPerPage = 10;
     const prevCurrencyRef = useRef(currency);
+    const distanceFetchStarted = useRef(new Set());
+    const distanceFetchGeneration = useRef(0);
 
     const landmark = useMemo(
         () => resolveLandmark(city, place, location),
         [city, place, location]
     );
 
-    useEffect(() => {
-        setDistance([]);
-        setDistanceCache({});
-    }, [landmark?.key]);
+    /**
+     * Fetch distances in batches of 10 via POST /api/bulk-route
+     * body: { hotels: [{ hotel, city, lat, lon }, ...] }
+     * response: { total, results: [...] } — mapped back by request index
+     */
+    const fetchBulkDistances = useCallback(async (hotelItems = [], generation) => {
+        const toFetch = hotelItems.filter(
+            (item) => item?.id && !distanceFetchStarted.current.has(item.id)
+        );
+        if (!toFetch.length) return;
 
-    const fetchSingleDistance = useCallback(async ({ id, hotel, cityKey, lat, lon }) => {
-        let skip = false;
-        setDistanceCache((prev) => {
-            if (prev[id]) {
-                skip = true;
-                return prev;
-            }
-            return { ...prev, [id]: { loading: true } };
+        const loadingMap = {};
+        toFetch.forEach((item) => {
+            distanceFetchStarted.current.add(item.id);
+            loadingMap[item.id] = { loading: true };
         });
-        if (skip) return;
+        setDistanceCache((prev) => ({ ...prev, ...loadingMap }));
 
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_AI_API_URL}/api/bulk-route`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-API-Key": process.env.NEXT_PUBLIC_AI_API_TOKEN,
-                },
-                body: JSON.stringify({ hotel, city: cityKey, lat, lon }),
-            });
-            const r = await res.json();
+        for (let i = 0; i < toFetch.length; i += BULK_ROUTE_BATCH_SIZE) {
+            if (generation !== distanceFetchGeneration.current) return;
 
-            setDistanceCache((prev) => ({
-                ...prev,
-                [id]: (r && !r.error)
-                    ? {
-                        loading: false,
-                        distance: r.distance,
-                        walking: r.walking,
-                        difficulty: r.difficulty,
-                        distanceMeters: parseDistanceStringToMeters(r.distance),
-                    }
-                    : { loading: false, error: true },
-            }));
-        } catch {
-            setDistanceCache((prev) => ({
-                ...prev,
-                [id]: { loading: false, error: true },
-            }));
+            const batch = toFetch.slice(i, i + BULK_ROUTE_BATCH_SIZE);
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bulk-route`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotels: batch.map(({ hotel, city: cityKey, lat, lon }) => ({
+                            hotel,
+                            city: normalizeCity(cityKey),
+                            lat,
+                            lon,
+                        })),
+                    }),
+                });
+                const json = await res.json();
+
+                // Ignore stale responses after a new search / city change
+                if (generation !== distanceFetchGeneration.current) return;
+
+                const results = Array.isArray(json?.results) ? json.results : [];
+                const updates = {};
+                batch.forEach((item, idx) => {
+                    updates[item.id] = cacheEntryFromResult(results[idx]);
+                });
+                setDistanceCache((prev) => ({ ...prev, ...updates }));
+            } catch {
+                if (generation !== distanceFetchGeneration.current) return;
+                const updates = {};
+                batch.forEach((item) => {
+                    updates[item.id] = { loading: false, error: true };
+                });
+                setDistanceCache((prev) => ({ ...prev, ...updates }));
+            }
         }
     }, []);
+
+    // Clear distance state on landmark (city) change
+    useEffect(() => {
+        distanceFetchGeneration.current += 1;
+        setDistance([]);
+        setDistanceCache({});
+        distanceFetchStarted.current = new Set();
+    }, [landmark?.key]);
 
     useEffect(() => {
         if (hotels && hotels.length > 0) {
@@ -252,7 +295,10 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
             setMinPrice(min);
             setMaxPrice(max);
         } else {
-            // New search started (list cleared) → clear applied filters
+            // New search started (list cleared) → clear applied filters + cancel in-flight distance fetches
+            distanceFetchGeneration.current += 1;
+            distanceFetchStarted.current = new Set();
+            setDistanceCache({});
             setConvertedHotels([]);
             setSearch(null);
             setStar([]);
@@ -267,14 +313,16 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
         }
     }, [hotels, rates, currency]);
 
-    // Fetch landmark distances via bulk-route (Makkah / Madinah only)
+    // Fetch landmark distances in batches of 10 (Makkah / Madinah only)
     useEffect(() => {
         if (!landmark || !convertedHotels.length) return;
 
-        const seen = new Set();
+        const generation = distanceFetchGeneration.current;
+        const hotelItems = [];
+
         convertedHotels.forEach((hotel) => {
-            if (!hotel?.id || !hotel?.name || seen.has(hotel.id)) return;
-            seen.add(hotel.id);
+            const id = hotel?.id;
+            if (!id || !hotel?.name || distanceFetchStarted.current.has(id)) return;
 
             const coords = getHotelCoords(hotel);
             const address =
@@ -282,17 +330,18 @@ export function HotelListProvider({ children, hotels, place, city, location }) {
                 || hotel?.address
                 || hotel?.metadata?.address
                 || "";
-            const hotelLabel = [hotel.name, address].filter(Boolean).join(", ");
 
-            fetchSingleDistance({
-                id: hotel.id,
-                hotel: hotelLabel,
-                cityKey: landmark.city,
+            hotelItems.push({
+                id,
+                hotel: [hotel.name, address].filter(Boolean).join(", "),
+                city: landmark.city,
                 lat: coords?.lat ?? null,
                 lon: coords?.lng ?? null,
             });
         });
-    }, [convertedHotels, landmark, fetchSingleDistance]);
+
+        fetchBulkDistances(hotelItems, generation);
+    }, [convertedHotels, landmark, fetchBulkDistances]);
 
     const resetFilters = () => {
         setSearch(null);

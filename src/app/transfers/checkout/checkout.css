@@ -492,11 +492,121 @@
     margin: 1rem 0 0.85rem;
 }
 
+.transfer-info-price-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-bottom: 0.75rem;
+}
+
+.transfer-info-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 .transfer-info-total {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
+}
+
+/* Extra Services (checkout form) */
+.transfer-extras-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.transfer-extra-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 0;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.transfer-extra-item:hover {
+    border-color: #c5d0e0;
+    background: #f8f9fc;
+}
+
+.transfer-extra-item--active {
+    border-color: var(--ck-navy, #1b3b6f);
+    background: #eef2f8;
+}
+
+.transfer-extra-checkbox {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--ck-navy, #1b3b6f);
+}
+
+.transfer-extra-content {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.transfer-extra-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.transfer-extra-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.4;
+}
+
+.transfer-extra-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.transfer-extra-meta-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #eef2f8;
+    color: #3d5270;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.transfer-extra-item--active .transfer-extra-meta-tag {
+    background: #dce5f2;
+    color: var(--ck-navy, #1b3b6f);
+}
+
+.transfer-extra-meta-text {
+    font-size: 0.75rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.transfer-extra-price {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--ck-navy, #1b3b6f);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .transfer-info-total-label {

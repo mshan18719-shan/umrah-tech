@@ -9,13 +9,121 @@ import PackageBookingLoader from '@/components/Loader/PackageBookingLoader';
 import { useCurrency } from '@/util/currency';
 import { ConvertPrice } from '@/components/Currency/ConvertPrice';
 import { IoPersonAddOutline, IoShieldCheckmarkOutline, IoPeopleOutline, IoPersonOutline, IoCardOutline } from 'react-icons/io5';
-import { BsBank2 } from 'react-icons/bs';
 import Link from 'next/link';
 import Autocomplete from "react-google-autocomplete";
 import LeadDetail from '@/components/LeadDetail/LeadDetail';
 
 const NAME_MAX = 35;
 const EMAIL_MAX = 200;
+
+function formatAgeRange(ageFrom, ageTo) {
+    if (ageFrom == null && ageTo == null) return '';
+    const to = ageTo != null && Number(ageTo) >= 999 ? '99+' : ageTo;
+    if (ageFrom != null && to != null) return `(${ageFrom}-${to})`;
+    if (ageFrom != null) return `(${ageFrom}+)`;
+    return '';
+}
+
+function buildGuestFromPax(pax, type) {
+    return {
+        firstName: '',
+        lastName: '',
+        gender: 'male',
+        type,
+        ageFrom: pax?.ageFrom ?? null,
+        ageTo: pax?.ageTo ?? null,
+        paxType: pax?.paxType || null,
+    };
+}
+
+/** Use ageTo for API (0–3 → 3, 4–12 → 12). */
+function resolveChildAge(ageTo, ageFrom) {
+    if (ageTo != null && Number(ageTo) < 999) return Number(ageTo);
+    if (ageFrom != null) return Number(ageFrom);
+    return 0;
+}
+
+/**
+ * Build children_details from selected_pax quantities.
+ * Names come from optional guest form entries; age always from the band's upper limit.
+ */
+function buildChildrenDetails(activityDetail, otherGuestDetail = []) {
+    const selectedPax = activityDetail?.modality?.selected_pax;
+    const enteredChildren = (otherGuestDetail || []).filter(
+        (g) => g.type === 'CH' || g.type === 'IN'
+    );
+    const details = [];
+
+    if (Array.isArray(selectedPax) && selectedPax.length > 0) {
+        for (const pax of selectedPax) {
+            if (pax.paxType !== 'CHILD' && pax.paxType !== 'INFANT') continue;
+            const qty = Number(pax.quantity || 0);
+            const age = resolveChildAge(pax.ageTo, pax.ageFrom);
+            for (let i = 0; i < qty; i++) {
+                const matchIdx = enteredChildren.findIndex(
+                    (g) => g.ageFrom === pax.ageFrom && g.ageTo === pax.ageTo
+                );
+                let first_name = '';
+                let last_name = '';
+                if (matchIdx >= 0) {
+                    const guest = enteredChildren.splice(matchIdx, 1)[0];
+                    first_name = guest.firstName?.trim() || '';
+                    last_name = guest.lastName?.trim() || '';
+                }
+                details.push({ age, first_name, last_name });
+            }
+        }
+        return details;
+    }
+
+    const childrenCount = Number(activityDetail?.children || 0);
+    for (let i = 0; i < childrenCount; i++) {
+        const guest = enteredChildren[i];
+        details.push({
+            age: resolveChildAge(guest?.ageTo, guest?.ageFrom),
+            first_name: guest?.firstName?.trim() || '',
+            last_name: guest?.lastName?.trim() || '',
+        });
+    }
+    return details;
+}
+
+/** Next child/infant age band still needing a guest slot. */
+function getNextPaxSlot(activityDetail, otherGuestDetail, guestType) {
+    const selectedPax = activityDetail?.modality?.selected_pax;
+    if (!Array.isArray(selectedPax) || !selectedPax.length) {
+        return { firstName: '', lastName: '', gender: 'male', type: guestType, ageFrom: null, ageTo: null };
+    }
+
+    const targetPaxTypes =
+        guestType === 'CH' ? ['CHILD'] :
+        guestType === 'IN' ? ['INFANT'] :
+        ['ADULT', 'SENIOR'];
+
+    for (const pax of selectedPax) {
+        if (!targetPaxTypes.includes(pax.paxType)) continue;
+        const needed = Number(pax.quantity || 0);
+        const used = otherGuestDetail.filter(
+            (g) =>
+                g.type === guestType &&
+                g.ageFrom === pax.ageFrom &&
+                g.ageTo === pax.ageTo
+        ).length;
+        const leadOffset =
+            guestType === 'AD' && (pax.paxType === 'ADULT' || pax.paxType === 'SENIOR')
+                ? (selectedPax.findIndex(
+                      (p) => p.paxType === 'ADULT' || p.paxType === 'SENIOR'
+                  ) === selectedPax.indexOf(pax)
+                    ? 1
+                    : 0)
+                : 0;
+        if (used + leadOffset < needed) {
+            return buildGuestFromPax(pax, guestType);
+        }
+    }
+
+    return { firstName: '', lastName: '', gender: 'male', type: guestType, ageFrom: null, ageTo: null };
+}
 
 /** Mr/Master → male; Mrs/Miss/Ms → female; Dr (and empty) → null (manual). */
 function genderFromTitle(title) {
@@ -125,16 +233,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
         terms: false,
     });
     const [bookingOptionDetails, setBookingOptionDetails] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('card');
     const handleCheckoutRef = useRef(null);
-
-    const bankInfo = {
-        accountName: "UmrahTech Ltd",
-        accountNumber: "58516868",
-        // iban: "GB29NWBK60161331926819",
-        sortcode: "309950",
-        // branch: "London Branch",
-    };
 
     useEffect(() => {
         setTotalPersons({
@@ -392,9 +491,15 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
         }
         setOtherGuestError([])
         if (currentAdults < totalPersons?.adults) {
-            setOtherGuestDetail([...otherGuestDetail, { firstName: '', lastName: '', gender: 'male', type: 'AD' }]);
+            setOtherGuestDetail([
+                ...otherGuestDetail,
+                getNextPaxSlot(activityDetail, otherGuestDetail, 'AD'),
+            ]);
         } else if (currentChildren < totalPersons?.children) {
-            setOtherGuestDetail([...otherGuestDetail, { firstName: '', lastName: '', gender: 'male', type: 'CH' }]);
+            setOtherGuestDetail([
+                ...otherGuestDetail,
+                getNextPaxSlot(activityDetail, otherGuestDetail, 'CH'),
+            ]);
         }
 
     };
@@ -451,8 +556,6 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
             NewOtherPassenger = convertPassengers(otherGuestDetail);
         }
 
-        const selectedPaymentMethod = paymentMethod === 'bank' ? 'bank_transfer' : 'stripe';
-
         // Calculate currency conversion
         const packageCurrency = activityDetail?.currency;
         const grandTotal = Number(activityDetail?.grand_total);
@@ -476,6 +579,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
             customerTotalAfterDiscount = grandTotal;
         }
 
+        const modality = activityDetail?.modality;
         const request = {
             activity_id: activityDetail?.id,
             currency_uuid: currencyKey,
@@ -491,16 +595,21 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
             lead_gender: formData?.gender,
             travel_date: activityDetail?.travel_date,
             adults: activityDetail?.adults,
-            adult_price: (Number(activityDetail?.adults) * Number(activityDetail?.price_per_adult)).toFixed(2),
+            adult_price: (Number(activityDetail?.adults) * Number(activityDetail?.price_per_adult || 0)).toFixed(2),
             children: activityDetail?.children,
-            child_price: (Number(activityDetail?.children) * Number(activityDetail?.price_per_child)).toFixed(2),
+            child_price: (Number(activityDetail?.children) * Number(activityDetail?.price_per_child || 0)).toFixed(2),
             grand_total: grandTotal,
             other_passengers: NewOtherPassenger,
             customer_currency: customerCurrency,
             customer_exchange_rate: customerExchangeRate,
             customer_total: customerTotalAfterDiscount,
             additional_services: activityDetail?.selected_services || [],
-            payment_method: selectedPaymentMethod,
+            payment_method: 'stripe',
+            provider: activityDetail?.provider,
+            language: modality?.language?.code || modality?.language?.description || 'en',
+            ...(modality?.code ? { modality_code: modality.code } : {}),
+            ...(modality?.rate_key ? { rate_key: modality.rate_key } : {}),
+            children_details: buildChildrenDetails(activityDetail, otherGuestDetail),
         };
 
         try {
@@ -517,18 +626,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
             if (bookingOk) {
                 await new Promise(resolve => setTimeout(resolve, 800));
                 setConfirmStatus("reserve");
-                if (selectedPaymentMethod === 'bank_transfer') {
-                    const bookingRef =
-                        content?.booking?.booking_reference ||
-                        content?.booking_reference;
-                    setConfirmStatus("success");
-                    setTimeout(() => {
-                        setLoading(false);
-                        router.push(`/activities/voucher/${bookingRef}`);
-                    }, 800);
-                } else {
-                    await handlePayment(content);
-                }
+                await handlePayment(content);
             } else {
                 setLoaderError(response?.error?.message || response?.Description || "Booking failed. Please try again.");
                 setConfirmStatus("error");
@@ -871,6 +969,9 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                                 {(item.type === 'CH' || item.type === 'IN') && (
                                     <span className="guest-type-badge">
                                         {item.type === 'CH' ? 'Child' : 'Infant'}
+                                        {formatAgeRange(item.ageFrom, item.ageTo)
+                                          ? ` ${formatAgeRange(item.ageFrom, item.ageTo)}`
+                                          : ''}
                                     </span>
                                 )}
                             </h6>
@@ -950,7 +1051,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                 </div>
             </div>
 
-            {/* Payment Method */}
+            {/* Payment Method — card only */}
             <div className="checkout-form-card">
                 <div className="checkout-form-card-header">
                     <div className="checkout-form-card-icon">
@@ -958,42 +1059,24 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                     </div>
                     <div>
                         <h5>Payment Method</h5>
-                        <p>Choose how you would like to pay</p>
+                        <p>Pay securely with your debit or credit card</p>
                     </div>
                 </div>
 
                 <div className="payment-method-grid">
                     <button
                         type="button"
-                        className={`payment-method-btn ${paymentMethod === 'card' ? 'payment-method-btn-active' : ''}`}
-                        onClick={() => setPaymentMethod('card')}
+                        className="payment-method-btn payment-method-btn-active"
                     >
                         <IoCardOutline />
                         Debit / Credit Card
                     </button>
-                    <button
-                        type="button"
-                        className={`payment-method-btn ${paymentMethod === 'bank' ? 'payment-method-btn-active' : ''}`}
-                        onClick={() => setPaymentMethod('bank')}
-                    >
-                        <BsBank2 />
-                        Bank Transfer
-                    </button>
                 </div>
 
-                {paymentMethod === 'card' ? (
-                    <p className="payment-method-note">
-                        All card details are encrypted and processed through a secure payment gateway.
-                        Your information remains completely safe and protected.
-                    </p>
-                ) : (
-                    <div className="payment-method-note">
-                        <p className="mb-2"><strong>Bank Transfer Details</strong></p>
-                        <p className="mb-1">Account Name: {bankInfo.accountName}</p>
-                        <p className="mb-1">Account Number: {bankInfo.accountNumber}</p>
-                        <p className="mb-0">Sort Code: {bankInfo.sortcode}</p>
-                    </div>
-                )}
+                <p className="payment-method-note">
+                    All card details are encrypted and processed through a secure payment gateway.
+                    Your information remains completely safe and protected.
+                </p>
             </div>
 
             <button
@@ -1002,11 +1085,7 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                 onClick={handleCheckout}
                 disabled={loading}
             >
-                {loading
-                    ? 'Processing...'
-                    : paymentMethod === 'bank'
-                        ? 'Confirm Booking'
-                        : 'Pay Securely with Card'}
+                {loading ? 'Processing...' : 'Pay Securely with Card'}
             </button>
 
         </div>

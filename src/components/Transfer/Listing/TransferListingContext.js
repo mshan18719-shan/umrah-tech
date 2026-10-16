@@ -60,14 +60,38 @@ export function TransferListProvider({ children, transfers }) {
             // Extract unique values for filters
             const vehicleNames = [...new Set(transferListNew.map((t) => t.vehicle_details?.name))];
             const categories = [...new Set(transferListNew.map((t) => t.vehiclecategory?.name))];
-            const transmissions = [...new Set(transferListNew.map((t) => t.vehicle_details?.transmission_type))];
+            const isCustomTransfer = (t) =>
+                String(t?.provider || "").toLowerCase() === "custom" ||
+                String(t?.transfer_type_code || "").toUpperCase() === "CUSTOM";
+
+            // Transmission filter only applies to custom-provider vehicles
+            const transmissions = [
+                ...new Set(
+                    transferListNew
+                        .filter(isCustomTransfer)
+                        .map((t) => t.vehicle_details?.transmission_type)
+                        .filter(Boolean)
+                ),
+            ];
 
             setVehicleNames(vehicleNames);
             setAvailableCategories(categories);
             setAvailableTransmissions(transmissions);
             setConvertedTransfers(transferListNew);
         } else {
+            // New search cleared list → reset filters
             setConvertedTransfers([]);
+            setSearch(null);
+            setVehicleCategory([]);
+            setTransmissionType([]);
+            setPassengerCapacity([]);
+            setLuggageCapacity([]);
+            setSort("price-asc");
+            setCurrentPage(1);
+            setPriceRange([0, 0]);
+            setMinPrice(0);
+            setMaxPrice(0);
+            setResetPrice((prev) => prev + 1);
         }
     }, [transfers, rates, currency]);
 
@@ -105,11 +129,15 @@ export function TransferListProvider({ children, transfers }) {
             );
         }
 
-        // Transmission Type filter
+        // Transmission Type filter (custom provider only)
         if (transmissionType.length > 0) {
-            result = result.filter((t) =>
-                transmissionType.includes(t.vehicle_details?.transmission_type)
-            );
+            result = result.filter((t) => {
+                const isCustom =
+                    String(t?.provider || "").toLowerCase() === "custom" ||
+                    String(t?.transfer_type_code || "").toUpperCase() === "CUSTOM";
+                if (!isCustom) return true;
+                return transmissionType.includes(t.vehicle_details?.transmission_type);
+            });
         }
 
         // Passenger Capacity filter
