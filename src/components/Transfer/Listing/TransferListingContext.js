@@ -23,8 +23,8 @@ export function TransferListProvider({ children, transfers }) {
     const [resetPrice, setResetPrice] = useState(0);
     const [priceRange, setPriceRange] = useState([0, 0]);
     
-    // Pagination
-    const [currentPage, setCurrentPage] = useState(1);
+    // Infinite scroll pagination
+    const [visibleCount, setVisibleCount] = useState(10);
     const itemsPerPage = 10;
     
     // Available options
@@ -87,7 +87,7 @@ export function TransferListProvider({ children, transfers }) {
             setPassengerCapacity([]);
             setLuggageCapacity([]);
             setSort("price-asc");
-            setCurrentPage(1);
+            setVisibleCount(10);
             setPriceRange([0, 0]);
             setMinPrice(0);
             setMaxPrice(0);
@@ -104,7 +104,7 @@ export function TransferListProvider({ children, transfers }) {
         setSort("price-asc");
         setPriceRange([minPrice, maxPrice]);
         setResetPrice(resetPrice + 1);
-        setCurrentPage(1);
+        setVisibleCount(10);
     };
 
     const filteredTransfers = useMemo(() => {
@@ -175,16 +175,24 @@ export function TransferListProvider({ children, transfers }) {
         return result;
     }, [convertedTransfers, search, priceRange, vehicleCategory, transmissionType, passengerCapacity, luggageCapacity, sort]);
 
-    const totalPages = Math.ceil(filteredTransfers.length / itemsPerPage);
-    const paginatedTransfers = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredTransfers.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredTransfers, currentPage]);
+    useEffect(() => {
+        setVisibleCount(10);
+    }, [search, priceRange, vehicleCategory, transmissionType, passengerCapacity, luggageCapacity, sort]);
+
+    const visibleTransfers = useMemo(() => {
+        return filteredTransfers.slice(0, visibleCount);
+    }, [filteredTransfers, visibleCount]);
+
+    const hasMore = visibleCount < filteredTransfers.length;
+
+    const loadMore = () => {
+        setVisibleCount((prev) => Math.min(prev + itemsPerPage, filteredTransfers.length));
+    };
 
     return (
         <TransferListContext.Provider
             value={{
-                transfers: paginatedTransfers,
+                transfers: visibleTransfers,
                 totalTransfers: filteredTransfers.length,
                 setSearch,
                 setPriceRange,
@@ -193,9 +201,8 @@ export function TransferListProvider({ children, transfers }) {
                 setPassengerCapacity,
                 setLuggageCapacity,
                 setSort,
-                totalPages,
-                currentPage,
-                setCurrentPage,
+                hasMore,
+                loadMore,
                 itemsPerPage,
                 minPrice,
                 maxPrice,

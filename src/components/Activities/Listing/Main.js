@@ -18,6 +18,7 @@ import { notifications } from "@mantine/notifications";
 import FilterSection from "./FilterSection";
 import styles from "./Activities.module.css";
 import ActivityLoader from "./ActivityLoader";
+import UmrahPagination from "@/components/UmrahGetAway/Listing/UmrahPagination";
 
 const GOOGLE_MAPS_LIBRARIES = ['places'];
 const ACTIVITY_LISTING_RETURN_URL_KEY = 'activity_listing_return_url';
@@ -105,6 +106,8 @@ function Main() {
   const { currency, rates } = useCurrency();
   const [isLoading, setIsLoading] = useState(true);
   const [activityList, setActivityList] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const itemsPerPage = 10;
 
   // Filter states
   const [priceRange, setPriceRange] = useState([0, 500]);
@@ -571,6 +574,21 @@ function Main() {
     return filtered;
   }, [activityList, priceRange, activeFilters, sortBy, getDisplayPrice]);
 
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [activityList, priceRange, activeFilters, sortBy]);
+
+  const visibleActivities = React.useMemo(
+    () => filteredActivities.slice(0, visibleCount),
+    [filteredActivities, visibleCount]
+  );
+
+  const hasMore = visibleCount < filteredActivities.length;
+
+  const loadMore = () => {
+    setVisibleCount((prev) => Math.min(prev + itemsPerPage, filteredActivities.length));
+  };
+
   const renderSearchFields = (onSearchDone) => (
     <div className={styles.searchContainer}>
       <div className={styles.searchInputWrapper} ref={searchRef}>
@@ -883,113 +901,116 @@ function Main() {
                   <p>No experiences match your filters</p>
                 </div>
               ) : (
-                <div className={styles.activitiesGrid}>
-                  {filteredActivities.map((item, index) => {
-                    const locationText = [item.city, item.country].filter(Boolean).join(', ');
-                    const activityType = formatActivityType(item.type);
-                    const description = getActivityDescription(item);
-                    const ratingValue = Number(item.rating_stars);
-                    const showFreeCancellation = hasFreeCancellation(item, selectedDate);
-                    const hasChildPrice = Number(item?.child_sale_price) > 0;
+                <>
+                  <div className={styles.activitiesGrid}>
+                    {visibleActivities.map((item, index) => {
+                      const locationText = [item.city, item.country].filter(Boolean).join(', ');
+                      const activityType = formatActivityType(item.type);
+                      const description = getActivityDescription(item);
+                      const ratingValue = Number(item.rating_stars);
+                      const showFreeCancellation = hasFreeCancellation(item, selectedDate);
+                      const hasChildPrice = Number(item?.child_sale_price) > 0;
 
-                    return (
-                      <div className={styles.activityCard} key={item.id || item.slug || index}>
-                        <div className={styles.cardImageWrap}>
-                          <Image
-                            src={item?.featured_image || item?.banner_image || '/images/placeholder.jpg'}
-                            width={400}
-                            height={300}
-                            alt={item.title}
-                            className={styles.cardImage}
-                          />
-                          {String(item?.provider || '').toLowerCase() === 'custom' && (
-                            <span className={styles.customBadge}>CA</span>
-                          )}
-                          {Number.isFinite(ratingValue) && ratingValue > 0 && (
-                            <span className={styles.ratingBadge}>
-                              <FaStar />
-                              {ratingValue % 1 === 0 ? ratingValue.toFixed(0) : ratingValue.toFixed(1)}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className={styles.cardBody}>
-                          <h3 className={styles.cardActivityTitle}>{item.title}</h3>
-
-                          {locationText && (
-                            <div className={styles.locationRow} title={locationText}>
-                              <IoLocationSharp className={styles.locationIcon} />
-                              <span className={styles.locationText}>{locationText}</span>
-                            </div>
-                          )}
-
-                          {description && (
-                            <p className={styles.cardDescription} title={description}>
-                              {description}
-                            </p>
-                          )}
-
-                          <div className={styles.featureTags}>
-                            {item.activity_duration && (
-                              <span className={styles.featureTag}>
-                                <IoTimeOutline />
-                                {item.activity_duration}
-                              </span>
+                      return (
+                        <div className={styles.activityCard} key={item.id || item.slug || index}>
+                          <div className={styles.cardImageWrap}>
+                            <Image
+                              src={item?.featured_image || item?.banner_image || '/images/placeholder.jpg'}
+                              width={400}
+                              height={300}
+                              alt={item.title}
+                              className={styles.cardImage}
+                            />
+                            {String(item?.provider || '').toLowerCase() === 'custom' && (
+                              <span className={styles.customBadge}>CA</span>
                             )}
-                            {item.type && (
-                              <span className={styles.featureTag}>
-                                <HiTicket />
-                                {activityType}
-                              </span>
-                            )}
-                            {showFreeCancellation && (
-                              <span className={`${styles.featureTag} ${styles.freeCancelTag}`}>
-                                <IoCheckmarkCircle />
-                                Free Cancellation
+                            {Number.isFinite(ratingValue) && ratingValue > 0 && (
+                              <span className={styles.ratingBadge}>
+                                <FaStar />
+                                {ratingValue % 1 === 0 ? ratingValue.toFixed(0) : ratingValue.toFixed(1)}
                               </span>
                             )}
                           </div>
 
-                          <div className={styles.cardFooter}>
-                            <div className={styles.priceBlock}>
-                              <div className={hasChildPrice ? styles.priceRow : undefined}>
-                                <div className={styles.priceItem}>
-                                  <span className={styles.cardPriceLabel}>Per Person</span>
-                                  <p className={styles.cardPriceValue}>
-                                    <PriceDisplay price={item?.sale_price} currency={item?.currency_code} />
-                                  </p>
-                                </div>
-                                {hasChildPrice && (
+                          <div className={styles.cardBody}>
+                            <h3 className={styles.cardActivityTitle}>{item.title}</h3>
+
+                            {locationText && (
+                              <div className={styles.locationRow} title={locationText}>
+                                <IoLocationSharp className={styles.locationIcon} />
+                                <span className={styles.locationText}>{locationText}</span>
+                              </div>
+                            )}
+
+                            {description && (
+                              <p className={styles.cardDescription} title={description}>
+                                {description}
+                              </p>
+                            )}
+
+                            <div className={styles.featureTags}>
+                              {item.activity_duration && (
+                                <span className={styles.featureTag}>
+                                  <IoTimeOutline />
+                                  {item.activity_duration}
+                                </span>
+                              )}
+                              {item.type && (
+                                <span className={styles.featureTag}>
+                                  <HiTicket />
+                                  {activityType}
+                                </span>
+                              )}
+                              {showFreeCancellation && (
+                                <span className={`${styles.featureTag} ${styles.freeCancelTag}`}>
+                                  <IoCheckmarkCircle />
+                                  Free Cancellation
+                                </span>
+                              )}
+                            </div>
+
+                            <div className={styles.cardFooter}>
+                              <div className={styles.priceBlock}>
+                                <div className={hasChildPrice ? styles.priceRow : undefined}>
                                   <div className={styles.priceItem}>
-                                    <span className={styles.cardPriceLabel}>Child</span>
+                                    <span className={styles.cardPriceLabel}>Per Person</span>
                                     <p className={styles.cardPriceValue}>
-                                      <PriceDisplay price={item.child_sale_price} currency={item?.currency_code} />
+                                      <PriceDisplay price={item?.sale_price} currency={item?.currency_code} />
                                     </p>
                                   </div>
-                                )}
+                                  {hasChildPrice && (
+                                    <div className={styles.priceItem}>
+                                      <span className={styles.cardPriceLabel}>Child</span>
+                                      <p className={styles.cardPriceValue}>
+                                        <PriceDisplay price={item.child_sale_price} currency={item?.currency_code} />
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                <span className={styles.cardPriceNote}>VAT &amp; taxes included</span>
                               </div>
-                              <span className={styles.cardPriceNote}>VAT &amp; taxes included</span>
+                              <Link
+                                href={`/activities/${item.slug}?from=${moment(selectedDate).format('YYYY-MM-DD')}&to=${moment(selectedDate).format('YYYY-MM-DD')}&language=en`}
+                                className={styles.selectBtn}
+                                onClick={() => {
+                                  if (typeof window !== 'undefined') {
+                                    sessionStorage.setItem(
+                                      ACTIVITY_LISTING_RETURN_URL_KEY,
+                                      window.location.pathname + window.location.search
+                                    );
+                                  }
+                                }}
+                              >
+                                View Details
+                              </Link>
                             </div>
-                            <Link
-                              href={`/activities/${item.slug}?from=${moment(selectedDate).format('YYYY-MM-DD')}&to=${moment(selectedDate).format('YYYY-MM-DD')}&language=en`}
-                              className={styles.selectBtn}
-                              onClick={() => {
-                                if (typeof window !== 'undefined') {
-                                  sessionStorage.setItem(
-                                    ACTIVITY_LISTING_RETURN_URL_KEY,
-                                    window.location.pathname + window.location.search
-                                  );
-                                }
-                              }}
-                            >
-                              View Details
-                            </Link>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                  <UmrahPagination hasMore={hasMore} onLoadMore={loadMore} />
+                </>
               )}
             </div>
           </div>

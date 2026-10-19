@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PackageCard from './PackageCard';
 import PackageCardLoader from '../Loader/PackageCardLoader';
 import { useSearchParams, useParams } from 'next/navigation';
-import PackagePagination from './PackagePagination';
 import Link from 'next/link';
 import { FaHome } from 'react-icons/fa';
 import Filter from './Filter';
 import PackageSort, { sortPackages } from './PackageSort';
+import UmrahPagination from '@/components/UmrahGetAway/Listing/UmrahPagination';
 
 function formatCategoryLabel(slug) {
     if (!slug) return 'packages';
@@ -24,25 +24,44 @@ export default function PackageList({ category_slug }) {
     const [packageResponse, setPackageResponse] = useState({});
     const [packageList, setPackageList] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [progress, setProgress] = useState(0);
     const [sort, setSort] = useState('price-asc');
+    const [visibleCount, setVisibleCount] = useState(10);
+    const [apiPage, setApiPage] = useState(1);
+    const [lastApiPage, setLastApiPage] = useState(1);
+    const itemsPerPage = 10;
+    const loadingMoreRef = useRef(false);
 
     const resolvedSlug =
         category_slug === 'umrah-packages'
             ? category_slug
             : category_slug || params?.slug;
 
+    const buildQuery = useCallback(
+        (page) => {
+            const queryParams = new URLSearchParams(searchParams.toString());
+            queryParams.delete('_ts');
+            queryParams.delete('page');
+            queryParams.set('page', String(page));
+            return queryParams.toString();
+        },
+        [searchParams]
+    );
+
     useEffect(() => {
         async function getPackages() {
             setIsLoading(true);
             setProgress(0);
+            setVisibleCount(10);
+            setApiPage(1);
+            setLastApiPage(1);
+            setPackageList([]);
             const progressInterval = setInterval(() => {
                 setProgress((prev) => (prev < 90 ? prev + 10 : prev));
             }, 200);
             try {
-                const queryParams = new URLSearchParams(searchParams.toString());
-                queryParams.delete('_ts');
-                const query = queryParams.toString();
+                const query = buildQuery(1);
                 const res = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/packages/search?category_slug=${resolvedSlug}${query ? `&${query}` : ''}`,
                     {
@@ -57,8 +76,12 @@ export default function PackageList({ category_slug }) {
                 setProgress(100);
                 setIsLoading(false);
                 if (response.Success) {
-                    setPackageResponse(response?.Content);
-                    setPackageList(response?.Content?.packages || []);
+                    const content = response?.Content || {};
+                    const pagination = content?.pagination || {};
+                    setPackageResponse(content);
+                    setPackageList(content?.packages || []);
+                    setApiPage(Number(pagination.current_page) || 1);
+                    setLastApiPage(Number(pagination.last_page) || 1);
                 } else {
                     setPackageResponse({});
                     setPackageList([]);
@@ -70,12 +93,75 @@ export default function PackageList({ category_slug }) {
             }
         }
         getPackages();
-    }, [searchParams, resolvedSlug]);
+    }, [searchParams, resolvedSlug, buildQuery]);
 
     const sortedPackages = useMemo(
         () => sortPackages(packageList, sort),
         [packageList, sort]
     );
+
+    useEffect(() => {
+        setVisibleCount(10);
+    }, [sort, searchParams, resolvedSlug]);
+
+    const visiblePackages = useMemo(
+        () => sortedPackages.slice(0, visibleCount),
+        [sortedPackages, visibleCount]
+    );
+
+    const hasMoreLocal = visibleCount < sortedPackages.length;
+    const hasMoreApi = apiPage < lastApiPage;
+    const hasMore = hasMoreLocal || hasMoreApi;
+
+    const loadMore = useCallback(async () => {
+        if (hasMoreLocal) {
+            setVisibleCount((prev) => Math.min(prev + itemsPerPage, sortedPackages.length));
+            return;
+        }
+
+        if (!hasMoreApi || loadingMoreRef.current) return;
+
+        loadingMoreRef.current = true;
+        setIsLoadingMore(true);
+        try {
+            const nextPage = apiPage + 1;
+            const query = buildQuery(nextPage);
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/packages/search?category_slug=${resolvedSlug}${query ? `&${query}` : ''}`,
+                {
+                    cache: 'no-store',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+            const response = await res.json();
+            if (response.Success) {
+                const content = response?.Content || {};
+                const pagination = content?.pagination || {};
+                const nextPackages = content?.packages || [];
+                setPackageList((prev) => [...prev, ...nextPackages]);
+                setApiPage(Number(pagination.current_page) || nextPage);
+                setLastApiPage(Number(pagination.last_page) || lastApiPage);
+                setPackageResponse(content);
+                setVisibleCount((prev) => prev + Math.min(itemsPerPage, nextPackages.length || itemsPerPage));
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            loadingMoreRef.current = false;
+            setIsLoadingMore(false);
+        }
+    }, [
+        hasMoreLocal,
+        hasMoreApi,
+        sortedPackages.length,
+        apiPage,
+        lastApiPage,
+        buildQuery,
+        resolvedSlug,
+        itemsPerPage,
+    ]);
 
     const total = packageResponse?.pagination?.total ?? packageList.length;
     const categoryLabel = formatCategoryLabel(resolvedSlug);
@@ -156,10 +242,11 @@ export default function PackageList({ category_slug }) {
                                 </div>
                             ) : (
                                 <div>
-                                    <PackageCard packageList={sortedPackages} />
-                                    {packageResponse?.pagination?.last_page > 1 && (
-                                        <PackagePagination pdata={packageResponse.pagination} />
-                                    )}
+                                    <PackageCard packageList={visiblePackages} />
+                                    <UmrahPagination
+                                        hasMore={hasMore || isLoadingMore}
+                                        onLoadMore={loadMore}
+                                    />
                                 </div>
                             )}
                         </div>
