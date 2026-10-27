@@ -16,23 +16,18 @@ import moment from "moment";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const CURRENCY_OPTIONS = [
-  { value: "GBP", label: "GBP" },
-  { value: "EUR", label: "EUR" },
-  { value: "USD", label: "USD" },
-  { value: "SAR", label: "SAR" },
-];
+import { useCurrency } from "@/util/currency";
 
 function page() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { rates, currency: defaultCurrency } = useCurrency();
   const [invoiceNo, setInvoiceNo] = useState("");
   const [bookingref, setBookingRef] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [currency, setCurrency] = useState("GBP");
+  const [currency, setCurrency] = useState("");
   const [image, setImage] = useState(null);
   const [date, setDate] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -41,6 +36,16 @@ function page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingids, setBookingIds] = useState([]);
   const fileRef = useRef(null);
+
+  const currencyOptions = Object.keys(rates || {})
+    .sort()
+    .map((code) => ({ value: code, label: code }));
+
+  useEffect(() => {
+    if (!currency && defaultCurrency) {
+      setCurrency(defaultCurrency);
+    }
+  }, [defaultCurrency, currency]);
 
   useEffect(() => {
     const { email, otp } = session.user;
@@ -295,11 +300,12 @@ function page() {
                 </label>
                 <input
                   type="number"
-                  className="mp-text-input"
+                  className="mp-text-input mp-amount-input"
                   name="payment_amount"
                   placeholder="e.g. 250.00"
                   min="0"
                   step="0.01"
+                  inputMode="decimal"
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                 />
@@ -316,12 +322,19 @@ function page() {
                 </label>
                 <Select
                   placeholder="Select currency..."
-                  value={currency}
-                  onChange={(value) => setCurrency(value || "GBP")}
+                  value={currency || null}
+                  onChange={(value) => setCurrency(value || "")}
+                  searchable
+                  clearable
+                  nothingFoundMessage="No currency found"
                   data={
-                    CURRENCY_OPTIONS.some((c) => c.value === currency)
-                      ? CURRENCY_OPTIONS
-                      : [...CURRENCY_OPTIONS, { value: currency, label: currency }]
+                    currency &&
+                    !currencyOptions.some((c) => c.value === currency)
+                      ? [
+                          ...currencyOptions,
+                          { value: currency, label: currency },
+                        ]
+                      : currencyOptions
                   }
                   classNames={{ input: "mp-mantine-input" }}
                 />

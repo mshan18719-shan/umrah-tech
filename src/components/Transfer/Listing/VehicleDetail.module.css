@@ -212,6 +212,13 @@
   line-height: 1.4;
 }
 
+.vehicleNameUnderInfo {
+  margin: 0.65rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #6B7A99;
+}
+
 .statCard {
   background: #f8fafc;
   border: 1px solid #eef1f6;

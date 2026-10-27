@@ -4,6 +4,7 @@ import moment from 'moment'
 import { BiCalendarCheck } from 'react-icons/bi'
 import { IoCheckmarkCircleOutline } from 'react-icons/io5'
 import PriceDisplay from '@/components/Currency/PriceDisplay'
+import { getCancellationDisplay } from './cancellationPolicyUtils'
 import styles from './ModalityOptions.module.css'
 
 const PAX_LABELS = {
@@ -21,8 +22,10 @@ function formatSessionLabel(codeOrName) {
 
 function formatDuration(duration) {
   if (!duration?.value) return null
-  const metric = String(duration.metric || '').toLowerCase()
   const value = duration.value
+  if (duration.metric == null || duration.metric === '') return String(value)
+  const metric = String(duration.metric).toLowerCase()
+  if (metric === 'null' || metric === 'undefined') return String(value)
   if (metric.includes('day')) return `${value} day${value > 1 ? 's' : ''}`
   if (metric.includes('hour')) return `${value} hour${value > 1 ? 's' : ''}`
   if (metric.includes('min')) return `${value} min`
@@ -186,6 +189,14 @@ function getPaxKey(pax) {
   return `${pax.paxType}_${pax.ageFrom ?? 'x'}_${pax.ageTo ?? 'x'}`
 }
 
+function getServiceLineTotal(service) {
+  if (!service) return 0
+  if (service.type === 'per_person') {
+    return Number(service.quantity || 0) * Number(service.price || 0)
+  }
+  return Number(service.total ?? service.price ?? 0)
+}
+
 export default function ModalityOptions({
   modalities = [],
   currency,
@@ -199,6 +210,8 @@ export default function ModalityOptions({
   onSelectTime = null,
   /** Hide internal time pills when Availability shows sessions */
   hideTimeSection = false,
+  /** Optional add-ons selected above modality options (custom activities) */
+  selectedServices = [],
 }) {
   const [internalTime, setInternalTime] = useState(null)
   const [selectedCode, setSelectedCode] = useState(null)
@@ -249,12 +262,15 @@ export default function ModalityOptions({
     [modalities, selectedCode]
   )
 
-  // Activity-level policy (same for all modalities) — modality rates often have no cancel data
-  const sharedCancelDeadline = useMemo(() => {
+  const cancellationDisplay = useMemo(() => {
+    if (cancellationPolicy) {
+      return getCancellationDisplay(cancellationPolicy, selectedDate)
+    }
+    // Fallback: free-cancel deadline from activity hours-based policy
     const fromActivity = getFreeCancelDeadlineFromActivity(cancellationPolicy, selectedDate)
-    if (fromActivity) return fromActivity
-
-    // Fallback: modality operation_dates dateFrom if present
+    if (fromActivity) {
+      return { kind: 'free', deadlineLabel: fromActivity.format('MMMM D') }
+    }
     let earliest = null
     modalities.forEach((m) => {
       const sessions = getModalitySessions(m)
@@ -267,7 +283,10 @@ export default function ModalityOptions({
         if (!earliest || d.isBefore(earliest)) earliest = d
       })
     })
-    return earliest
+    if (earliest) {
+      return { kind: 'free', deadlineLabel: earliest.format('MMMM D') }
+    }
+    return null
   }, [cancellationPolicy, selectedDate, modalities])
 
   const modalitySessions = useMemo(
@@ -339,13 +358,24 @@ export default function ModalityOptions({
     })
   }, [selectedModality, selectedTime, selectedLanguage])
 
-  const totalAmount = useMemo(() => {
+  const ticketsTotal = useMemo(() => {
     if (!selectedModality) return 0
     return activePaxAmounts.reduce((sum, pax) => {
       const qty = quantities[getPaxKey(pax)] || 0
       return sum + qty * Number(pax.amount || 0)
     }, 0)
   }, [selectedModality, activePaxAmounts, quantities])
+
+  const servicesTotal = useMemo(
+    () =>
+      (Array.isArray(selectedServices) ? selectedServices : []).reduce(
+        (sum, service) => sum + getServiceLineTotal(service),
+        0
+      ),
+    [selectedServices]
+  )
+
+  const totalAmount = ticketsTotal + servicesTotal
 
   const totalTickets = useMemo(
     () => Object.values(quantities).reduce((sum, q) => sum + (q || 0), 0),
@@ -428,7 +458,7 @@ export default function ModalityOptions({
       selected_pax: selectedPax,
       adults,
       children,
-      participants_total: totalAmount,
+      participants_total: ticketsTotal,
       price_per_adult: pricePerAdult,
       price_per_child: pricePerChild,
       cancellation_policies:
@@ -440,7 +470,7 @@ export default function ModalityOptions({
   }
 
   const renderCancellation = () => {
-    if (!sharedCancelDeadline) {
+    if (!cancellationDisplay) {
       return (
         <div className={styles.cancelBlock}>
           <BiCalendarCheck size={20} className={styles.cancelIcon} />
@@ -452,13 +482,29 @@ export default function ModalityOptions({
       )
     }
 
+    if (cancellationDisplay.kind === 'free') {
+      return (
+        <div className={styles.cancelBlock}>
+          <BiCalendarCheck size={20} className={styles.cancelIcon} />
+          <div>
+            <p className={styles.cancelTitle}>Free cancellation available</p>
+            <p className={styles.cancelText}>
+              {cancellationDisplay.deadlineLabel
+                ? `Cancel for free before ${cancellationDisplay.deadlineLabel} for a full refund`
+                : 'Cancel for free for a full refund'}
+            </p>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className={styles.cancelBlock}>
         <BiCalendarCheck size={20} className={styles.cancelIcon} />
         <div>
-          <p className={styles.cancelTitle}>Free cancellation available</p>
+          <p className={styles.cancelTitle}>Non refundable</p>
           <p className={styles.cancelText}>
-            Cancel for free before {sharedCancelDeadline.format('MMMM D')} for a full refund
+            This option is non-refundable. No refund will be issued for cancellations.
           </p>
         </div>
       </div>
@@ -613,7 +659,37 @@ export default function ModalityOptions({
           )}
 
           <div className={styles.footer}>
-            <div>
+            <div className={styles.footerPriceBlock}>
+              {selectedServices?.length > 0 && (
+                <div className={styles.footerBreakdown}>
+                  <div className={styles.footerBreakdownRow}>
+                    <span>Tickets</span>
+                    <span>
+                      <PriceDisplay price={ticketsTotal} currency={currency} />
+                    </span>
+                  </div>
+                  {selectedServices.map((service, index) => {
+                    const lineTotal = getServiceLineTotal(service)
+                    if (!(lineTotal > 0)) return null
+                    const qty = Number(service.quantity || 1)
+                    return (
+                      <div
+                        key={service.name || index}
+                        className={styles.footerBreakdownRow}
+                      >
+                        <span>
+                          {service.name || 'Add-on'}
+                          {service.type === 'per_person' && qty > 1 ? ` × ${qty}` : ''}
+                        </span>
+                        <span>
+                          +
+                          <PriceDisplay price={lineTotal} currency={currency} />
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
               <p className={styles.totalLabel}>
                 Total <PriceDisplay price={totalAmount} currency={currency} />
               </p>

@@ -224,10 +224,10 @@ export default function Page() {
                         </div>
                         <div className={styles.brandContact}>
                             <span className={styles.brandContactItem}>
-                                <FaPhone size={12} /> 01217772522
+                                <FaPhone size={12} /> +1234567890
                             </span>
                             <span className={styles.brandContactItem}>
-                                <FaEnvelope size={12} /> info@umrahtech.net
+                                <FaEnvelope size={12} /> info@Umrahtech.com
                             </span>
                         </div>
                     </header>
@@ -872,8 +872,8 @@ export default function Page() {
                     <footer className={styles.footerBar}>
                         <p className={styles.footerThanks}>Thanks for Choosing Umrah Tech</p>
                         <div className={styles.footerContact}>
-                            <span><FaPhone size={11} /> 01217772522</span>
-                            <span><FaEnvelope size={11} /> info@umrahtech.net</span>
+                            <span><FaPhone size={11} /> +1234567890</span>
+                            <span><FaEnvelope size={11} /> info@Umrahtech.com</span>
                         </div>
                     </footer>
                 </div>

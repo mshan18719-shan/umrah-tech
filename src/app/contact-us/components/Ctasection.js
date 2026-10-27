@@ -12,10 +12,10 @@ export default function CTASection() {
         </p>
 
         <div className={styles.ctaJourneyButtons}>
-          <a href="tel:01217772522" className={styles.ctaJourneyBtnPrimary}>
+          <a href="tel:+1234567890" className={styles.ctaJourneyBtnPrimary}>
             <BsChatDotsFill /> Speak With Our Concierge
           </a>
-          <a href="mailto:info@umrahTech.net" className={styles.ctaJourneyBtnOutline}>
+          <a href="mailto:info@Umrahtech.com" className={styles.ctaJourneyBtnOutline}>
             <BsEnvelopeFill /> Send an Email
           </a>
         </div>

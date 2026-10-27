@@ -157,11 +157,31 @@ export default function VehicleDetail({
     ? vehicle?.transmission_type
     : null;
 
-  const serviceInformation = Array.isArray(transfer?.service_information)
-    ? transfer.service_information.filter(
-        (item) => item && (item.name || item.description || item.value != null)
-      )
-    : [];
+  const serviceInformation = (() => {
+    const fromApi = Array.isArray(transfer?.service_information)
+      ? transfer.service_information.filter(
+          (item) => item && (item.name || item.description || item.value != null)
+        )
+      : [];
+    if (fromApi.length > 0) return fromApi;
+
+    const fallback = [];
+    if (vehicle?.passenger_capacity != null && vehicle?.passenger_capacity !== '') {
+      fallback.push({
+        id: 'MAXPAX',
+        name: 'Maximum pax',
+        value: `${vehicle.passenger_capacity} passenger(s) maximum`,
+      });
+    }
+    if (vehicle?.luggage_capacity != null && vehicle?.luggage_capacity !== '') {
+      fallback.push({
+        id: 'LUGGAGE',
+        name: 'Number of suitcases',
+        value: `${vehicle.luggage_capacity} suitcases permitted`,
+      });
+    }
+    return fallback;
+  })();
 
   const additionalServices = (() => {
     const raw =
@@ -173,13 +193,27 @@ export default function VehicleDetail({
     return raw.filter(Boolean);
   })();
 
+  const quantity = Math.max(
+    1,
+    Number(vehicleQuantity ?? transfer?.quantity) || 1
+  );
+
+  const unitPrice = Number(transfer?.convertedPrice) || 0;
+  const totalConvertedPrice = unitPrice * quantity;
+  const formattedTotalPrice = Number.isInteger(totalConvertedPrice)
+    ? totalConvertedPrice
+    : totalConvertedPrice.toFixed(2);
+
   const priceContent =
     transfer?.convertedCurrency && transfer?.convertedPrice != null ? (
       <>
-        {transfer.convertedCurrency} {transfer.convertedPrice}
+        {transfer.convertedCurrency} {formattedTotalPrice}
       </>
     ) : transfer?.fare != null ? (
-      <PriceDisplay price={transfer.fare} currency={transfer.currency} />
+      <PriceDisplay
+        price={quantity * Number(transfer.fare)}
+        currency={transfer.currency}
+      />
     ) : (
       '—'
     );
@@ -308,6 +342,9 @@ export default function VehicleDetail({
                 </div>
               ))}
             </div>
+            {vehicle?.name && (
+              <p className={styles.vehicleNameUnderInfo}>{vehicle.name}</p>
+            )}
           </>
         )}
 
@@ -399,9 +436,13 @@ export default function VehicleDetail({
                     If cancelled from{' '}
                     <strong>{moment(policy.from).format('DD MMM YYYY')}</strong>, a fee of{' '}
                     <strong>
-                      <PriceDisplay price={policy.amount} currency={transfer.currency} />
+                      <PriceDisplay
+                        price={quantity * Number(policy.amount || 0)}
+                        currency={transfer.currency}
+                      />
                     </strong>{' '}
-                    will be charged.
+                    will be charged
+                    {quantity > 1 ? ` (for ${quantity} vehicles)` : ''}.
                   </div>
                 ))}
               </>

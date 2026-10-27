@@ -59,11 +59,95 @@ export const resolveCancellationPolicies = (activityDetail) => {
 export const getPolicyDeadline = (policy) =>
   policy?.from || policy?.dateFrom || null;
 
+/** Parse from/dateFrom as UTC so "2026-10-21T23:59:00Z" stays Oct 21. */
+export const parsePolicyDateUtc = (raw) => {
+  if (!raw) return null;
+  const d = moment.utc(raw);
+  return d.isValid() ? d : null;
+};
+
 export const formatDeadlineDate = (policy) => {
   const deadlineRaw = getPolicyDeadline(policy);
   if (!deadlineRaw) return null;
-  const d = moment(deadlineRaw);
+  const d = parsePolicyDateUtc(deadlineRaw) || moment(deadlineRaw);
   return d.isValid() ? d.format('D MMM YYYY') : null;
+};
+
+/** True when a charged fee window has already started. */
+export const isChargeWindowActive = (policies = []) => {
+  const now = moment.utc();
+  const charged = policies
+    .map((p) => {
+      const amount = Number(p?.amount ?? p?.original_amount ?? 0);
+      if (!(amount > 0)) return null;
+      const d = parsePolicyDateUtc(getPolicyDeadline(p));
+      return d ? { date: d, amount } : null;
+    })
+    .filter(Boolean);
+  if (!charged.length) return false;
+  const earliest = charged.reduce((a, b) => (a.date.isBefore(b.date) ? a : b));
+  return !now.isBefore(earliest.date);
+};
+
+/**
+ * Top-level activity cancellation display.
+ * Returns { kind: 'free', deadlineLabel } | { kind: 'non-refundable' }.
+ */
+export const getCancellationDisplay = (cancellationPolicy, selectedDate = null) => {
+  if (!cancellationPolicy || cancellationPolicy.cancel_policy === 'non-refundable') {
+    return { kind: 'non-refundable' };
+  }
+  if (cancellationPolicy.cancel_policy !== 'refundable') {
+    return { kind: 'non-refundable' };
+  }
+
+  const policies = cancellationPolicy.cancellation_policies || [];
+  if (!policies.length) return { kind: 'non-refundable' };
+
+  const dated = policies
+    .map((p) => {
+      const raw = p?.from || p?.dateFrom;
+      if (!raw) return null;
+      const d = moment.utc(raw);
+      if (!d.isValid()) return null;
+      return {
+        date: d,
+        amount: Number(p.amount ?? p.original_amount ?? 0),
+      };
+    })
+    .filter(Boolean);
+
+  if (dated.length) {
+    const now = moment.utc();
+    const charged = dated.filter((p) => p.amount > 0);
+    if (charged.length) {
+      const earliestCharge = charged.reduce((a, b) =>
+        a.date.isBefore(b.date) ? a : b
+      );
+      if (!now.isBefore(earliestCharge.date)) {
+        return { kind: 'non-refundable' };
+      }
+      return {
+        kind: 'free',
+        deadlineLabel: earliestCharge.date.format('MMMM D'),
+      };
+    }
+    const earliest = dated.reduce((a, b) => (a.date.isBefore(b.date) ? a : b));
+    return { kind: 'free', deadlineLabel: earliest.date.format('MMMM D') };
+  }
+
+  const freePolicies = policies.filter((p) => Number(p?.value) === 0);
+  if (!freePolicies.length) return { kind: 'non-refundable' };
+
+  const hours = Math.max(...freePolicies.map((p) => Number(p.time_duration) || 0));
+  const activityDate = moment(selectedDate);
+  if (!activityDate.isValid()) return { kind: 'non-refundable' };
+
+  const deadline = activityDate.clone().subtract(hours, 'hours');
+  if (!moment().isBefore(deadline)) {
+    return { kind: 'non-refundable' };
+  }
+  return { kind: 'free', deadlineLabel: deadline.format('MMMM D') };
 };
 
 export const getPolicyHours = (policy, travelDate, sessionCode) => {
@@ -131,34 +215,40 @@ export const isFromAmountPolicyStyle = (policies = []) =>
       p?.type == null
   );
 
+/** Never expose fee amounts — free when available, otherwise non-refundable (GTM parity). */
 export const getPolicyCharge = (policy) => {
   if (policy?.type === 'percentage') {
     const value = Number(policy.value);
-    const refundPercentage = 100 - value;
+    const isFree = value === 0;
     return {
       kind: 'percentage',
       value,
-      refundText: `${value}% Charge`,
-      refundDescription: `${value}% cancellation charge applies. You will receive ${refundPercentage}% of the total booking amount back.`,
+      refundText: isFree ? 'Free' : 'Non refundable',
+      refundDescription: isFree
+        ? 'Full refund. No cancellation fee.'
+        : 'This booking is non refundable.',
       refundAmount: null,
-      isFree: value === 0,
-      isFullCharge: value === 100,
+      isFree,
+      isFullCharge: !isFree,
     };
   }
 
   if (policy?.type === 'fixed') {
+    const isFree = Number(policy.value) === 0;
     return {
       kind: 'fixed',
       value: policy.value,
-      refundText: 'Cancellation Fee',
-      refundDescription: 'A fixed cancellation fee will be charged.',
-      refundAmount: policy.value,
-      isFree: Number(policy.value) === 0,
-      isFullCharge: false,
+      refundText: isFree ? 'Free' : 'Non refundable',
+      refundDescription: isFree
+        ? 'Full refund. No cancellation fee.'
+        : 'This booking is non refundable.',
+      refundAmount: null,
+      isFree,
+      isFullCharge: !isFree,
     };
   }
 
-  // API style: { from, amount, original_amount }
+  // API style: { from, amount, original_amount } — never show fee amounts
   if (policy?.amount != null || getPolicyDeadline(policy)) {
     const amount = Number(policy.amount ?? policy.original_amount ?? 0);
     const deadlineLabel = formatDeadlineDate(policy);
@@ -178,13 +268,13 @@ export const getPolicyCharge = (policy) => {
     return {
       kind: 'fixed',
       value: amount,
-      refundText: 'Fee applies',
+      refundText: 'Non refundable',
       refundDescription: deadlineLabel
-        ? `If you cancel on or after ${deadlineLabel}, this fee will be charged.`
-        : 'If you cancel on or after this date, this fee will be charged.',
-      refundAmount: amount,
+        ? `On or after ${deadlineLabel}, this booking is non refundable.`
+        : 'This booking is non refundable.',
+      refundAmount: null,
       isFree: false,
-      isFullCharge: false,
+      isFullCharge: true,
     };
   }
 
@@ -211,7 +301,7 @@ const formatPolicyDuration = (duration) => {
   return `${hours} hour${hours > 1 ? 's' : ''}`;
 };
 
-export const getCancellationSummary = (rawPolicy, rawText) => {
+export const getCancellationSummary = (rawPolicy, rawText, selectedDate = null) => {
   const policy = resolveCancellationPolicy(rawPolicy, rawText);
 
   const plainText =
@@ -227,37 +317,16 @@ export const getCancellationSummary = (rawPolicy, rawText) => {
   }
 
   if (policy?.cancel_policy === 'refundable' && policy?.cancellation_policies?.length) {
-    const policies = policy.cancellation_policies;
-
-    if (isFromAmountPolicyStyle(policies)) {
-      const first = policies[0];
-      const dateLabel = formatDeadlineDate(first);
+    const display = getCancellationDisplay(policy, selectedDate);
+    if (display.kind === 'free') {
       return {
-        text: dateLabel
-          ? `Free cancellation available before ${dateLabel}`
+        text: display.deadlineLabel
+          ? `Free cancellation available before ${display.deadlineLabel}`
           : 'Free cancellation available',
         variant: 'positive',
       };
     }
-
-    const sortedPolicies = [...policies].sort(
-      (a, b) => Number(b.time_duration || 0) - Number(a.time_duration || 0)
-    );
-    const freePolicy = sortedPolicies.find(
-      (item) => item.type === 'percentage' && Number(item.value) === 0
-    );
-
-    if (freePolicy) {
-      const durationText = formatPolicyDuration(freePolicy.time_duration);
-      return {
-        text: durationText
-          ? `Free cancellation up to ${durationText}`
-          : 'Free cancellation available',
-        variant: 'positive',
-      };
-    }
-
-    return { text: 'Cancellation policy applies', variant: 'positive' };
+    return { text: 'Non-refundable', variant: 'negative' };
   }
 
   if (plainText) {

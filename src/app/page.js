@@ -31,7 +31,7 @@ export default async function Home() {
             "logo": "https://alhijaztours.net/_next/image?url=%2Fimages%2Flogo.png&w=256&q=75",
             contactPoint: {
               "@type": "ContactPoint",
-              "telephone": "0121 777 2522",
+              "telephone": "1234567890",
               "contactType": "sales",
               "areaServed": "GB",
               "availableLanguage": "en",

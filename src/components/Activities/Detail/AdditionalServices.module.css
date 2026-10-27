@@ -1,0 +1,233 @@
+.section {
+  margin-top: 4px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1b3b6f;
+}
+
+.subtitle {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  background: #fff;
+  border: 1px solid #eef1f6;
+  border-radius: 12px;
+  padding: 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.itemActive {
+  border-color: #1b3b6f;
+  background: #f8fbff;
+  box-shadow: 0 0 0 1px rgba(27, 59, 111, 0.12);
+}
+
+.itemTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toggleWrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.switchInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switchTrack {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #d1d5db;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.switchTrack::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s ease;
+}
+
+.switchInput:checked + .switchTrack {
+  background: #1b3b6f;
+}
+
+.switchInput:checked + .switchTrack::after {
+  transform: translateX(18px);
+}
+
+.switchInput:focus-visible + .switchTrack {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.serviceMeta {
+  min-width: 0;
+}
+
+.serviceName {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.35;
+}
+
+.serviceHint {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.priceBlock {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.unitPrice {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1b3b6f;
+  line-height: 1.2;
+}
+
+.unitType {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+
+.itemControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.qtyBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 110px;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+
+.qtyBtn {
+  appearance: none;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #1b3b6f;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.qtyBtn:hover:not(:disabled) {
+  border-color: #1b3b6f;
+  background: #eef5ff;
+}
+
+.qtyBtn:disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.qtyValue {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  min-width: 24px;
+  text-align: center;
+}
+
+.lineTotal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.lineTotalLabel {
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+
+.lineTotalValue {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.bookingOnlyTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.bookingOnlyTotal strong {
+  font-size: 0.9rem;
+  color: #111827;
+}

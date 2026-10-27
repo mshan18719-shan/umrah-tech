@@ -520,6 +520,18 @@
     gap: 0.65rem;
 }
 
+.transfer-extras-selected-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: #eef2f8;
+    color: var(--ck-navy, #1b3b6f);
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 .transfer-extra-item {
     display: flex;
     align-items: flex-start;
@@ -527,7 +539,6 @@
     padding: 0.85rem 1rem;
     border: 1px solid #e5e7eb;
     border-radius: 10px;
-    cursor: pointer;
     margin: 0;
     transition: border-color 0.2s ease, background 0.2s ease;
 }
@@ -542,13 +553,6 @@
     background: #eef2f8;
 }
 
-.transfer-extra-checkbox {
-    margin-top: 0.2rem;
-    flex-shrink: 0;
-    cursor: pointer;
-    accent-color: var(--ck-navy, #1b3b6f);
-}
-
 .transfer-extra-content {
     display: flex;
     flex: 1;
@@ -556,6 +560,7 @@
     align-items: flex-start;
     gap: 0.75rem;
     min-width: 0;
+    flex-wrap: wrap;
 }
 
 .transfer-extra-info {
@@ -563,6 +568,7 @@
     flex-direction: column;
     gap: 0.35rem;
     min-width: 0;
+    flex: 1;
 }
 
 .transfer-extra-name {
@@ -570,6 +576,19 @@
     font-weight: 600;
     color: #111827;
     line-height: 1.4;
+}
+
+.transfer-extra-added-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: #dce5f2;
+    color: var(--ck-navy, #1b3b6f);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .transfer-extra-meta {
@@ -601,12 +620,74 @@
     line-height: 1.4;
 }
 
+.transfer-extra-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-shrink: 0;
+}
+
+.transfer-extra-price-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+}
+
 .transfer-extra-price {
     font-size: 0.875rem;
     font-weight: 700;
     color: var(--ck-navy, #1b3b6f);
     white-space: nowrap;
-    flex-shrink: 0;
+}
+
+.transfer-extra-price-hint {
+    font-size: 0.68rem;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.transfer-extra-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    padding: 0.15rem;
+}
+
+.transfer-extra-stepper-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: #f3f4f6;
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.transfer-extra-stepper-btn:hover:not(:disabled) {
+    background: #e5e7eb;
+}
+
+.transfer-extra-stepper-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.transfer-extra-stepper-value {
+    min-width: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #111827;
 }
 
 .transfer-info-total-label {

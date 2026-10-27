@@ -11,6 +11,7 @@ import {
   FaCheckCircle,
   FaChevronDown,
   FaSearch,
+  FaUserEdit,
 } from "react-icons/fa";
 import { FiFileText, FiCalendar } from "react-icons/fi";
 import moment from "moment";
@@ -18,6 +19,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import CancelBookingModal from "@/dashboard_components/CancelBookingModal/CancelBookingModal";
+import EditPassengerModal from "@/dashboard_components/EditPassengerModal/EditPassengerModal";
 import { groupSegments } from "@/components/Flights/Checkout/flightHelpers";
 
 const statusLabel = (status) => {
@@ -100,13 +102,30 @@ function getRouteTitle(booking) {
   return `${dep} to ${arr}`;
 }
 
-function canCancelFlightBooking(booking) {
-  const departureDate =
+function getSegmentDeparturePoint(segment) {
+  return segment?.departure || segment?.origin || segment?.from || null;
+}
+
+/** Same departure resolution as path project (flight_details + segment shapes). */
+function getFlightDateValue(booking) {
+  const firstSeg = booking?.segments?.[0];
+  const dep = getSegmentDeparturePoint(firstSeg);
+  return (
     booking?.flight_details?.departure_date ||
     booking?.departure_date ||
     booking?.booking_criteria?.departure_date ||
-    booking?.segments?.[0]?.departure_date ||
-    null;
+    dep?.datetime ||
+    dep?.date ||
+    firstSeg?.departure?.datetime ||
+    firstSeg?.departure?.date ||
+    firstSeg?.departure_date ||
+    null
+  );
+}
+
+/** Cancel when not cancelled and departure is still in the future */
+function canCancelFlightBooking(booking) {
+  const departureDate = getFlightDateValue(booking);
 
   return (
     booking?.booking_status?.toLowerCase() !== "cancelled" &&
@@ -116,14 +135,19 @@ function canCancelFlightBooking(booking) {
   );
 }
 
-function getFlightDateValue(booking) {
-  return (
-    booking?.flight_details?.departure_date ||
-    booking?.departure_date ||
-    booking?.booking_criteria?.departure_date ||
-    booking?.segments?.[0]?.departure_date ||
-    null
-  );
+/**
+ * Same as path project: edit passenger when confirmed + paid + departure in future
+ */
+function canEditFlightPassenger(booking) {
+  const st = booking?.booking_status?.toLowerCase();
+  const isPaid = booking?.payment_status?.toLowerCase() === "paid";
+  const departureDate = getFlightDateValue(booking);
+  const departureInFuture =
+    departureDate &&
+    moment(departureDate).isValid() &&
+    moment(departureDate).isAfter(moment(), "day");
+
+  return st === "confirmed" && isPaid && departureInFuture;
 }
 
 function toMomentDate(value) {
@@ -166,6 +190,12 @@ export default function FlightBookingsPage() {
     opened: false,
     bookingReference: "",
     provider: "",
+  });
+  const [editPassengerModal, setEditPassengerModal] = useState({
+    opened: false,
+    bookingReference: "",
+    provider: "",
+    passengers: [],
   });
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -307,6 +337,21 @@ export default function FlightBookingsPage() {
         provider={cancelModal.provider}
         type="flight"
         endPoint="/api/flights/booking/cancel"
+        onSuccess={() => fetchBookings()}
+      />
+      <EditPassengerModal
+        opened={editPassengerModal.opened}
+        onClose={() =>
+          setEditPassengerModal({
+            opened: false,
+            bookingReference: "",
+            provider: "",
+            passengers: [],
+          })
+        }
+        bookingReference={editPassengerModal.bookingReference}
+        provider={editPassengerModal.provider}
+        passengers={editPassengerModal.passengers}
         onSuccess={() => fetchBookings()}
       />
 
@@ -460,12 +505,19 @@ export default function FlightBookingsPage() {
               const tripType = formatTripTypeLabel(
                 booking?.flight_details?.trip_type
               );
-              const dateValue = booking?.flight_details?.departure_date
-                ? moment(booking.flight_details.departure_date).format(
-                  "MMM DD, YYYY"
-                )
+              const departureRaw = getFlightDateValue(booking);
+              const dateValue = departureRaw
+                ? moment(departureRaw).format("MMM DD, YYYY")
                 : moment(booking?.created_at).format("MMM DD, YYYY");
               const canCancel = canCancelFlightBooking(booking);
+              const showEdit = canEditFlightPassenger(booking);
+              const paymentTone = statusTone(booking?.payment_status);
+              const paymentLabel = booking?.payment_status
+                ? String(booking.payment_status).toUpperCase()
+                : "-";
+              const paxName = `${lead?.firstName || "Guest"} ${
+                lead?.lastName || ""
+              }`.trim();
 
               return (
                 <article
@@ -513,11 +565,9 @@ export default function FlightBookingsPage() {
                       <div>
                         <span className="hb-meta-label">Pax</span>
                         <strong>
-                          {passengers
-                            ? `${lead?.firstName || "Guest"} ${lead?.lastName || ""
-                              }`.trim()
-                            : `${lead?.firstName || "Guest"} ${lead?.lastName || ""
-                              }`.trim()}
+                          {passengers != null && passengers > 1
+                            ? `${paxName} (+${passengers - 1})`
+                            : paxName}
                         </strong>
                       </div>
                     </div>
@@ -539,12 +589,8 @@ export default function FlightBookingsPage() {
                         {booking?.pricing?.display_currency || ""}{" "}
                         {booking?.pricing?.amount ?? "-"}
                       </div>
-                      <div className={`hb-status hb-status-${tone}`}>
-                        Payment:{" "}
-                        {booking?.payment_status
-                          ? String(booking.payment_status).charAt(0).toUpperCase() +
-                          String(booking.payment_status).slice(1)
-                          : "-"}
+                      <div className={`hb-status hb-status-${paymentTone}`}>
+                        Payment: {paymentLabel}
                       </div>
                     </div>
 
@@ -565,21 +611,39 @@ export default function FlightBookingsPage() {
                         <FaDownload size={13} />
                         Invoice
                       </Link>
+                      {showEdit && (
+                        <button
+                          type="button"
+                          className="hb-btn hb-btn-light"
+                          onClick={() =>
+                            setEditPassengerModal({
+                              opened: true,
+                              bookingReference:
+                                booking?.booking_reference || "",
+                              provider: booking?.provider,
+                              passengers: booking?.passenger_details || [],
+                            })
+                          }
+                        >
+                          <FaUserEdit size={13} />
+                          Edit Passenger
+                        </button>
+                      )}
                       {canCancel && (
-                          <button
-                            type="button"
-                            className="btn btn-danger"
-                            onClick={() =>
-                              setCancelModal({
-                                opened: true,
-                                bookingReference: booking?.booking_reference,
-                                provider: booking?.provider,
-                              })
-                            }
-                          >
-                            Cancel Booking
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          onClick={() =>
+                            setCancelModal({
+                              opened: true,
+                              bookingReference: booking?.booking_reference,
+                              provider: booking?.provider,
+                            })
+                          }
+                        >
+                          Cancel Booking
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>

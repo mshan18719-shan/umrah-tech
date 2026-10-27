@@ -550,7 +550,8 @@ export default function CheckoutTransfer({
         const packageCurrency = transferDetail?.currency || 'GBP';
         const bookedQty = Math.max(1, Number(transferDetail?.quantity) || 1);
         const extrasTotal = (selectedExtras || []).reduce(
-            (sum, extra) => sum + Number(extra?.amount || 0),
+            (sum, extra) =>
+                sum + Number(extra?.amount || 0) * Number(extra?.units || 1),
             0
         );
         const grandTotal = bookedQty * Number(transferDetail?.fare || 0) + extrasTotal;
@@ -590,7 +591,13 @@ export default function CheckoutTransfer({
             infants,
             passengers,
         };
-        transferDetail.selected_extras = selectedExtras || [];
+        const extrasWithUnits = (selectedExtras || [])
+            .filter((extra) => Number(extra?.units || 0) > 0)
+            .map((extra) => ({
+                ...extra,
+                units: Math.max(1, Number(extra?.units) || 1),
+            }));
+        transferDetail.selected_extras = extrasWithUnits;
 
         const request = {
             booked_qty: transferDetail?.quantity || 1,
@@ -823,14 +830,18 @@ export default function CheckoutTransfer({
                 onSelectLocation={handleMapSelectLocation}
                 initialLocation={mapModal.initialLocation}
                 title={isPickup ? 'Select Pickup Location' : 'Select Dropoff Location'}
-                boundLat={isPickup ? sp.fromLat : sp.toLat}
-                boundLng={isPickup ? sp.fromLng : sp.toLng}
+                boundLat={isPickup ? (sp.pickupLatitude ?? sp.fromLat) : (sp.dropoffLatitude ?? sp.toLat)}
+                boundLng={isPickup ? (sp.pickupLongitude ?? sp.fromLng) : (sp.dropoffLongitude ?? sp.toLng)}
                 boundLabel={isPickup ? sp.pickupLocation : sp.dropoffLocation}
             />
         );
     };
 
     const availableExtras = Array.isArray(transferDetail?.extras) ? transferDetail.extras : [];
+    const maxExtraUnits = Math.max(
+        Number(transferDetail?.vehicle_details?.passenger_capacity || 0),
+        1
+    );
 
     const getExtraMetaParts = (extra) => {
         const parts = [];
@@ -839,15 +850,28 @@ export default function CheckoutTransfer({
         return parts;
     };
 
-    const toggleExtra = (extra) => {
+    const getSelectedExtra = (code) =>
+        (selectedExtras || []).find((item) => item.code === code);
+
+    const setExtraUnits = (extra, nextUnits) => {
         if (!onSelectedExtrasChange) return;
         const code = extra?.code;
-        const alreadySelected = selectedExtras.some((item) => item.code === code);
-        if (alreadySelected) {
-            onSelectedExtrasChange(selectedExtras.filter((item) => item.code !== code));
-        } else {
-            onSelectedExtrasChange([...selectedExtras, extra]);
+        if (!code) return;
+        const units = Math.max(0, Math.min(Number(nextUnits) || 0, maxExtraUnits));
+        const withoutCurrent = (selectedExtras || []).filter((item) => item.code !== code);
+
+        if (units <= 0) {
+            onSelectedExtrasChange(withoutCurrent);
+            return;
         }
+
+        onSelectedExtrasChange([
+            ...withoutCurrent,
+            {
+                ...extra,
+                units,
+            },
+        ]);
     };
 
     return (
@@ -892,8 +916,8 @@ export default function CheckoutTransfer({
                                     placeholder="Enter pickup location"
                                     onOpenMap={(name, location) => handleOpenMap('pickup', location)}
                                     name="pickup"
-                                    boundLat={transferDetail?.searchParams?.fromLat}
-                                    boundLng={transferDetail?.searchParams?.fromLng}
+                                    boundLat={transferDetail?.searchParams?.pickupLatitude ?? transferDetail?.searchParams?.fromLat}
+                                    boundLng={transferDetail?.searchParams?.pickupLongitude ?? transferDetail?.searchParams?.fromLng}
                                     boundLabel={transferDetail?.searchParams?.pickupLocation}
                                     boundCountry={transferDetail?.searchParams?.fromCountry}
                                 />
@@ -908,8 +932,8 @@ export default function CheckoutTransfer({
                                     placeholder="Enter dropoff location"
                                     onOpenMap={(name, location) => handleOpenMap('dropoff', location)}
                                     name="dropoff"
-                                    boundLat={transferDetail?.searchParams?.toLat}
-                                    boundLng={transferDetail?.searchParams?.toLng}
+                                    boundLat={transferDetail?.searchParams?.dropoffLatitude ?? transferDetail?.searchParams?.toLat}
+                                    boundLng={transferDetail?.searchParams?.dropoffLongitude ?? transferDetail?.searchParams?.toLng}
                                     boundLabel={transferDetail?.searchParams?.dropoffLocation}
                                     boundCountry={transferDetail?.searchParams?.toCountry || transferDetail?.searchParams?.fromCountry}
                                 />
@@ -948,30 +972,40 @@ export default function CheckoutTransfer({
             {/* Extra Services */}
             {availableExtras.length > 0 && (
                 <div className="rounded border p-3 mb-3 transfer-extras-card">
-                    <h5 className="mb-1">Extra Services</h5>
+                    <div className="d-flex align-items-center justify-content-between gap-2 mb-1">
+                        <h5 className="mb-0">Extra Services</h5>
+                        {selectedExtras.length > 0 && (
+                            <span className="transfer-extras-selected-badge">
+                                {selectedExtras.reduce((sum, item) => sum + Number(item.units || 0), 0)} selected
+                            </span>
+                        )}
+                    </div>
                     <p className="text-muted small mb-3">
-                        Optional add-ons for your transfer. Selected extras will be added to the total price.
+                        Optional add-ons for your transfer. Each service is limited to max capacity ({maxExtraUnits}).
                     </p>
                     <div className="transfer-extras-list">
                         {availableExtras.map((extra) => {
-                            const isSelected = selectedExtras.some((item) => item.code === extra.code);
+                            const selected = getSelectedExtra(extra.code);
+                            const units = Number(selected?.units || 0);
+                            const isSelected = units > 0;
                             const metaParts = getExtraMetaParts(extra);
+                            const unitPrice = Number(extra.amount || 0);
+                            const lineTotal = unitPrice * units;
                             return (
-                                <label
+                                <div
                                     key={extra.code}
                                     className={`transfer-extra-item${isSelected ? ' transfer-extra-item--active' : ''}`}
                                 >
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input transfer-extra-checkbox"
-                                        checked={isSelected}
-                                        onChange={() => toggleExtra(extra)}
-                                    />
                                     <div className="transfer-extra-content">
                                         <div className="transfer-extra-info">
-                                            <span className="transfer-extra-name">
-                                                {extra.name || extra.type}
-                                            </span>
+                                            <div className="d-flex align-items-center gap-2 flex-wrap">
+                                                <span className="transfer-extra-name">
+                                                    {extra.name || extra.type}
+                                                </span>
+                                                {isSelected && (
+                                                    <span className="transfer-extra-added-tag">Added</span>
+                                                )}
+                                            </div>
                                             {metaParts.length > 0 ? (
                                                 <div className="transfer-extra-meta">
                                                     {metaParts.map((part) => (
@@ -986,14 +1020,44 @@ export default function CheckoutTransfer({
                                                 ) : null
                                             )}
                                         </div>
-                                        <span className="transfer-extra-price">
-                                            <PriceDisplay
-                                                price={Number(extra.amount || 0)}
-                                                currency={transferDetail?.currency}
-                                            />
-                                        </span>
+                                        <div className="transfer-extra-actions">
+                                            <div className="transfer-extra-price-block">
+                                                <span className="transfer-extra-price">
+                                                    <PriceDisplay
+                                                        price={isSelected ? lineTotal : unitPrice}
+                                                        currency={transferDetail?.currency}
+                                                    />
+                                                </span>
+                                                <span className="transfer-extra-price-hint">
+                                                    {isSelected
+                                                        ? `${units} unit${units > 1 ? 's' : ''}`
+                                                        : 'per unit'}
+                                                </span>
+                                            </div>
+                                            <div className="transfer-extra-stepper">
+                                                <button
+                                                    type="button"
+                                                    className="transfer-extra-stepper-btn"
+                                                    onClick={() => setExtraUnits(extra, units - 1)}
+                                                    disabled={units <= 0}
+                                                    aria-label={`Decrease ${extra.name || 'extra'} units`}
+                                                >
+                                                    −
+                                                </button>
+                                                <span className="transfer-extra-stepper-value">{units}</span>
+                                                <button
+                                                    type="button"
+                                                    className="transfer-extra-stepper-btn"
+                                                    onClick={() => setExtraUnits(extra, units + 1)}
+                                                    disabled={units >= maxExtraUnits}
+                                                    aria-label={`Increase ${extra.name || 'extra'} units`}
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                </label>
+                                </div>
                             );
                         })}
                     </div>

@@ -113,9 +113,10 @@ export default function Selection({ PackageDetail }) {
   const cancellationInfo = useMemo(
     () => getCancellationSummary(
       PackageDetail?.cancellation_policy,
-      PackageDetail?.cancellation_policy_text
+      PackageDetail?.cancellation_policy_text,
+      selectedDate || PackageDetail?.travel_date
     ),
-    [PackageDetail?.cancellation_policy, PackageDetail?.cancellation_policy_text]
+    [PackageDetail?.cancellation_policy, PackageDetail?.cancellation_policy_text, selectedDate, PackageDetail?.travel_date]
   );
 
   const renderCancellationPolicy = () => {
@@ -165,8 +166,6 @@ export default function Selection({ PackageDetail }) {
       if (isFromAmountPolicyStyle(cancellation_policies)) {
         const policy = cancellation_policies[0];
         const dateLabel = formatDeadlineDate(policy);
-        const amount = Number(policy.amount ?? policy.original_amount ?? 0);
-        const currency = PackageDetail?.currency_code || PackageDetail?.currency;
 
         return (
           <div>
@@ -213,21 +212,18 @@ export default function Selection({ PackageDetail }) {
               <div className={styles.policyCardBody}>
                 <div className={styles.policyCardHeader}>
                   <div>
-                    <p className={styles.policyCardLabel}>Fee applies</p>
+                    <p className={styles.policyCardLabel}>Non refundable</p>
                     <p className={styles.policyCardTime}>
                       {dateLabel ? `On or after ${dateLabel}` : 'After the deadline'}
                     </p>
                   </div>
                   <span className={`${styles.policyCardBadge} ${styles.policyCardBadgeNegative}`}>
-                    Fee applies
+                    Non refundable
                   </span>
                 </div>
-                <p className={styles.policyCardText}>Cancellation fee will be charged.</p>
-                {amount > 0 && (
-                  <div className={styles.policyCardFee}>
-                    Fee: <PriceDisplay price={amount} currency={currency} />
-                  </div>
-                )}
+                <p className={styles.policyCardText}>
+                  This booking is non refundable after the free-cancel deadline.
+                </p>
               </div>
             </div>
 
@@ -297,24 +293,14 @@ export default function Selection({ PackageDetail }) {
 
                     <p className={styles.policyCardText}>{charge.refundDescription}</p>
 
-                    {charge.refundAmount != null && Number(charge.refundAmount) > 0 && (
-                      <div className={styles.policyCardFee}>
-                        Cancellation Fee:{' '}
-                        <PriceDisplay
-                          price={charge.refundAmount}
-                          currency={PackageDetail?.currency_code || PackageDetail?.currency}
-                        />
-                      </div>
-                    )}
-
                     {charge.isFree && (
                       <div className={styles.policyCardFee} style={{ color: '#16a34a' }}>
                         Full refund - No cancellation charges
                       </div>
                     )}
-                    {charge.isFullCharge && (
+                    {!charge.isFree && (
                       <div className={styles.policyCardFee}>
-                        No refund - 100% cancellation charge
+                        Non refundable
                       </div>
                     )}
                   </div>
@@ -509,6 +495,7 @@ export default function Selection({ PackageDetail }) {
           onSelectTime={setSelectedSession}
           hideTimeSection={modalitySessions.length > 0}
           onProceed={HandleModalityProceed}
+          selectedServices={selectedServices}
         />
 
         <Modal

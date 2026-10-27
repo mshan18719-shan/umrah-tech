@@ -15,6 +15,7 @@ import Faqs from "@/components/Activities/Detail/Faqs";
 import Selection from "@/components/Activities/Detail/Selection";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import ActivityDetailLoader from "@/components/Loader/ActivityDetailLoader";
+import moment from "moment";
 import styles from "./ActivityDetail.module.css";
 
 const FACILITY_PREVIEW_COUNT = 4;
@@ -46,9 +47,12 @@ const GetActivityDetail = () => {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const from = searchParams.get('from');
-      const to = searchParams.get('to');
-      const language = searchParams.get('language');
+      const from =
+        searchParams.get('from') ||
+        searchParams.get('date') ||
+        moment().format('YYYY-MM-DD');
+      const to = searchParams.get('to') || from;
+      const language = searchParams.get('language') || 'en';
 
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activities/${params.slug}?from=${from}&to=${to}&language=${language}`, {

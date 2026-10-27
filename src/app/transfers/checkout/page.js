@@ -8,7 +8,7 @@ import { GiGearStickPattern } from 'react-icons/gi'
 import PriceDisplay from '@/components/Currency/PriceDisplay'
 import CheckoutTransfer from '@/components/Transfer/Checkout/CheckoutTransfer.js'
 import moment from 'moment'
-// import VehicleDetail from '@/components/Transfer/Listing/VehicleDetail'
+import VehicleDetail from '@/components/Transfer/Listing/VehicleDetail'
 import { IoInformationCircleOutline } from 'react-icons/io5'
 import './checkout.css'
 
@@ -101,7 +101,8 @@ export default function Page() {
     const quantity = Number(selectedtransfer.quantity) || 1
     const baseTotal = quantity * Number(selectedtransfer?.fare || 0)
     const extrasTotal = selectedExtras.reduce(
-        (sum, extra) => sum + Number(extra?.amount || 0),
+        (sum, extra) =>
+            sum + Number(extra?.amount || 0) * Number(extra?.units || 1),
         0
     )
     const totalPrice = baseTotal + extrasTotal
@@ -334,40 +335,54 @@ export default function Page() {
                                         )}
                                     </div>
 
-                                    {/* <button
+                                    <button
                                         type="button"
                                         className="btn-transfer-view-details"
                                         onClick={() => setShowModal(true)}
                                     >
                                         View Details
-                                    </button> */}
+                                    </button>
 
                                     {selectedtransfer?.cancel_policy && (
                                         <div className="transfer-info-policy">
                                             <p className="transfer-info-policy-title">Cancellation Policy</p>
                                             {selectedtransfer.cancel_policy === 'refundable' ? (
-                                                selectedtransfer.cancellation_policies?.length > 0 ? (
-                                                    <div className="transfer-policy-list">
-                                                        {selectedtransfer.cancellation_policies.map((policy, idx) => (
-                                                            <div key={idx} className="transfer-policy-item warning">
-                                                                <IoInformationCircleOutline size={16} className="flex-shrink-0" />
-                                                                <small>
-                                                                    From <strong>{moment(policy.from).format('DD MMM YYYY')}</strong>: fee of{' '}
-                                                                    <strong className="text-danger">
-                                                                        <PriceDisplay
-                                                                            price={quantity * Number(policy.amount)}
-                                                                            currency={selectedtransfer?.currency}
-                                                                        />
-                                                                    </strong>
-                                                                </small>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
+                                                <div className="transfer-policy-list">
                                                     <div className="transfer-policy-item success">
-                                                        <small>Refundable according to provider terms.</small>
+                                                        <IoInformationCircleOutline size={16} className="flex-shrink-0" />
+                                                        <small>
+                                                            This transfer is fully refundable.
+                                                            {selectedtransfer.cancellation_policies?.length > 0 && (
+                                                                <>
+                                                                    {' '}
+                                                                    Free cancellation before{' '}
+                                                                    <strong>
+                                                                        {moment(selectedtransfer.cancellation_policies[0].from).format('DD MMM YYYY')}
+                                                                    </strong>
+                                                                    .
+                                                                </>
+                                                            )}
+                                                        </small>
                                                     </div>
-                                                )
+                                                    {selectedtransfer.cancellation_policies?.map((policy, idx) => (
+                                                        <div key={idx} className="transfer-policy-item warning">
+                                                            <IoInformationCircleOutline size={16} className="flex-shrink-0" />
+                                                            <small>
+                                                                If cancelled from{' '}
+                                                                <strong>{moment(policy.from).format('DD MMM YYYY')}</strong>
+                                                                , a fee of{' '}
+                                                                <strong>
+                                                                    <PriceDisplay
+                                                                        price={quantity * Number(policy.amount || 0)}
+                                                                        currency={selectedtransfer?.currency}
+                                                                    />
+                                                                </strong>{' '}
+                                                                will be charged
+                                                                {quantity > 1 ? ` (for ${quantity} vehicles)` : ''}.
+                                                            </small>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             ) : (
                                                 <div className="transfer-policy-item danger">
                                                     <small>
@@ -387,14 +402,29 @@ export default function Page() {
                                                 <PriceDisplay price={baseTotal} currency={selectedtransfer?.currency} />
                                             </span>
                                         </div>
-                                        {selectedExtras.length > 0 && (
-                                            <div className="transfer-info-price-row">
-                                                <span className="transfer-info-label">Extra services</span>
-                                                <span className="transfer-info-value">
-                                                    <PriceDisplay price={extrasTotal} currency={selectedtransfer?.currency} />
-                                                </span>
-                                            </div>
-                                        )}
+                                        {selectedExtras
+                                            .filter((extra) => Number(extra?.units || 0) > 0)
+                                            .map((extra) => {
+                                                const units = Number(extra.units || 1)
+                                                const lineTotal = Number(extra.amount || 0) * units
+                                                return (
+                                                    <div
+                                                        key={extra.code}
+                                                        className="transfer-info-price-row"
+                                                    >
+                                                        <span className="transfer-info-label">
+                                                            {extra.name || extra.type || 'Extra'}
+                                                            {units > 1 ? ` × ${units}` : ''}
+                                                        </span>
+                                                        <span className="transfer-info-value">
+                                                            <PriceDisplay
+                                                                price={lineTotal}
+                                                                currency={selectedtransfer?.currency}
+                                                            />
+                                                        </span>
+                                                    </div>
+                                                )
+                                            })}
                                     </div>
 
                                     <div className="transfer-info-total">
@@ -407,12 +437,13 @@ export default function Page() {
                                 </div>
                             </div>
 
-                            {/* <VehicleDetail
+                            <VehicleDetail
                                 selectedTransferDetail={selectedtransfer}
                                 showModal={showModal}
                                 handleCloseModal={() => setShowModal(false)}
                                 type="checkout"
-                            /> */}
+                                vehicleQuantity={quantity}
+                            />
                         </div>
                     </div>
                 </div>

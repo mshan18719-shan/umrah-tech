@@ -24,6 +24,30 @@ function formatAgeRange(ageFrom, ageTo) {
     return '';
 }
 
+/**
+ * Free bands contribute 0; paid bands use amount from selected_pax.
+ */
+function calculateChildPrice(activityDetail) {
+    const selectedPax = activityDetail?.modality?.selected_pax;
+    if (Array.isArray(selectedPax) && selectedPax.length > 0) {
+        const paidChildPax = selectedPax.find(
+            (pax) =>
+                (pax.paxType === 'CHILD' || pax.paxType === 'INFANT') &&
+                Number(pax.amount || 0) > 0
+        );
+        if (paidChildPax) {
+            return Number(paidChildPax.amount).toFixed(2);
+        }
+        const childPax = selectedPax.find(
+            (pax) => pax.paxType === 'CHILD' || pax.paxType === 'INFANT'
+        );
+        if (childPax) {
+            return Number(childPax.amount || 0).toFixed(2);
+        }
+    }
+    return Number(activityDetail?.price_per_child || 0).toFixed(2);
+}
+
 function buildGuestFromPax(pax, type) {
     return {
         firstName: '',
@@ -233,13 +257,148 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
         terms: false,
     });
     const [bookingOptionDetails, setBookingOptionDetails] = useState('');
+    const [questionAnswers, setQuestionAnswers] = useState({});
+    const [questionPhoneMeta, setQuestionPhoneMeta] = useState({});
     const handleCheckoutRef = useRef(null);
+
+    const activityQuestions = Array.isArray(activityDetail?.questions)
+        ? activityDetail.questions
+        : [];
+
+    // Already captured on lead form — hide in Additional Details, still send in payload.
+    const LEAD_DERIVED_QUESTION_CODES = [
+        'LEAD_NAME',
+        'PHONENUMBER',
+        'TLFCONTACTO',
+        'EMAILCONTACTO',
+        'EMAIL',
+        'NC-CTEL',
+    ];
+
+    const isPhoneQuestion = (question) => {
+        const code = String(question?.code || '').toUpperCase();
+        const text = String(question?.text || '').toLowerCase();
+        return (
+            code.includes('PHONE') ||
+            code.includes('TLF') ||
+            code.includes('CTEL') ||
+            text.includes('telephone') ||
+            text.includes('phone')
+        );
+    };
+
+    const isEmailQuestion = (question) => {
+        const code = String(question?.code || '').toUpperCase();
+        const text = String(question?.text || '').toLowerCase();
+        return code.includes('EMAIL') || text.includes('email');
+    };
+
+    const isLeadNameQuestion = (question) => {
+        const code = String(question?.code || '').toUpperCase();
+        const text = String(question?.text || '').toLowerCase();
+        return (
+            code === 'LEAD_NAME' ||
+            code === 'NAME' ||
+            ((text.includes('full name') ||
+                text.includes('lead name') ||
+                text.includes('passenger name')) &&
+                !text.includes('hotel'))
+        );
+    };
+
+    const isLeadDerivedQuestion = (question) => {
+        if (!question?.code) return false;
+        const code = String(question.code).toUpperCase();
+        if (LEAD_DERIVED_QUESTION_CODES.includes(code)) return true;
+        return (
+            isEmailQuestion(question) ||
+            isPhoneQuestion(question) ||
+            isLeadNameQuestion(question)
+        );
+    };
+
+    const getLeadDerivedAnswer = (question) => {
+        if (isEmailQuestion(question)) {
+            return (formData.email || '').trim();
+        }
+        if (isPhoneQuestion(question)) {
+            return `${formData.phoneCode || ''}${formData.phone || ''}`
+                .replace(/\s+/g, '')
+                .trim();
+        }
+        if (isLeadNameQuestion(question)) {
+            return [formData.title, formData.firstName, formData.lastName]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+        }
+        const code = String(question?.code || '').toUpperCase();
+        switch (code) {
+            case 'EMAILCONTACTO':
+            case 'EMAIL':
+                return (formData.email || '').trim();
+            case 'PHONENUMBER':
+            case 'TLFCONTACTO':
+            case 'NC-CTEL':
+                return `${formData.phoneCode || ''}${formData.phone || ''}`
+                    .replace(/\s+/g, '')
+                    .trim();
+            case 'LEAD_NAME':
+            case 'NAME':
+                return [formData.title, formData.firstName, formData.lastName]
+                    .filter(Boolean)
+                    .join(' ')
+                    .trim();
+            default:
+                return '';
+        }
+    };
+
+    const visibleQuestions = activityQuestions.filter(
+        (q) => q?.code && !isLeadDerivedQuestion(q)
+    );
+
+    const getQuestionAnswerValue = (question) => {
+        const code = question?.code;
+        if (!code) return '';
+        if (isLeadDerivedQuestion(question)) {
+            return getLeadDerivedAnswer(question);
+        }
+        const raw = String(questionAnswers[code] || '').trim();
+        if (!isPhoneQuestion(question)) return raw;
+        const meta = questionPhoneMeta[code] || {};
+        return `${meta.phoneCode || ''}${raw}`.replace(/\s+/g, '').trim();
+    };
+
+    const buildQuestionAnswersPayload = () =>
+        activityQuestions
+            .filter((q) => q?.code)
+            .map((q) => ({
+                code: q.code,
+                answer: getQuestionAnswerValue(q),
+            }));
 
     useEffect(() => {
         setTotalPersons({
             adults: Math.max((activityDetail?.adults || 0) - 1, 0),
             children: activityDetail?.children || 0,
         });
+        setOtherGuestDetail([]);
+        setOtherGuestError([]);
+
+        const initialAnswers = {};
+        const initialPhoneMeta = {};
+        (Array.isArray(activityDetail?.questions) ? activityDetail.questions : []).forEach(
+            (q) => {
+                if (!q?.code) return;
+                initialAnswers[q.code] = '';
+                if (isPhoneQuestion(q)) {
+                    initialPhoneMeta[q.code] = { country: '', phoneCode: '' };
+                }
+            }
+        );
+        setQuestionAnswers(initialAnswers);
+        setQuestionPhoneMeta(initialPhoneMeta);
     }, [activityDetail]);
 
     useEffect(() => {
@@ -293,6 +452,55 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
             ? item.idd.root + item.idd.suffixes[0]
             : item.idd?.root,
     }));
+
+    const handleQuestionChange = (code, value) => {
+        setQuestionAnswers((prev) => ({
+            ...prev,
+            [code]: value,
+        }));
+        const errorKey = `question_${code}`;
+        if (errors[errorKey]) {
+            setErrors((prev) => {
+                const updated = { ...prev };
+                delete updated[errorKey];
+                return updated;
+            });
+        }
+    };
+
+    const handleQuestionPhoneChange = (code, rawValue) => {
+        const digits = String(rawValue || '').replace(/[^\d+]/g, '');
+        setQuestionAnswers((prev) => ({
+            ...prev,
+            [code]: digits,
+        }));
+        const errorKey = `question_${code}`;
+        if (errors[errorKey]) {
+            setErrors((prev) => {
+                const updated = { ...prev };
+                delete updated[errorKey];
+                return updated;
+            });
+        }
+    };
+
+    const handleQuestionCountryChange = (code, value) => {
+        const selected = countryOptions.find((c) => c.value === value);
+        setQuestionPhoneMeta((prev) => ({
+            ...prev,
+            [code]: {
+                country: value || '',
+                phoneCode: selected?.code || '',
+            },
+        }));
+        setErrors((prev) => {
+            const updated = { ...prev };
+            delete updated[`question_${code}_country`];
+            delete updated[`question_${code}`];
+            return updated;
+        });
+    };
+
     // ---- Handle field change ----
     const syncLiveNameValidation = (nextForm, nextGuests) => {
         const { leadErrors, guestErrors } = computeNameErrors(
@@ -477,6 +685,28 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
         // if (!formData.cvv) newErrors.cvv = "CVV is required.";
         if (!formData.terms) newErrors.terms = "You must agree to terms.";
 
+        visibleQuestions.forEach((q) => {
+            if (!q?.code) return;
+            const isRequired = q.required !== false;
+            const errorKey = `question_${q.code}`;
+            if (isPhoneQuestion(q)) {
+                const phone = String(questionAnswers[q.code] || '').trim();
+                const meta = questionPhoneMeta[q.code] || {};
+                if (isRequired && !meta.country) {
+                    newErrors[`${errorKey}_country`] = 'Please select a country.';
+                }
+                if (isRequired && !phone) {
+                    newErrors[errorKey] = 'This field is required.';
+                } else if (phone && (phone.length > 15 || phone.length < 6)) {
+                    newErrors[errorKey] = 'Phone number must be between 6 and 15 digits.';
+                }
+                return;
+            }
+            if (isRequired && !String(questionAnswers[q.code] || '').trim()) {
+                newErrors[errorKey] = 'This field is required.';
+            }
+        });
+
         setOtherGuestError(otherGuestErrors);
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0 && otherGuestErrors.every(err => Object.keys(err).length === 0);
@@ -595,9 +825,9 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
             lead_gender: formData?.gender,
             travel_date: activityDetail?.travel_date,
             adults: activityDetail?.adults,
-            adult_price: (Number(activityDetail?.adults) * Number(activityDetail?.price_per_adult || 0)).toFixed(2),
+            adult_price: Number(activityDetail?.price_per_adult || 0).toFixed(2),
             children: activityDetail?.children,
-            child_price: (Number(activityDetail?.children) * Number(activityDetail?.price_per_child || 0)).toFixed(2),
+            child_price: calculateChildPrice(activityDetail),
             grand_total: grandTotal,
             other_passengers: NewOtherPassenger,
             customer_currency: customerCurrency,
@@ -606,10 +836,12 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
             additional_services: activityDetail?.selected_services || [],
             payment_method: 'stripe',
             provider: activityDetail?.provider,
-            language: modality?.language?.code || modality?.language?.description || 'en',
+            language: modality?.language?.code || '',
+            languagedescription: modality?.language?.description || '',
             ...(modality?.code ? { modality_code: modality.code } : {}),
             ...(modality?.rate_key ? { rate_key: modality.rate_key } : {}),
             children_details: buildChildrenDetails(activityDetail, otherGuestDetail),
+            question_answers: buildQuestionAnswersPayload(),
         };
 
         try {
@@ -1005,6 +1237,135 @@ export default function DetailForm({ activityDetail, onRegisterSubmit, onLoading
                     </div>
                 ))}
             </div>
+
+            {/* Additional Questions */}
+            {visibleQuestions.length > 0 && (
+                <div className="checkout-form-card">
+                    <div className="checkout-form-card-header">
+                        <div className="checkout-form-card-icon">
+                            <IoShieldCheckmarkOutline />
+                        </div>
+                        <div>
+                            <h5>Additional Details</h5>
+                            <p>Please provide the required information for this activity</p>
+                        </div>
+                    </div>
+                    <div className="row g-3">
+                        {visibleQuestions.map((question) => {
+                            const code = question.code;
+                            const isRequired = question.required !== false;
+                            const errorKey = `question_${code}`;
+                            const countryErrorKey = `${errorKey}_country`;
+                            const label = question.text || code;
+                            const phoneQ = isPhoneQuestion(question);
+                            const phoneMeta = questionPhoneMeta[code] || {};
+                            const inputType =
+                                String(code || '').toUpperCase().includes('EMAIL') ||
+                                String(label).toLowerCase().includes('email')
+                                    ? 'email'
+                                    : 'text';
+
+                            if (phoneQ) {
+                                return (
+                                    <React.Fragment key={code}>
+                                        <div className="col-md-6">
+                                            <label className="form-label">
+                                                Country{isRequired ? '*' : ''}
+                                            </label>
+                                            <Select
+                                                placeholder="Select Country"
+                                                searchable
+                                                data={countryOptions}
+                                                value={phoneMeta.country || null}
+                                                limit={50}
+                                                onChange={(value) =>
+                                                    handleQuestionCountryChange(code, value)
+                                                }
+                                                className={
+                                                    errors[countryErrorKey] ? 'is-invalid' : ''
+                                                }
+                                            />
+                                            {errors[countryErrorKey] && (
+                                                <div className="text-danger small mt-1">
+                                                    {errors[countryErrorKey]}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">
+                                                {label}
+                                                {isRequired ? '*' : ''}
+                                            </label>
+                                            <div className="input-group">
+                                                <span className="input-group-text">
+                                                    {phoneMeta.phoneCode || '+__'}
+                                                </span>
+                                                <input
+                                                    type="tel"
+                                                    value={questionAnswers[code] || ''}
+                                                    onChange={(e) =>
+                                                        handleQuestionPhoneChange(code, e.target.value)
+                                                    }
+                                                    onKeyDown={(e) => {
+                                                        if (e.ctrlKey || e.metaKey || e.altKey) return;
+                                                        if (
+                                                            !/[0-9+]/.test(e.key) &&
+                                                            ![
+                                                                'Backspace',
+                                                                'Delete',
+                                                                'ArrowLeft',
+                                                                'ArrowRight',
+                                                                'Tab',
+                                                                'Home',
+                                                                'End',
+                                                            ].includes(e.key)
+                                                        ) {
+                                                            e.preventDefault();
+                                                        }
+                                                    }}
+                                                    className={`form-control ${errors[errorKey] ? 'is-invalid' : ''}`}
+                                                    placeholder={label}
+                                                    autoComplete="tel"
+                                                    inputMode="tel"
+                                                />
+                                            </div>
+                                            {errors[errorKey] && (
+                                                <div className="text-danger small mt-1">
+                                                    {errors[errorKey]}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </React.Fragment>
+                                );
+                            }
+
+                            return (
+                                <div key={code} className="col-md-6">
+                                    <label className="form-label">
+                                        {label}
+                                        {isRequired ? '*' : ''}
+                                    </label>
+                                    <input
+                                        type={inputType}
+                                        className={`form-control ${errors[errorKey] ? 'is-invalid' : ''}`}
+                                        value={questionAnswers[code] || ''}
+                                        onChange={(e) =>
+                                            handleQuestionChange(code, e.target.value)
+                                        }
+                                        placeholder={label}
+                                        autoComplete="off"
+                                    />
+                                    {errors[errorKey] && (
+                                        <div className="text-danger small mt-1">
+                                            {errors[errorKey]}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Special Requests */}
             <div className="checkout-form-card">

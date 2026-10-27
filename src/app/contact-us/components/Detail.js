@@ -19,7 +19,7 @@ export default function Detail() {
             </div>
             <div className="card-content">
               <h4>Office Address</h4>
-              <p>693a Stratford Road Birmingham B11 4DX, UK</p>
+              <p>123 Street, ABC City, XYZ Country</p>
             </div>
           </div>
 
@@ -29,7 +29,7 @@ export default function Detail() {
             </div>
             <div className="card-content">
               <h4>Phone</h4>
-              <a href="tel:01217772522" className="text-decoration-none">0121 777 2522</a>
+              <a href="tel:1234567890" className="text-decoration-none">+1234567890</a>
             </div>
           </div>
 
@@ -39,7 +39,7 @@ export default function Detail() {
             </div>
             <div className="card-content">
               <h4>Email</h4>
-              <a href="mailto:info@umrahTech.net" className="text-decoration-none">info@umrahTech.net</a>
+              <a href="mailto:info@Umrahtech.com" className="text-decoration-none">info@Umrahtech.com</a>
             </div>
           </div>
 

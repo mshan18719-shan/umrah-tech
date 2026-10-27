@@ -196,7 +196,7 @@ export default function Footer() {
                 <div className={styles.iconCircle}><FaPhone className={styles.phoneFlip} /></div>
                 <div>
                   <a href="/" className="text-decoration-none">
-                    +44 2345689321
+                    +1234567890
                   </a>
                 </div>
               </div>
@@ -204,8 +204,8 @@ export default function Footer() {
               <div className={styles.contactItem}>
                 <div className={styles.iconCircle}><FaMailBulk /></div>
                 <div>
-                  <a href="mailto:info@umrahTech.net" className="text-decoration-none">
-                    info@umrahTech.net
+                  <a href="mailto:info@Umrahtech.com" className="text-decoration-none">
+                    info@Umrahtech.com
                   </a>
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default function Footer() {
                     className="text-decoration-none"
                     href="https://www.google.com/maps/place/693a+Stratford+Rd,+Springfield,+Birmingham+B11+4DX/@52.4469259,-1.8602044,162m/data=!3m1!1e3!4m6!3m5!1s0x4870bbeeb8d8a42f:0x236b6f6fb188450d!8m2!3d52.4467704!4d-1.8605181!16s%2Fg%2F11mkj18ckh?entry=ttu&g_ep=EgoyMDI2MDEyNi4wIKXMDSoKLDEwMDc5MjA3M0gBUAM%3D"
                   >
-                    JKL Street, ABC City, XYZ Country
+                    123 Street, ABC City, XYZ Country
                   </a>
                 </div>
               </div>

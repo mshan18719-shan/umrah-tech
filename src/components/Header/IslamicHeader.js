@@ -73,11 +73,11 @@ export default function IslamicHeader() {
                         <div className={`${styles.islamicTopBarLeft} d-flex align-items-center gap-4`}>
                             <div className={`${styles.islamicTopBarItem} d-none d-md-flex align-items-center gap-2`}>
                                 <MdOutlinePhone className={styles.islamicTopBarIcon} />
-                                <a href="/"><span className={styles.islamicTopBarText}>0121 777 2522</span></a>
+                                <a href="/"><span className={styles.islamicTopBarText}>1234567890</span></a>
                             </div>
                             <div className={`${styles.islamicTopBarItem} d-none d-md-flex align-items-center gap-2`}>
                                 <IoIosMailUnread className={styles.islamicTopBarIcon} />
-                                <a href="mailto:info@umrahTech.net"><span className={styles.islamicTopBarText}>info@Umerahtech.net</span></a>
+                                <a href="mailto:info@Umrahtech.com"><span className={styles.islamicTopBarText}>info@Umrahtech.com</span></a>
                             </div>
 
                             {/* <div className={`${styles.islamicTopBarItem} d-none d-md-flex align-items-center gap-2`}>
@@ -207,7 +207,7 @@ export default function IslamicHeader() {
                             <div className={`${styles.islamicNavActions} d-flex align-items-center gap-3`}>
                                 {/* <a href="tel:+1217772522" className={styles.islamicPhoneLink}>
                                     <FaPhoneAlt className={styles.islamicPhoneIcon} />
-                                    <span className={styles.islamicPhoneText}>0121 777 2522</span>
+                                    <span className={styles.islamicPhoneText}>1234567890</span>
                                 </a> */}
                                 <CurrencySelector width='w-auto' />
                             </div>
@@ -334,7 +334,7 @@ export default function IslamicHeader() {
                         )}
                         <a href="/" className={styles.islamicMobileCallBtn} onClick={closeMobileMenu}>
                             <FaPhoneAlt size={14} />
-                            0121 777 2522
+                            1234567890
                         </a>
 
                     </div>

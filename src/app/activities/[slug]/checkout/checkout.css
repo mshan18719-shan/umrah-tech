@@ -261,6 +261,24 @@
     line-height: 1.3;
 }
 
+.checkout-review-pill--cancel-free {
+    background: #eef6f2;
+    color: #166534;
+}
+
+.checkout-review-pill--cancel-free .checkout-review-pill-icon {
+    color: #166534;
+}
+
+.checkout-review-pill--cancel-none {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.checkout-review-pill--cancel-none .checkout-review-pill-icon {
+    color: #991b1b;
+}
+
 /* Included / excluded compact */
 .checkout-included-card {
     background: var(--ck-card);

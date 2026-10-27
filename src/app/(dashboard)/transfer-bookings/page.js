@@ -362,7 +362,7 @@ export default function TransferBookingsPage() {
                         <FaCar size={16} />
                       </div>
                       <div>
-                        <h6 className="hb-hotel-name">{booking?.vehicle_details?.name}</h6>
+                        <h6 className="hb-hotel-name">{booking?.vehicle_details?.name || "Transfer Booking"}</h6>
                         <p className="hb-hotel-location">
                           <FaMapMarkerAlt size={11} />
                           <span>{location}</span>

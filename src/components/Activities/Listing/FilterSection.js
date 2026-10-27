@@ -1,7 +1,7 @@
 'use client'
 import React, { useMemo, useState, useEffect } from "react";
 import { RangeSlider, Checkbox, Drawer } from "@mantine/core";
-import { IoTimeOutline } from "react-icons/io5";
+import { IoTimeOutline, IoLanguageOutline } from "react-icons/io5";
 import { MdTune } from "react-icons/md";
 import { LiaAngleDownSolid } from "react-icons/lia";
 import styles from "./Activities.module.css";
@@ -81,6 +81,39 @@ function DurationPanel({ durationFilters, activeFilters, onToggle }) {
   );
 }
 
+function LanguagePanel({ languageFilters, activeFilters, onToggle }) {
+  return (
+    <div>
+      <p className={styles.sidebarFilterTitle}>Language</p>
+      <div className={styles.sidebarCheckList}>
+        {languageFilters.length === 0 ? (
+          <p className={styles.sidebarEmpty}>No languages available</p>
+        ) : (
+          languageFilters.map(({ code, label, count }) => {
+            const id = `language_${code}`;
+            const checked = activeFilters.includes(id);
+            return (
+              <Checkbox
+                key={code}
+                checked={checked}
+                onChange={() => onToggle(code)}
+                className={styles.sidebarCheckbox}
+                label={
+                  <span className={styles.sidebarCheckLabel}>
+                    <IoLanguageOutline className={styles.sidebarCheckIcon} />
+                    <span>{label}</span>
+                    <span className={styles.sidebarCheckCount}>({count})</span>
+                  </span>
+                }
+              />
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SortPanel({ sortBy, onSelect }) {
   return (
     <div>
@@ -127,6 +160,32 @@ function FilterSection({
       .map(([duration, count]) => ({ duration, count }));
   }, [activityList]);
 
+  const languageFilters = useMemo(() => {
+    const byCode = {};
+    activityList.forEach((activity) => {
+      (activity.languages || []).forEach((lang) => {
+        const code = String(lang?.code || '').trim();
+        if (!code) return;
+        if (!byCode[code]) {
+          const description = String(lang?.description || lang?.name || '').trim();
+          byCode[code] = {
+            code,
+            label: description || code,
+            count: 0,
+          };
+        }
+        byCode[code].count += 1;
+      });
+    });
+    return Object.values(byCode).sort(
+      (a, b) => a.label.localeCompare(b.label) || b.count - a.count
+    );
+  }, [activityList]);
+
+  const selectedLanguageCount = activeFilters.filter((f) =>
+    f.startsWith('language_')
+  ).length;
+
   const isBudgetActive =
     minPrice !== undefined &&
     maxPrice !== undefined &&
@@ -148,6 +207,13 @@ function FilterSection({
 
   const toggleDuration = (duration) => {
     const id = `duration_${duration}`;
+    setActiveFilters((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+    );
+  };
+
+  const toggleLanguage = (code) => {
+    const id = `language_${code}`;
     setActiveFilters((prev) =>
       prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
     );
@@ -183,6 +249,14 @@ function FilterSection({
         <button type="button" onClick={() => setActiveDrawer('duration')} className={styles.filterPill}>
           Duration <span className={styles.filterPillArrow}><LiaAngleDownSolid /></span>
         </button>
+        {languageFilters.length > 0 && (
+          <button type="button" onClick={() => setActiveDrawer('language')} className={styles.filterPill}>
+            Language
+            {selectedLanguageCount > 0 ? ` (${selectedLanguageCount})` : ''}
+            {' '}
+            <span className={styles.filterPillArrow}><LiaAngleDownSolid /></span>
+          </button>
+        )}
         <button type="button" onClick={() => setActiveDrawer('sort')} className={styles.filterPill}>
           Sort By <span className={styles.filterPillArrow}><LiaAngleDownSolid /></span>
         </button>
@@ -226,6 +300,16 @@ function FilterSection({
               durationFilters={durationFilters}
               activeFilters={activeFilters}
               onToggle={toggleDuration}
+            />
+          </div>
+        )}
+
+        {languageFilters.length > 0 && (
+          <div className={styles.filterPanel}>
+            <LanguagePanel
+              languageFilters={languageFilters}
+              activeFilters={activeFilters}
+              onToggle={toggleLanguage}
             />
           </div>
         )}
@@ -288,6 +372,27 @@ function FilterSection({
           durationFilters={durationFilters}
           activeFilters={activeFilters}
           onToggle={toggleDuration}
+        />
+        <div className={styles.drawerActions}>
+          <button type="button" className={styles.drawerDoneBtn} onClick={() => setActiveDrawer(null)}>
+            Done
+          </button>
+        </div>
+      </Drawer>
+
+      <Drawer
+        opened={activeDrawer === 'language'}
+        onClose={() => setActiveDrawer(null)}
+        title="Language"
+        position="bottom"
+        size="50%"
+        overlayProps={{ backgroundOpacity: 0.5, blur: 2 }}
+        classNames={{ content: styles.filterDrawer }}
+      >
+        <LanguagePanel
+          languageFilters={languageFilters}
+          activeFilters={activeFilters}
+          onToggle={toggleLanguage}
         />
         <div className={styles.drawerActions}>
           <button type="button" className={styles.drawerDoneBtn} onClick={() => setActiveDrawer(null)}>

@@ -96,7 +96,6 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
       if (isFromAmountPolicyStyle(cancellation_policies)) {
         const policy = cancellation_policies[0];
         const dateLabel = formatDeadlineDate(policy);
-        const amount = Number(policy.amount ?? policy.original_amount ?? 0);
 
         return (
           <div>
@@ -136,13 +135,9 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
                     {dateLabel ? `On or after ${dateLabel}` : 'After the deadline'}
                   </h6>
                   <p className="mb-1 small text-muted">
-                    Cancellation fee will be charged.
+                    This booking is non refundable after the free-cancel deadline.
                   </p>
-                  {amount > 0 && (
-                    <strong className="text-danger small">
-                      Fee: <PriceDisplay price={amount} currency={activityDetail?.currency} />
-                    </strong>
-                  )}
+                  <strong className="text-danger small">Non refundable</strong>
                 </div>
               </div>
             </div>
@@ -209,23 +204,14 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
 
                     <p className="mb-1 small text-muted">{charge.refundDescription}</p>
 
-                    {charge.refundAmount != null && Number(charge.refundAmount) > 0 && (
-                      <div className="mt-1">
-                        <strong className="text-danger small">
-                          Cancellation Fee:{' '}
-                          <PriceDisplay price={charge.refundAmount} currency={activityDetail?.currency} />
-                        </strong>
-                      </div>
-                    )}
-
                     {charge.isFree && (
                       <div className="mt-1 small text-success">
                         <strong>✓ Full refund — No cancellation charges</strong>
                       </div>
                     )}
-                    {charge.isFullCharge && (
+                    {!charge.isFree && (
                       <div className="mt-1 small text-danger">
-                        <strong>⚠ No refund — 100% cancellation charge</strong>
+                        <strong>Non refundable</strong>
                       </div>
                     )}
                   </div>
@@ -461,7 +447,7 @@ export default function Summery({ activityDetail, totalGuests = 0 }) {
           <div className="trust-help-icon"><IoInformation size={20} /></div>
           <div className="trust-item-title mb-1">Need Help?</div>
           <div className="trust-item-desc mb-3">Our travel experts are available 24/7</div>
-          <a href="tel:01217772522" className="btn-support">
+          <a href="tel:+1234567890" className="btn-support">
             <i className="bi bi-telephone"></i>
             Contact Support
           </a>

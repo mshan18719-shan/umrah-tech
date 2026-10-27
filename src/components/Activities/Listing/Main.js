@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { FaSearch, FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { BsCalendar2Date } from "react-icons/bs";
-import { IoLocationSharp, IoTimeOutline, IoCheckmarkCircle } from "react-icons/io5";
+import { IoLocationSharp, IoTimeOutline, IoCheckmarkCircle, IoLanguageOutline } from "react-icons/io5";
 import { HiTicket } from "react-icons/hi2";
 import { MdEdit, MdLocationOn } from "react-icons/md";
 import Image from "next/image";
@@ -19,6 +19,7 @@ import FilterSection from "./FilterSection";
 import styles from "./Activities.module.css";
 import ActivityLoader from "./ActivityLoader";
 import UmrahPagination from "@/components/UmrahGetAway/Listing/UmrahPagination";
+import { getCancellationDisplay } from "@/components/Activities/Detail/cancellationPolicyUtils";
 
 const GOOGLE_MAPS_LIBRARIES = ['places'];
 const ACTIVITY_LISTING_RETURN_URL_KEY = 'activity_listing_return_url';
@@ -57,6 +58,11 @@ const getActivityDescription = (item) =>
 const hasFreeCancellation = (item, selectedDate) => {
   const cancellationPolicy = item?.cancellation_policy;
   if (!cancellationPolicy) return false;
+
+  // Prefer shared date-aware helper (handles from/amount + hours policies)
+  const display = getCancellationDisplay(cancellationPolicy, selectedDate);
+  if (display?.kind === 'free') return true;
+  if (display?.kind === 'non-refundable') return false;
 
   const { cancel_policy, cancellation_policies } = cancellationPolicy;
   if (cancel_policy === 'non-refundable') return false;
@@ -558,6 +564,21 @@ function Main() {
           const activityDuration = activity.activity_duration?.trim() || '';
           if (!durationFilters.includes(activityDuration)) return false;
         }
+
+        // Language filters (match any selected language code)
+        const languageFilters = activeFilters
+          .filter((filter) => filter.startsWith('language_'))
+          .map((filter) => filter.replace('language_', ''));
+
+        if (languageFilters.length > 0) {
+          const activityCodes = (activity.languages || [])
+            .map((lang) => String(lang?.code || '').trim())
+            .filter(Boolean);
+          const hasSelectedLanguage = languageFilters.some((code) =>
+            activityCodes.includes(code)
+          );
+          if (!hasSelectedLanguage) return false;
+        }
       }
 
       return true;
@@ -910,6 +931,22 @@ function Main() {
                       const ratingValue = Number(item.rating_stars);
                       const showFreeCancellation = hasFreeCancellation(item, selectedDate);
                       const hasChildPrice = Number(item?.child_sale_price) > 0;
+                      const languageLabels = Array.from(
+                        new Set(
+                          (item.languages || [])
+                            .map((lang) =>
+                              typeof lang === 'object'
+                                ? lang?.description || lang?.name || lang?.code
+                                : lang
+                            )
+                            .map((label) => String(label || '').trim())
+                            .filter(Boolean)
+                        )
+                      );
+                      const detailLanguage =
+                        String(item.languages?.[0]?.code || '').trim() || 'en';
+                      const travelDate = moment(selectedDate).format('YYYY-MM-DD');
+                      const detailHref = `/activities/${item.slug}?from=${travelDate}&to=${travelDate}&language=${encodeURIComponent(detailLanguage)}`;
 
                       return (
                         <div className={styles.activityCard} key={item.id || item.slug || index}>
@@ -961,6 +998,17 @@ function Main() {
                                   {activityType}
                                 </span>
                               )}
+                              {languageLabels.slice(0, 3).map((label) => (
+                                <span key={label} className={styles.featureTag}>
+                                  <IoLanguageOutline />
+                                  {label}
+                                </span>
+                              ))}
+                              {languageLabels.length > 3 && (
+                                <span className={styles.featureTag}>
+                                  +{languageLabels.length - 3} more
+                                </span>
+                              )}
                               {showFreeCancellation && (
                                 <span className={`${styles.featureTag} ${styles.freeCancelTag}`}>
                                   <IoCheckmarkCircle />
@@ -990,7 +1038,7 @@ function Main() {
                                 <span className={styles.cardPriceNote}>VAT &amp; taxes included</span>
                               </div>
                               <Link
-                                href={`/activities/${item.slug}?from=${moment(selectedDate).format('YYYY-MM-DD')}&to=${moment(selectedDate).format('YYYY-MM-DD')}&language=en`}
+                                href={detailHref}
                                 className={styles.selectBtn}
                                 onClick={() => {
                                   if (typeof window !== 'undefined') {

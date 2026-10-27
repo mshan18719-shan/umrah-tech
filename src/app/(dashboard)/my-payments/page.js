@@ -301,30 +301,7 @@ function page() {
                       </span>
                       <div>
                         <span className="hb-meta-label">Booking Ref</span>
-                        {fields.bookingReference ? (
-                          <strong>{fields.bookingReference}</strong>
-                        ) : fields.snapshotUrl ? (
-                          <button
-                            type="button"
-                            className="hb-btn hb-btn-light"
-                            style={{
-                              padding: "4px 10px",
-                              fontSize: "0.78rem",
-                              marginTop: 2,
-                            }}
-                            onClick={() =>
-                              openSnapshot(
-                                fields.snapshotUrl,
-                                fields.invoiceNumber || "Payment Proof"
-                              )
-                            }
-                          >
-                            <FaImage size={12} />
-                            View Snapshot
-                          </button>
-                        ) : (
-                          <strong>—</strong>
-                        )}
+                        <strong>{fields.bookingReference || "—"}</strong>
                       </div>
                     </div>
                     <div className="hb-meta-item">
@@ -362,7 +339,7 @@ function page() {
                       <div className="hb-amount">{amountDisplay}</div>
                     </div>
 
-                    {fields.snapshotUrl && fields.bookingReference && (
+                    {fields.snapshotUrl && (
                       <div className="hb-card-actions">
                         <button
                           type="button"

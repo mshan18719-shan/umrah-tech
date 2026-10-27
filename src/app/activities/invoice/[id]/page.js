@@ -22,6 +22,8 @@ import {
   FaFileInvoice,
 } from "react-icons/fa";
 import Link from "next/link";
+import { getDisplayQuestionAnswers } from "@/util/activityQuestionAnswers";
+import { getCancellationDisplay } from "@/components/Activities/Detail/cancellationPolicyUtils";
 
 export default function Page() {
   const { id } = useParams();
@@ -338,19 +340,16 @@ export default function Page() {
           : p?.time_duration != null
             ? `${p.time_duration} HOURS BEFORE`
             : "CANCELLATION";
-        const amountValue =
-          p?.amount ?? p?.value ?? p?.fee ?? 0;
-        const amount =
-          p?.type === "percentage"
-            ? `${p.value}%`
-            : `${currency} ${convertToCustomerCurrency(amountValue)}`;
+        const feeValue = Number(p?.amount ?? p?.value ?? p?.fee ?? 0);
+        const isFree =
+          feeValue === 0 ||
+          (p?.type === "percentage" && Number(p.value) === 0);
         return {
           when,
-          amount,
-          desc:
-            p?.type === "percentage"
-              ? "Of total booking value"
-              : "Fixed cancellation charge",
+          amount: isFree ? "Free" : "Non refundable",
+          desc: isFree
+            ? "Full refund. No cancellation fee."
+            : "This booking is non refundable after this point.",
         };
       });
     }
@@ -358,6 +357,17 @@ export default function Page() {
     if (cancelPolicy === "refundable") return [];
     return [{ nonRefundable: true }];
   }, [voucherDetail, currency]);
+
+  const additionalInfoItems = getDisplayQuestionAnswers(voucherDetail);
+
+  const cancellationDisplay = useMemo(() => {
+    const policy = getCancellationPolicy();
+    if (!policy) return null;
+    const normalized = Array.isArray(policy)
+      ? { cancel_policy: "refundable", cancellation_policies: policy }
+      : policy;
+    return getCancellationDisplay(normalized, voucherDetail?.travel_date);
+  }, [voucherDetail]);
 
   const priceRows = useMemo(() => {
     const formatMoney = (price) => convertToCustomerCurrency(price);
@@ -499,10 +509,10 @@ export default function Page() {
                 </div>
                 <div className={styles.brandContact}>
                   <span className={styles.brandContactItem}>
-                    <FaPhone size={12} /> 01217772522
+                    <FaPhone size={12} /> +1234567890
                   </span>
                   <span className={styles.brandContactItem}>
-                    <FaEnvelope size={12} /> info@umrahtech.net
+                    <FaEnvelope size={12} /> info@Umrahtech.com
                   </span>
                 </div>
               </header>
@@ -867,6 +877,29 @@ export default function Page() {
                   </div>
                 </section>
 
+                {additionalInfoItems.length > 0 && (
+                  <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                      <div className={styles.sectionHeadLeft}>
+                        <span className={styles.sectionIcon}>
+                          <FaFileInvoice size={11} />
+                        </span>
+                        <h3 className={styles.sectionTitle}>
+                          Additional Information
+                        </h3>
+                      </div>
+                    </div>
+                    <div className={styles.bookingGrid}>
+                      {additionalInfoItems.map((item) => (
+                        <div key={item.code}>
+                          <span className={styles.fieldLabel}>{item.label}</span>
+                          <div className={styles.fieldValue}>{item.answer}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 {voucherDetail?.special_request && (
                   <section className={styles.section}>
                     <div className={styles.sectionHead}>
@@ -897,26 +930,61 @@ export default function Page() {
                       </h3>
                     </div>
                   </div>
-                  {cancelCards.length === 0 ? (
+                  {cancellationDisplay && (
+                    <div
+                      className={styles.cancelFull}
+                      style={
+                        cancellationDisplay.kind === "free"
+                          ? {
+                              background: "#eef6f2",
+                              color: "#166534",
+                              border: "1px solid #bbf7d0",
+                              marginBottom: cancelCards.length ? 12 : 0,
+                            }
+                          : {
+                              background: "#fef2f2",
+                              color: "#991b1b",
+                              border: "1px solid #fecaca",
+                              marginBottom: cancelCards.length ? 12 : 0,
+                            }
+                      }
+                    >
+                      {cancellationDisplay.kind === "free" ? (
+                        <>
+                          This activity is fully refundable.
+                          {cancellationDisplay.deadlineLabel ? (
+                            <>
+                              {" "}
+                              Free cancellation before{" "}
+                              <strong>{cancellationDisplay.deadlineLabel}</strong>.
+                            </>
+                          ) : null}
+                        </>
+                      ) : (
+                        <>
+                          This booking is non-refundable. No refund will be
+                          issued for cancellations.
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {cancelCards.length === 0 && !cancellationDisplay ? (
                     <div className={styles.cancelFull}>
                       Cancellation terms apply as per activity policy.
                     </div>
-                  ) : cancelCards[0]?.nonRefundable ? (
-                    <div className={styles.cancelFull}>
-                      This booking is non-refundable. No refund will be issued
-                      for cancellations.
-                    </div>
-                  ) : (
+                  ) : cancelCards[0]?.nonRefundable ? null : cancelCards.length > 0 ? (
                     <div className={styles.cancelGrid}>
-                      {cancelCards.map((c, i) => (
-                        <div key={i} className={styles.cancelCard}>
-                          <span className={styles.cancelWhen}>{c.when}</span>
-                          <p className={styles.cancelAmount}>{c.amount}</p>
-                          <p className={styles.cancelDesc}>{c.desc}</p>
-                        </div>
-                      ))}
+                      {cancelCards.map((c, i) =>
+                        c.nonRefundable ? null : (
+                          <div key={i} className={styles.cancelCard}>
+                            <span className={styles.cancelWhen}>{c.when}</span>
+                            <p className={styles.cancelAmount}>{c.amount}</p>
+                            <p className={styles.cancelDesc}>{c.desc}</p>
+                          </div>
+                        )
+                      )}
                     </div>
-                  )}
+                  ) : null}
                 </section>
 
                 {/* Important */}
@@ -988,10 +1056,10 @@ export default function Page() {
                 </p>
                 <div className={styles.footerContact}>
                   <span>
-                    <FaPhone size={11} /> 01217772522
+                    <FaPhone size={11} /> +1234567890
                   </span>
                   <span>
-                    <FaEnvelope size={11} /> info@umrahtech.net
+                    <FaEnvelope size={11} /> info@Umrahtech.com
                   </span>
                 </div>
               </footer>

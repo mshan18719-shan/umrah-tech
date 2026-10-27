@@ -68,10 +68,15 @@ export default function TransferCard({ transfers, searchParams }) {
     );
   }
 
-  const handleBooking = (transfer) => {
+  const handleBooking = (transfer, qty) => {
     if (!transfer) return;
+    const isCustom =
+      String(transfer?.provider || "").toLowerCase() === "custom" ||
+      String(transfer?.transfer_type_code || "").toUpperCase() === "CUSTOM";
     transfer.searchParams = searchParams;
-    transfer.quantity = vehicleQuantity;
+    transfer.quantity = isCustom
+      ? Math.max(1, Number(qty ?? vehicleQuantity) || 1)
+      : 1;
     setSelectedTransfer(transfer);
 
     if (isPackageMode || isEditMode) {
@@ -269,7 +274,7 @@ export default function TransferCard({ transfers, searchParams }) {
         handleCloseModal={() => setSelectedVehicle(null)}
         selectedTransferDetail={selectedVehicle}
         searchParams={searchParams}
-        handleBookNow={() => handleBooking(selectedVehicle)}
+        handleBookNow={(qty) => handleBooking(selectedVehicle, qty)}
         isPackageMode={isPackageMode}
         isEditMode={isEditMode}
         setVehicleQuantity={setVehicleQuantity}

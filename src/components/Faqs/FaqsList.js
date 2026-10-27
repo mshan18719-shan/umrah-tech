@@ -166,8 +166,8 @@ export default function FaqsList() {
                                         <div className="card-body p-4">
                                             <FaPhoneAlt className="text-success mb-3" style={{ fontSize: '2rem' }} />
                                             <h6 className="fw-semibold mb-2">Phone Support</h6>
-                                            <a href="tel:01217772522" className="text-decoration-none">
-                                                <p className="text-muted small mb-0">0121 777 2522</p>
+                                            <a href="tel:+1234567890" className="text-decoration-none">
+                                                <p className="text-muted small mb-0">1234567890</p>
                                             </a>
                                         </div>
                                     </div>
@@ -177,8 +177,8 @@ export default function FaqsList() {
                                         <div className="card-body p-4">
                                             <FaEnvelope className="text-success mb-3" style={{ fontSize: '2rem' }} />
                                             <h6 className="fw-semibold mb-2">Email Us</h6>
-                                            <a href="mailto:info@umrahTech.net" className="text-decoration-none">
-                                                <p className="text-muted small mb-0">info@umrahTech.net</p>
+                                            <a href="mailto:info@Umrahtech.com" className="text-decoration-none">
+                                                <p className="text-muted small mb-0">info@Umrahtech.com</p>
                                             </a>
                                         </div>
                                     </div>
@@ -231,15 +231,15 @@ export default function FaqsList() {
                 }
                 :global(.faq-tabs .mantine-Tabs-tab:hover) {
                     background-color: #f8f9fa;
-                    border-color: #198754;
+                    border-color: #1B3B6F;
                 }
                 :global(.faq-tabs .mantine-Tabs-tab[data-active]) {
-                    background-color: #198754;
+                    background-color: #1B3B6F;
                     color: white;
-                    border-color: #198754;
+                    border-color: #1B3B6F;
                 }
                 :global(.faq-tabs .mantine-Tabs-tab[data-active]:hover) {
-                    background-color: #157347;
+                    background-color: #1B3B6F;
                 }
             `}</style>
         </div>

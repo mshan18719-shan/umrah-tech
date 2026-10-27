@@ -126,25 +126,54 @@ export default function Page() {
       "custom" ||
     String(transfer?.transfer_type_code || "").toUpperCase() === "CUSTOM";
 
-  const selectedExtras = (() => {
-    const fromSelectedTransfers = Array.isArray(invoiceDetail?.selected_transfers)
-      ? invoiceDetail.selected_transfers.flatMap((t) =>
-          Array.isArray(t?.selected_extras) ? t.selected_extras : []
-        )
+  const parseMaybeArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string" && value.trim()) {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const getBookedExtras = () => {
+    const fromTransfers = Array.isArray(invoiceDetail?.selected_transfers)
+      ? invoiceDetail.selected_transfers.flatMap((t) => [
+          t?.selected_extras,
+          t?.extras,
+        ])
       : [];
     const candidates = [
       invoiceDetail?.selected_extras,
       transfer?.selected_extras,
-      fromSelectedTransfers,
+      transfer?.extras,
+      ...fromTransfers,
       invoiceDetail?.additional_services,
       transfer?.additional_services,
       invoiceDetail?.extras,
     ];
-    for (const list of candidates) {
-      if (Array.isArray(list) && list.length) return list;
+    for (const raw of candidates) {
+      const list = parseMaybeArray(raw);
+      if (!list?.length) continue;
+      const withUnits = list.filter((extra) => Number(extra?.units || 0) > 0);
+      if (withUnits.length) return withUnits;
+      if (
+        raw === invoiceDetail?.selected_extras ||
+        raw === transfer?.selected_extras ||
+        (Array.isArray(invoiceDetail?.selected_transfers) &&
+          invoiceDetail.selected_transfers.some((t) => t?.selected_extras === raw))
+      ) {
+        return list.map((extra) => ({ ...extra, units: extra?.units ?? 1 }));
+      }
     }
     return [];
-  })();
+  };
+
+  const selectedExtras = getBookedExtras();
+  const bookedQty = Number(invoiceDetail?.booked_qty || 1);
 
   const currency =
     invoiceDetail?.pricing?.display_currency ||
@@ -164,14 +193,18 @@ export default function Page() {
   );
 
   const extrasDisplayTotal = selectedExtras.reduce((sum, extra) => {
-    const raw = Number(extra?.amount || 0);
+    const raw =
+      Number(extra?.amount || 0) * Number(extra?.units || 1);
     if (!raw) return sum;
     return sum + Number(convertToCustomerCurrency(raw));
   }, 0);
+  const transferFare = Number(transfer?.fare || 0);
   const transferLineTotal =
-    extrasDisplayTotal > 0 && extrasDisplayTotal <= grandTotal
-      ? Math.max(0, grandTotal - extrasDisplayTotal)
-      : grandTotal;
+    transferFare > 0
+      ? transferFare * bookedQty
+      : extrasDisplayTotal > 0 && extrasDisplayTotal <= grandTotal
+        ? Math.max(0, grandTotal - extrasDisplayTotal)
+        : grandTotal;
 
   const paymentStatus = (invoiceDetail?.payment_status || "").toLowerCase();
   const amountPaid =
@@ -189,7 +222,13 @@ export default function Page() {
         : styles.statusPillPending;
 
   const invoiceNo = invoiceDetail?.invoice_number || id || "—";
-  const bookingReference = invoiceDetail?.booking_reference || id || "—";
+  // Booking Ref only when API returns a real booking_reference (never fall back to invoice/id)
+  const rawBookingRef = String(invoiceDetail?.booking_reference || "").trim();
+  const apiInvoiceNo = String(invoiceDetail?.invoice_number || "").trim();
+  const bookingReference =
+    rawBookingRef && (!apiInvoiceNo || rawBookingRef !== apiInvoiceNo)
+      ? rawBookingRef
+      : "—";
   const documentLinkId =
     invoiceDetail?.invoice_number ||
     invoiceDetail?.booking_reference ||
@@ -300,6 +339,19 @@ export default function Page() {
         policy?.cancelPolicy ||
         ""
     ).toLowerCase();
+    const qtyMultiplier = Math.max(1, Number(bookedQty) || 1);
+
+    const toFeeCard = (p) => {
+      const from = moment(p?.from);
+      const fee = qtyMultiplier * Number(p?.amount || 0);
+      return {
+        when: from.isValid()
+          ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
+          : "CANCELLATION",
+        amount: `${displayCurrency} ${convertToCustomerCurrency(fee)}`,
+        desc: "Fixed cancellation charge",
+      };
+    };
 
     if (!policy && !topLevelCancel) return [{ nonRefundable: true }];
 
@@ -307,19 +359,20 @@ export default function Page() {
     if (Array.isArray(policy)) {
       if (!policy.length) {
         return topLevelCancel === "refundable"
-          ? []
+          ? [{ freeCancellation: true, when: "" }]
           : [{ nonRefundable: true }];
       }
-      return policy.map((p) => {
-        const from = moment(p?.from);
-        return {
-          when: from.isValid()
-            ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
-            : "CANCELLATION",
-          amount: `${displayCurrency} ${convertToCustomerCurrency(p?.amount)}`,
-          desc: "Fixed cancellation charge",
-        };
-      });
+      const cards = [];
+      if (topLevelCancel === "refundable" || policy.length > 0) {
+        const firstFrom = moment(policy[0]?.from);
+        cards.push({
+          freeCancellation: true,
+          when: firstFrom.isValid()
+            ? firstFrom.format("DD MMM YYYY")
+            : "",
+        });
+      }
+      return [...cards, ...policy.map(toFeeCard)];
     }
 
     const cancelPolicy = String(
@@ -336,22 +389,20 @@ export default function Page() {
 
     const policies = policy?.policies || policy?.cancellation_policies || [];
     if (!Array.isArray(policies) || !policies.length) {
-      return [];
+      return [{ freeCancellation: true, when: "" }];
     }
 
-    return policies.map((p) => {
-      const from = moment(p?.from);
-      return {
-        when: from.isValid()
-          ? `FROM ${from.format("MMM DD, YYYY").toUpperCase()}`
-          : "CANCELLATION",
-        amount: `${displayCurrency} ${convertToCustomerCurrency(p?.amount)}`,
-        desc: "Fixed cancellation charge",
-      };
-    });
-  }, [invoiceDetail, currency]);
+    const firstFrom = moment(policies[0]?.from);
+    return [
+      {
+        freeCancellation: true,
+        when: firstFrom.isValid() ? firstFrom.format("DD MMM YYYY") : "",
+      },
+      ...policies.map(toFeeCard),
+    ];
+  }, [invoiceDetail, currency, bookedQty]);
 
-  const qty = Number(invoiceDetail?.booked_qty || 1);
+  const qty = bookedQty;
   const unitRate = PerTransferPrice(transferLineTotal, qty);
 
   const locationPairs = useMemo(() => {
@@ -432,10 +483,10 @@ export default function Page() {
                 </div>
                 <div className={styles.brandContact}>
                   <span className={styles.brandContactItem}>
-                    <FaPhone size={12} /> 01217772522
+                    <FaPhone size={12} /> +1234567890
                   </span>
                   <span className={styles.brandContactItem}>
-                    <FaEnvelope size={12} /> info@umrahtech.net
+                    <FaEnvelope size={12} /> info@Umrahtech.com
                   </span>
                 </div>
               </header>
@@ -473,10 +524,10 @@ export default function Page() {
                       <span className={styles.metaLabel}>Invoice</span>
                       <span className={styles.metaValue}>{invoiceNo}</span>
                     </div>
-                    <div className={styles.metaItem}>
+                    {bookingReference && bookingReference !== "—" && <div className={styles.metaItem}>
                       <span className={styles.metaLabel}>Booking Ref</span>
                       <span className={styles.metaValue}>{bookingReference}</span>
-                    </div>
+                    </div>}
                     <div className={styles.metaItem}>
                       <span className={styles.metaLabel}>Payment Status</span>
                       <span
@@ -852,43 +903,40 @@ export default function Page() {
                         <h3 className={styles.sectionTitle}>Extra Services</h3>
                       </div>
                     </div>
-                    <div className={styles.additionalServicesBody}>
-                      <div className={styles.serviceCardGrid}>
-                        {selectedExtras.map((extra, index) => {
-                          const metaParts = [
-                            extra?.weight_kg,
-                            extra?.age,
-                          ].filter(Boolean);
-                          const amount = Number(extra?.amount || 0);
-                          return (
-                            <div
-                              key={extra?.code || index}
-                              className={styles.ancillaryServiceCard}
-                            >
-                              {amount > 0 ? (
-                                <span className={styles.ancillaryServicePrice}>
+                    <div className={styles.priceTableWrap}>
+                      <table className={styles.priceTable}>
+                        <thead>
+                          <tr>
+                            <th>Service</th>
+                            <th>Units</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedExtras.map((extra, index) => {
+                            const units = Number(extra?.units || 1) || 1;
+                            const unitPrice = Number(extra?.amount || 0);
+                            const lineTotal = unitPrice * units;
+                            return (
+                              <tr key={extra?.code || index}>
+                                <td>
+                                  {extra?.name || extra?.type || "Extra service"}
+                                </td>
+                                <td>{units}</td>
+                                <td>
                                   {currency}{" "}
-                                  {convertToCustomerCurrency(amount)}
-                                </span>
-                              ) : null}
-                              <p className={styles.ancillaryServiceName}>
-                                {extra?.name || extra?.type || "Extra service"}
-                              </p>
-                              {metaParts.length > 0 ? (
-                                <p className={styles.ancillaryServiceMeta}>
-                                  {metaParts.join(" · ")}
-                                </p>
-                              ) : extra?.type &&
-                                extra?.name &&
-                                extra.type !== extra.name ? (
-                                <p className={styles.ancillaryServiceMeta}>
-                                  {extra.type}
-                                </p>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
+                                  {convertToCustomerCurrency(unitPrice)}
+                                </td>
+                                <td>
+                                  {currency}{" "}
+                                  {convertToCustomerCurrency(lineTotal)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   </section>
                 )}
@@ -929,26 +977,18 @@ export default function Page() {
                             {currency} {Number(transferLineTotal).toFixed(2)}
                           </td>
                         </tr>
-                        {selectedExtras.map((extra, index) => {
-                          const amount = Number(extra?.amount || 0);
-                          if (!amount) return null;
-                          const display = convertToCustomerCurrency(amount);
-                          return (
-                            <tr key={extra?.code || `extra-${index}`}>
-                              <td>
-                                Extra —{" "}
-                                {extra?.name || extra?.type || "Service"}
-                              </td>
-                              <td>1</td>
-                              <td>
-                                {currency} {display}
-                              </td>
-                              <td>
-                                {currency} {display}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {extrasDisplayTotal > 0 && (
+                          <tr>
+                            <td>Extra Services</td>
+                            <td>1</td>
+                            <td>
+                              {currency} {Number(extrasDisplayTotal).toFixed(2)}
+                            </td>
+                            <td>
+                              {currency} {Number(extrasDisplayTotal).toFixed(2)}
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -986,13 +1026,25 @@ export default function Page() {
                         issued in case of cancellation.
                       </div>
                     ) : (
-                      cancelCards.map((c, i) => (
-                        <div key={i} className={styles.cancelCard}>
-                          <span className={styles.cancelWhen}>{c.when}</span>
-                          <p className={styles.cancelAmount}>{c.amount}</p>
-                          <p className={styles.cancelDesc}>{c.desc}</p>
-                        </div>
-                      ))
+                      cancelCards.map((c, i) =>
+                        c.freeCancellation ? (
+                          <div key={i} className={styles.cancelFull} style={{ background: '#eef6f2', color: '#166534', border: '1px solid #bbf7d0' }}>
+                            This transfer is fully refundable.
+                            {c.when ? (
+                              <>
+                                {" "}
+                                Free cancellation before <strong>{c.when}</strong>.
+                              </>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div key={i} className={styles.cancelCard}>
+                            <span className={styles.cancelWhen}>{c.when}</span>
+                            <p className={styles.cancelAmount}>{c.amount}</p>
+                            <p className={styles.cancelDesc}>{c.desc}</p>
+                          </div>
+                        )
+                      )
                     )}
                   </div>
                 </section>
@@ -1073,10 +1125,10 @@ export default function Page() {
                 </p>
                 <div className={styles.footerContact}>
                   <span>
-                    <FaPhone size={11} /> 01217772522
+                    <FaPhone size={11} /> +1234567890
                   </span>
                   <span>
-                    <FaEnvelope size={11} /> info@umrahtech.net
+                    <FaEnvelope size={11} /> info@Umrahtech.com
                   </span>
                 </div>
               </footer>

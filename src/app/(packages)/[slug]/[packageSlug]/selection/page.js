@@ -566,7 +566,7 @@ export default function Page() {
               </p>
               <div className={styles.contactActions}>
                  <a href="/" className={styles.contactBtn}>
-                 {/* href="tel:01217772522"  */}
+                 {/* href="tel:+1234567890"  */}
                   <BiPhone size={15} /> Call Us Now
                 </a>
                 <a

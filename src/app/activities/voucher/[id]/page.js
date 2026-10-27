@@ -24,6 +24,8 @@ import {
 import { FaLocationDot } from "react-icons/fa6";
 import { IoWarningOutline } from "react-icons/io5";
 import Link from "next/link";
+import { getDisplayQuestionAnswers } from "@/util/activityQuestionAnswers";
+import { getCancellationDisplay } from "@/components/Activities/Detail/cancellationPolicyUtils";
 
 export default function Page() {
   const { id } = useParams();
@@ -303,23 +305,33 @@ export default function Page() {
           : p?.time_duration != null
             ? `${p.time_duration} HRS BEFORE`
             : "CANCELLATION";
-        const amountValue = p?.amount ?? p?.value ?? p?.fee ?? 0;
+        const feeValue = Number(p?.amount ?? p?.value ?? p?.fee ?? 0);
+        const isFree =
+          feeValue === 0 ||
+          (p?.type === "percentage" && Number(p.value) === 0);
         return {
           when,
-          amount:
-            p?.type === "percentage"
-              ? `${p.value}%`
-              : `${currency} ${convertToCustomerCurrency(amountValue)}`,
-          desc:
-            p?.type === "percentage"
-              ? "Of total booking value"
-              : "Fixed cancellation charge",
+          amount: isFree ? "Free" : "Non refundable",
+          desc: isFree
+            ? "Full refund. No cancellation fee."
+            : "This booking is non refundable after this point.",
         };
       });
     }
 
     if (cancelPolicy === "refundable") return [];
     return [{ nonRefundable: true }];
+  }, [voucherDetail]);
+
+  const additionalInfoItems = getDisplayQuestionAnswers(voucherDetail);
+
+  const cancellationDisplay = useMemo(() => {
+    const policy = getCancellationPolicy();
+    if (!policy) return null;
+    const normalized = Array.isArray(policy)
+      ? { cancel_policy: "refundable", cancellation_policies: policy }
+      : policy;
+    return getCancellationDisplay(normalized, voucherDetail?.travel_date);
   }, [voucherDetail]);
 
   const activityTime = (() => {
@@ -417,10 +429,10 @@ export default function Page() {
                 </div>
                 <div className={styles.brandContact}>
                   <span className={styles.brandContactItem}>
-                    <FaPhone size={12} /> 01217772522
+                    <FaPhone size={12} /> +1234567890
                   </span>
                   <span className={styles.brandContactItem}>
-                    <FaEnvelope size={12} /> info@umrahtech.net
+                    <FaEnvelope size={12} /> info@Umrahtech.com
                   </span>
                 </div>
               </header>
@@ -808,14 +820,46 @@ export default function Page() {
                   </section>
                 )}
 
+                {additionalInfoItems.length > 0 && (
+                  <section className={styles.section}>
+                    <div className={styles.sectionTitleRow}>
+                      <span className={styles.sectionNum}>
+                        {guestSlots.adultGuests.length > 0 ||
+                        guestSlots.childGuests.length > 0
+                          ? "04"
+                          : "03"}
+                      </span>
+                      <span className={styles.sectionIcon}>
+                        <FaFileInvoice size={11} />
+                      </span>
+                      <h3 className={styles.sectionTitle}>
+                        Additional Information
+                      </h3>
+                    </div>
+                    <div className={styles.bookingGrid}>
+                      {additionalInfoItems.map((item) => (
+                        <div key={item.code}>
+                          <span className={styles.fieldLabel}>{item.label}</span>
+                          <div className={styles.fieldValue}>{item.answer}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 {/* Cancellation */}
                 <section className={styles.section}>
                   <div className={styles.sectionTitleRow}>
                     <span className={styles.sectionNum}>
-                      {guestSlots.adultGuests.length > 0 ||
-                      guestSlots.childGuests.length > 0
-                        ? "04"
-                        : "03"}
+                      {(guestSlots.adultGuests.length > 0 ||
+                        guestSlots.childGuests.length > 0) &&
+                      additionalInfoItems.length > 0
+                        ? "05"
+                        : guestSlots.adultGuests.length > 0 ||
+                            guestSlots.childGuests.length > 0 ||
+                            additionalInfoItems.length > 0
+                          ? "04"
+                          : "03"}
                     </span>
                     <span className={styles.sectionIcon}>
                       <IoWarningOutline size={13} />
@@ -823,23 +867,59 @@ export default function Page() {
                     <h3 className={styles.sectionTitle}>Cancellation Policy</h3>
                   </div>
                   <div className={styles.cancelGrid}>
-                    {cancelCards.length === 0 ? (
+                    {cancellationDisplay && (
+                      <div
+                        className={styles.cancelFull}
+                        style={
+                          cancellationDisplay.kind === "free"
+                            ? {
+                                background: "#eef6f2",
+                                color: "#166534",
+                                border: "1px solid #bbf7d0",
+                              }
+                            : {
+                                background: "#fef2f2",
+                                color: "#991b1b",
+                                border: "1px solid #fecaca",
+                              }
+                        }
+                      >
+                        {cancellationDisplay.kind === "free" ? (
+                          <>
+                            This activity is fully refundable.
+                            {cancellationDisplay.deadlineLabel ? (
+                              <>
+                                {" "}
+                                Free cancellation before{" "}
+                                <strong>
+                                  {cancellationDisplay.deadlineLabel}
+                                </strong>
+                                .
+                              </>
+                            ) : null}
+                          </>
+                        ) : (
+                          <>
+                            This booking is non-refundable. No refund will be
+                            issued for cancellations.
+                          </>
+                        )}
+                      </div>
+                    )}
+                    {cancelCards.length === 0 && !cancellationDisplay ? (
                       <div className={styles.cancelFull}>
                         Cancellation terms apply as per activity policy.
                       </div>
-                    ) : cancelCards[0]?.nonRefundable ? (
-                      <div className={styles.cancelFull}>
-                        This booking is non-refundable. No refund will be issued
-                        for cancellations.
-                      </div>
-                    ) : (
-                      cancelCards.map((c, i) => (
-                        <div key={i} className={styles.cancelCard}>
-                          <span className={styles.cancelWhen}>{c.when}</span>
-                          <p className={styles.cancelAmount}>{c.amount}</p>
-                          <p className={styles.cancelDesc}>{c.desc}</p>
-                        </div>
-                      ))
+                    ) : cancelCards[0]?.nonRefundable ? null : (
+                      cancelCards.map((c, i) =>
+                        c.nonRefundable ? null : (
+                          <div key={i} className={styles.cancelCard}>
+                            <span className={styles.cancelWhen}>{c.when}</span>
+                            <p className={styles.cancelAmount}>{c.amount}</p>
+                            <p className={styles.cancelDesc}>{c.desc}</p>
+                          </div>
+                        )
+                      )
                     )}
                   </div>
                 </section>
@@ -848,10 +928,15 @@ export default function Page() {
                 <section className={styles.section}>
                   <div className={styles.sectionTitleRow}>
                     <span className={styles.sectionNum}>
-                      {guestSlots.adultGuests.length > 0 ||
-                      guestSlots.childGuests.length > 0
-                        ? "05"
-                        : "04"}
+                      {(guestSlots.adultGuests.length > 0 ||
+                        guestSlots.childGuests.length > 0) &&
+                      additionalInfoItems.length > 0
+                        ? "06"
+                        : guestSlots.adultGuests.length > 0 ||
+                            guestSlots.childGuests.length > 0 ||
+                            additionalInfoItems.length > 0
+                          ? "05"
+                          : "04"}
                     </span>
                     <span className={styles.sectionIcon}>
                       <FaCheckCircle size={11} />
@@ -923,10 +1008,10 @@ export default function Page() {
                 </p>
                 <div className={styles.footerContact}>
                   <span>
-                    <FaPhone size={11} /> 01217772522
+                    <FaPhone size={11} /> +1234567890
                   </span>
                   <span>
-                    <FaEnvelope size={11} /> info@umrahtech.net
+                    <FaEnvelope size={11} /> info@Umrahtech.com
                   </span>
                 </div>
               </footer>

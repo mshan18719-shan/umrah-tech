@@ -9,6 +9,8 @@ import { MdOutlineTranslate } from "react-icons/md";
 import moment from 'moment';
 import Summery from '@/components/Activities/Checkout/Summery';
 import DetailForm from '@/components/Activities/Checkout/DetailForm';
+import { getCancellationDisplay } from '@/components/Activities/Detail/cancellationPolicyUtils';
+import { IoInformationCircleOutline } from 'react-icons/io5';
 import './checkout.css';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +42,10 @@ export default function page() {
 
     const totalGuests = (activityDetail?.adults || 0) + (activityDetail?.children || 0);
     const modality = activityDetail?.modality;
+    const cancellationDisplay = getCancellationDisplay(
+        activityDetail?.cancellation_policy,
+        activityDetail?.travel_date
+    );
 
     const guestLabel = () => {
         const modalityPax = modality?.selected_pax;
@@ -169,6 +175,24 @@ export default function page() {
                                     <div className='checkout-review-pill'>
                                         <HiUserGroup className='checkout-review-pill-icon' />
                                         <span>{guestLabel()}</span>
+                                    </div>
+                                )}
+                                {cancellationDisplay && (
+                                    <div
+                                        className={`checkout-review-pill checkout-review-pill--cancel ${
+                                            cancellationDisplay.kind === 'free'
+                                                ? 'checkout-review-pill--cancel-free'
+                                                : 'checkout-review-pill--cancel-none'
+                                        }`}
+                                    >
+                                        <IoInformationCircleOutline className='checkout-review-pill-icon' />
+                                        <span>
+                                            {cancellationDisplay.kind === 'free'
+                                                ? cancellationDisplay.deadlineLabel
+                                                    ? `Free before ${cancellationDisplay.deadlineLabel}`
+                                                    : 'Free cancellation available'
+                                                : 'Non-refundable'}
+                                        </span>
                                     </div>
                                 )}
                             </div>

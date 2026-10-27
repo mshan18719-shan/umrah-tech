@@ -354,6 +354,33 @@
   border-top: 1px dashed #dce8e3;
 }
 
+.footerPriceBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.footerBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.footerBreakdownRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: #4b5563;
+}
+
+.footerBreakdownRow span:last-child {
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
 .totalLabel {
   font-size: 1rem;
   font-weight: 700;

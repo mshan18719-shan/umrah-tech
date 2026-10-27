@@ -682,11 +682,11 @@ export default function Page() {
                                 <div className={styles.invFooterLeft}>
                                     <span className={styles.invFooterItem}>
                                         <FaPhone size={13} className={styles.invFooterIcon} />
-                                        01217772522
+                                        +1234567890
                                     </span>
                                     <span className={styles.invFooterItem}>
                                         <FaEnvelope size={13} className={styles.invFooterIcon} />
-                                        info@umrahTech.net
+                                        info@Umrahtech.com
                                     </span>
                                 </div>
                                 <div className={styles.invFooterRight}>
