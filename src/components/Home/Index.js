@@ -26,7 +26,7 @@ export default function Index() {
       {/* <TopTransfers /> */}
       <Destinations/>
       <Chooseus/>
-      <Testimonials/>
+      {/* <Testimonials/> */}
       <FaqSection/>
       {/* <TopActivities /> */}
       {/* <AboutUs /> */}
