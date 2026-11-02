@@ -2268,6 +2268,36 @@ a {
     color: #1f7a5a;
 }
 
+.hotel-card .htc-card__rate-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.65rem;
+}
+
+.hotel-card .htc-card__rate-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.2;
+}
+
+.hotel-card .htc-card__rate-badge--breakfast {
+    color: #1B3B6F;
+}
+
+.hotel-card .htc-card__rate-badge--cancel-free {
+    color: #1f7a5a;
+}
+
+.hotel-card .htc-card__rate-badge--cancel-non-refundable,
+.hotel-card .htc-card__rate-badge--cancel-fee {
+    color: #b45309;
+}
+
 .hotel-card .htc-card__amenities {
     list-style: none;
     margin: 0 0 0.9rem;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import FlightDetail from "./FlightDetail";
 import { useFlightList } from "./FlightListingContext";
 import moment from "moment";
@@ -10,9 +10,202 @@ import PriceDisplay from "@/components/Currency/PriceDisplay";
 import Image from "next/image";
 import { usePackageMode } from "../Store/PackageModeHelper";
 import { useHolidayPackageStore } from "../Store/HolidayPackageStore";
-import { FaPlane } from "react-icons/fa";
+import { FaInfoCircle, FaPlane } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
 import { notifications } from "@mantine/notifications";
+import {
+  getPassengerCount,
+  getTravelerPricingGroups,
+  hasPerTravelerPricing,
+} from "./Checkout/flightHelpers";
 import styles from "./FlightCard.module.css";
+
+function getFallbackFareBreakdown(flight) {
+  const pricing = flight?.pricing;
+  if (!pricing) return null;
+
+  const markup = Number(
+    pricing?.markup_details?.total_markup_amount ||
+      pricing?.markup_details?.client_markup_amount ||
+      0,
+  );
+  const fare = Number(pricing?.base_amount || 0) + markup;
+  const tax = Number(pricing?.tax_amount || 0);
+  const total = Number(pricing?.total_amount || 0);
+  const currency = pricing?.currency;
+
+  if (!(fare > 0 || tax > 0 || total > 0)) return null;
+
+  return {
+    currency,
+    total,
+    groups: [
+      {
+        key: "fare",
+        label: "Flight",
+        fare,
+        tax,
+        total: fare + tax || total,
+        currency,
+      },
+    ],
+  };
+}
+
+function canUseHover() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+}
+
+function PriceBreakdown({ flight }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const touchOpenedRef = useRef(false);
+  const pricing = flight?.pricing;
+  const currency = pricing?.currency;
+  const total = Number(pricing?.total_amount || 0);
+  const passengerCount = getPassengerCount(flight) || 1;
+  const travelerGroups = hasPerTravelerPricing(flight)
+    ? getTravelerPricingGroups(flight)
+    : [];
+  const fallback = travelerGroups.length ? null : getFallbackFareBreakdown(flight);
+  const groups = travelerGroups.length
+    ? travelerGroups
+    : fallback?.groups || [];
+
+  useEffect(() => {
+    const card = wrapRef.current?.closest(`.${styles.flightCard}`);
+    if (!card) return undefined;
+    if (open) card.classList.add(styles.priceBreakdownActive);
+    else card.classList.remove(styles.priceBreakdownActive);
+    return () => card.classList.remove(styles.priceBreakdownActive);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        touchOpenedRef.current = false;
+        setOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  if (!groups.length) return null;
+
+  return (
+    <div
+      ref={wrapRef}
+      className={`${styles.priceBreakdownWrap}${open ? ` ${styles.priceBreakdownOpen}` : ""}`}
+      onMouseEnter={() => {
+        if (canUseHover() && !touchOpenedRef.current) setOpen(true);
+      }}
+      onMouseLeave={() => {
+        if (canUseHover() && !touchOpenedRef.current) setOpen(false);
+      }}
+    >
+      <button
+        type="button"
+        className={styles.priceInfoBtn}
+        aria-label="Price breakdown"
+        aria-expanded={open}
+        onPointerDown={(event) => {
+          if (event.pointerType && event.pointerType !== "mouse") {
+            touchOpenedRef.current = true;
+          }
+        }}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!canUseHover() || touchOpenedRef.current) {
+            setOpen((prev) => !prev);
+          }
+        }}
+      >
+        <FaInfoCircle aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div
+          className={styles.priceBreakdownPanel}
+          role="dialog"
+          aria-label="Price breakdown"
+        >
+          <div className={styles.priceBreakdownHeader}>
+            <span>Price breakdown</span>
+            <button
+              type="button"
+              className={styles.priceBreakdownClose}
+              aria-label="Close price breakdown"
+              onClick={(event) => {
+                event.stopPropagation();
+                touchOpenedRef.current = false;
+                setOpen(false);
+              }}
+            >
+              <IoClose size={16} aria-hidden="true" />
+            </button>
+          </div>
+
+          <p className={styles.priceBreakdownMeta}>
+            FLIGHT • {passengerCount}{" "}
+            {passengerCount === 1 ? "PASSENGER" : "PASSENGERS"}
+          </p>
+
+          <div className={styles.priceBreakdownBody}>
+            {groups.map((group) => (
+              <div key={group.key} className={styles.priceBreakdownGroup}>
+                <div className={styles.priceBreakdownGroupHead}>
+                  <span>{group.label}</span>
+                  <span>
+                    <PriceDisplay
+                      currency={group.currency || currency}
+                      price={group.total}
+                    />
+                  </span>
+                </div>
+                {group.fare > 0 && (
+                  <div className={styles.priceBreakdownRow}>
+                    <span>Flight fare</span>
+                    <span>
+                      <PriceDisplay
+                        currency={group.currency || currency}
+                        price={group.fare}
+                      />
+                    </span>
+                  </div>
+                )}
+                {group.tax > 0 && (
+                  <div className={styles.priceBreakdownRow}>
+                    <span>Airline taxes &amp; fees</span>
+                    <span>
+                      <PriceDisplay
+                        currency={group.currency || currency}
+                        price={group.tax}
+                      />
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.priceBreakdownFooter}>
+            <div className={styles.priceBreakdownTotal}>
+              <span>Total</span>
+              <span>
+                <PriceDisplay currency={currency} price={total} />
+              </span>
+            </div>
+            <p className={styles.priceBreakdownNote}>Includes VAT and taxes</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function formatDurationLabel(totalMinutes) {
   const hours = Math.floor(totalMinutes / 60);
@@ -193,22 +386,15 @@ function FlightCardItem({
 
           <div className={styles.footerRight}>
             <div className={styles.priceBlock}>
-              {showPerPerson ? (
-                <>
-                  <span className={styles.priceLabel}>Total</span>
-                  <p className={styles.priceMain}>
-                    <PriceDisplay price={totalAmount} currency={currency} />
-                  </p>
-                  <span className={styles.priceNote}>VAT and taxes included</span>
-                </>
-              ) : (
-                <>
-                  <p className={styles.priceMain}>
-                    <PriceDisplay price={totalAmount} currency={currency} />
-                  </p>
-                  <span className={styles.priceNote}>VAT and taxes included</span>
-                </>
+              {showPerPerson && (
+                <span className={styles.priceLabel}>Total</span>
               )}
+              <p className={styles.priceMain}>
+                <PriceDisplay price={totalAmount} currency={currency} />
+                <span className={styles.priceTotalTag}>/ total</span>
+                <PriceBreakdown flight={flight} />
+              </p>
+              <span className={styles.priceNote}>VAT and taxes included</span>
             </div>
 
             <button

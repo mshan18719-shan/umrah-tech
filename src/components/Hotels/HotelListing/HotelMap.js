@@ -485,20 +485,74 @@ const normalizeImageSrc = (raw) => {
     return "http://" + raw.replace(/^\/+/, "");
 };
 
-const hasFreeCancellation = (hotel) => {
-    if (!hotel?.rooms?.length) return false;
-    const now = moment.utc();
-    for (const room of hotel.rooms) {
+/** Rate whose price matches listing min_price (same as HotelCard / path project). */
+const getQuotedRate = (hotel) => {
+    const minPrice = Number(hotel?.metadata?.min_price);
+    let cheapest = null;
+
+    for (const room of hotel?.rooms || []) {
         for (const rate of room?.rates || []) {
-            const policies = rate?.cancellation_policies;
-            if (!Array.isArray(policies) || policies.length === 0) continue;
-            const allDatesInFuture = policies.every(
-                (policy) => policy?.from && moment.utc(policy.from).isAfter(now)
-            );
-            if (allDatesInFuture) return true;
+            const price = Number(rate?.price);
+            if (!Number.isFinite(price)) continue;
+
+            if (Number.isFinite(minPrice) && Math.abs(price - minPrice) < 0.01) {
+                return rate;
+            }
+
+            if (cheapest === null || price < Number(cheapest.price)) {
+                cheapest = rate;
+            }
         }
     }
-    return false;
+
+    return cheapest;
+};
+
+const rateHasBreakfast = (rate) => {
+    const board = rate?.board_name?.toLowerCase?.() || "";
+    return (
+        board.includes("breakfast") ||
+        board.includes("bed and breakfast") ||
+        board.includes("bb")
+    );
+};
+
+const getQuotedCancellation = (rate, displayCurrency, rates) => {
+    const policies = rate?.cancellation_policies;
+    if (!Array.isArray(policies) || policies.length === 0) {
+        return { message: "Non-refundable", type: "non-refundable" };
+    }
+
+    const sorted = [...policies].sort(
+        (a, b) => moment.utc(a.from).valueOf() - moment.utc(b.from).valueOf()
+    );
+    const now = moment.utc();
+    const allDatesInFuture = sorted.every((policy) =>
+        moment.utc(policy.from).isAfter(now)
+    );
+
+    if (allDatesInFuture) {
+        return { message: "Free Cancellation", type: "free" };
+    }
+
+    const passedPolicies = sorted.filter(
+        (policy) => !moment.utc(policy.from).isAfter(now)
+    );
+    const currentPolicy = passedPolicies[passedPolicies.length - 1];
+    if (!currentPolicy || currentPolicy.amount == null) {
+        return { message: "Non-refundable", type: "non-refundable" };
+    }
+
+    const converted = ConvertPrice(
+        currentPolicy.amount,
+        rate?.currency,
+        displayCurrency,
+        rates
+    );
+    return {
+        message: `Cancellation fee: ${converted.newcurrency} ${converted.newprice}`,
+        type: "fee",
+    };
 };
 
 const containerStyle = { width: "100%", height: "100%" };
@@ -832,7 +886,11 @@ function MapListCard({
         hotel?.metadata?.stars && !isNaN(hotel.metadata.stars)
             ? Math.round(Number(hotel.metadata.stars))
             : 0;
-    const freeCancel = hasFreeCancellation(hotel);
+    const quotedRate = getQuotedRate(hotel);
+    const quotedCancellation = quotedRate
+        ? getQuotedCancellation(quotedRate, currency, rates)
+        : null;
+    const showBreakfast = quotedRate ? rateHasBreakfast(quotedRate) : false;
 
     useEffect(() => {
         if (isSelected && cardRef.current) {
@@ -902,10 +960,26 @@ function MapListCard({
                     <span>{detail?.address || "Address loading…"}</span>
                 </p>
 
-                {freeCancel && (
-                    <span className={styles.listCardCancel}>
-                        <FaCheck size={10} /> Free Cancellation
-                    </span>
+                {(showBreakfast || quotedCancellation) && (
+                    <div className={styles.listCardRateBadges}>
+                        {showBreakfast && (
+                            <span className={`${styles.listCardCancel} ${styles.listCardBreakfast}`}>
+                                Breakfast Included
+                            </span>
+                        )}
+                        {quotedCancellation && (
+                            <span
+                                className={`${styles.listCardCancel} ${
+                                    quotedCancellation.type === "free"
+                                        ? ""
+                                        : styles.listCardCancelMuted
+                                }`}
+                            >
+                                {quotedCancellation.type === "free" && <FaCheck size={10} />}
+                                {quotedCancellation.message}
+                            </span>
+                        )}
+                    </div>
                 )}
 
                 <div className={styles.listCardBottom}>
@@ -971,7 +1045,11 @@ function MapFloatingCard({ hotel, onClose, check_in, check_out, nights, currency
             ? Math.round(Number(hotel.metadata.stars))
             : 0;
 
-    const freeCancel = hasFreeCancellation(hotel);
+    const quotedRate = getQuotedRate(hotel);
+    const quotedCancellation = quotedRate
+        ? getQuotedCancellation(quotedRate, currency, rates)
+        : null;
+    const showBreakfast = quotedRate ? rateHasBreakfast(quotedRate) : false;
 
     const shortLocation = detail?.address
         ? detail.address.split(",").slice(0, 2).join(",").trim()
@@ -1038,10 +1116,30 @@ function MapFloatingCard({ hotel, onClose, check_in, check_out, nights, currency
 
                 <div className={styles.floatingCardBottom}>
                     <div className={styles.floatingCardLeft}>
-                        {freeCancel && (
-                            <span className={styles.floatingCardCancel}>
-                                <FaCheck size={10} /> Free Cancellation
-                            </span>
+                        {(showBreakfast || quotedCancellation) && (
+                            <div className={styles.floatingCardRateBadges}>
+                                {showBreakfast && (
+                                    <span
+                                        className={`${styles.floatingCardCancel} ${styles.floatingCardBreakfast}`}
+                                    >
+                                        Breakfast Included
+                                    </span>
+                                )}
+                                {quotedCancellation && (
+                                    <span
+                                        className={`${styles.floatingCardCancel} ${
+                                            quotedCancellation.type === "free"
+                                                ? ""
+                                                : styles.floatingCardCancelMuted
+                                        }`}
+                                    >
+                                        {quotedCancellation.type === "free" && (
+                                            <FaCheck size={10} />
+                                        )}
+                                        {quotedCancellation.message}
+                                    </span>
+                                )}
+                            </div>
                         )}
                         <Link
                             target="_blank"

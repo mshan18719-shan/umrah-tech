@@ -1,5 +1,6 @@
 'use client'
 import PriceDisplay from '@/components/Currency/PriceDisplay';
+import { ConvertPrice } from '@/components/Currency/ConvertPrice';
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useState } from 'react'
@@ -9,6 +10,7 @@ import { useSearchParams } from "next/navigation";
 import moment from 'moment';
 import { FaCheck, FaHome, FaStar } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
+import { useCurrency } from '@/util/currency';
 
 const normalizeImageSrc = (raw) => {
   if (!raw) return '/images/hotelloadimg.jpg';
@@ -34,25 +36,83 @@ const ProviderShortNames = (encodedProvider) => {
   return encodeProvider(encodedProvider).toLowerCase();
 };
 
-/** Same rule as HotelMap: free cancel if any rate has policies whose dates are all still in the future. */
-const hasFreeCancellation = (hotel) => {
-  if (!hotel?.rooms?.length) return false;
-  const now = moment.utc();
-  for (const room of hotel.rooms) {
+/** Rate whose price matches the listing min_price (the room price shown on the card). */
+const getQuotedRate = (hotel) => {
+  const minPrice = Number(hotel?.metadata?.min_price);
+  let cheapest = null;
+
+  for (const room of hotel?.rooms || []) {
     for (const rate of room?.rates || []) {
-      const policies = rate?.cancellation_policies;
-      if (!Array.isArray(policies) || policies.length === 0) continue;
-      const allDatesInFuture = policies.every(
-        (policy) => policy?.from && moment.utc(policy.from).isAfter(now)
-      );
-      if (allDatesInFuture) return true;
+      const price = Number(rate?.price);
+      if (!Number.isFinite(price)) continue;
+
+      if (Number.isFinite(minPrice) && Math.abs(price - minPrice) < 0.01) {
+        return rate;
+      }
+
+      if (cheapest === null || price < Number(cheapest.price)) {
+        cheapest = rate;
+      }
     }
   }
-  return false;
+
+  return cheapest;
+};
+
+const rateHasBreakfast = (rate) => {
+  const board = rate?.board_name?.toLowerCase?.() || '';
+  return (
+    board.includes('breakfast') ||
+    board.includes('bed and breakfast') ||
+    board.includes('bb')
+  );
+};
+
+/** Same cancellation rules as path project / RoomList: free / fee amount / non-refundable. */
+const getQuotedCancellation = (rate, displayCurrency, rates) => {
+  const policies = rate?.cancellation_policies;
+  if (!Array.isArray(policies) || policies.length === 0) {
+    return { message: 'Non-refundable', type: 'non-refundable' };
+  }
+
+  const sorted = [...policies].sort(
+    (a, b) => moment.utc(a.from).valueOf() - moment.utc(b.from).valueOf()
+  );
+  const now = moment.utc();
+  const allDatesInFuture = sorted.every((policy) =>
+    moment.utc(policy.from).isAfter(now)
+  );
+
+  if (allDatesInFuture) {
+    return {
+      message: 'Free Cancellation',
+      type: 'free',
+    };
+  }
+
+  const passedPolicies = sorted.filter(
+    (policy) => !moment.utc(policy.from).isAfter(now)
+  );
+  const currentPolicy = passedPolicies[passedPolicies.length - 1];
+  if (!currentPolicy || currentPolicy.amount == null) {
+    return { message: 'Non-refundable', type: 'non-refundable' };
+  }
+
+  const converted = ConvertPrice(
+    currentPolicy.amount,
+    rate?.currency,
+    displayCurrency,
+    rates
+  );
+  return {
+    message: `Cancellation fee: ${converted.newcurrency} ${converted.newprice}`,
+    type: 'fee',
+  };
 };
 
 function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
   const [imgFallback, setImgFallback] = useState(false);
+  const { currency, rates } = useCurrency();
 
   const { data: detail } = useQuery({
     queryKey: ['hotelDetail', item.id, item.provider, check_in, check_out],
@@ -106,7 +166,11 @@ function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
   const visibleAmenities = facilities.slice(0, 3);
   const moreAmenities = Math.max(facilities.length - visibleAmenities.length, 0);
   const nightsLabel = daysDiff > 1 ? `${daysDiff} nights` : `${daysDiff || 1} night`;
-  const freeCancel = hasFreeCancellation(item);
+  const quotedRate = getQuotedRate(item);
+  const quotedCancellation = quotedRate
+    ? getQuotedCancellation(quotedRate, currency, rates)
+    : null;
+  const showBreakfast = quotedRate ? rateHasBreakfast(quotedRate) : false;
 
   return (
     <div className="col-12 col-md-6 mb-3">
@@ -180,10 +244,24 @@ function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
               </p>
             )}
 
-            {freeCancel && (
-              <span className="htc-card__cancel">
-                <FaCheck size={10} aria-hidden="true" /> Free Cancellation
-              </span>
+            {(showBreakfast || quotedCancellation) && (
+              <div className="htc-card__rate-badges">
+                {showBreakfast && (
+                  <span className="htc-card__rate-badge htc-card__rate-badge--breakfast">
+                    Breakfast Included
+                  </span>
+                )}
+                {quotedCancellation && (
+                  <span
+                    className={`htc-card__rate-badge htc-card__rate-badge--cancel htc-card__rate-badge--cancel-${quotedCancellation.type}`}
+                  >
+                    {quotedCancellation.type === 'free' && (
+                      <FaCheck size={10} aria-hidden="true" />
+                    )}
+                    {quotedCancellation.message}
+                  </span>
+                )}
+              </div>
             )}
 
             {detail ? (

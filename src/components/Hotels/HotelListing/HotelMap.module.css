@@ -567,6 +567,14 @@
   color: #7a8290;
 }
 
+.listCardRateBadges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
 .listCardCancel {
   display: inline-flex;
   align-items: center;
@@ -574,7 +582,14 @@
   font-size: 11px;
   font-weight: 650;
   color: #1f7a5a;
-  margin-top: 2px;
+}
+
+.listCardBreakfast {
+  color: #1b3b6f;
+}
+
+.listCardCancelMuted {
+  color: #b45309;
 }
 
 .listCardCta {
@@ -900,6 +915,13 @@
   min-width: 0;
 }
 
+.floatingCardRateBadges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 .floatingCardCancel {
   display: inline-flex;
   align-items: center;
@@ -907,6 +929,14 @@
   font-size: 12px;
   font-weight: 650;
   color: #1f7a5a;
+}
+
+.floatingCardBreakfast {
+  color: #1b3b6f;
+}
+
+.floatingCardCancelMuted {
+  color: #b45309;
 }
 
 .floatingCardCta {

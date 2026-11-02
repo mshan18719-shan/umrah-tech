@@ -1,9 +1,18 @@
 .flightCardList {
     width: 100%;
+    min-width: 0;
+    overflow: visible;
+}
+
+.flightCardList:has(.priceBreakdownActive),
+.flightCardList:has(.priceBreakdownOpen) {
+    position: relative;
+    z-index: 5;
 }
 
 .flightCard {
     overflow: hidden;
+    position: relative;
     background: #fff;
     border: 1px solid rgba(27, 59, 111, 0.12);
     border-radius: 14px;
@@ -11,6 +20,12 @@
     margin-bottom: 1rem;
     box-shadow: 0 27px 59px 0 rgba(0, 0, 0, 0.1);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flightCard:has(.priceBreakdownOpen),
+.flightCard.priceBreakdownActive {
+    overflow: visible;
+    z-index: 20;
 }
 
 .flightCard:hover {
@@ -298,6 +313,7 @@
 }
 
 .priceBlock {
+    position: relative;
     text-align: right;
     min-width: 0;
 }
@@ -311,11 +327,23 @@
 }
 
 .priceMain {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.28rem;
     font-size: 1.2rem;
     font-weight: 700;
     color: #2a9d8f;
     line-height: 1.15;
     margin: 0;
+}
+
+.priceTotalTag {
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: #6b7a99;
+    line-height: 1;
 }
 
 .priceNote,
@@ -325,6 +353,150 @@
     color: #6b7a99;
     font-weight: 500;
     margin-top: 0.12rem;
+}
+
+.priceBreakdownWrap {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.priceInfoBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    margin: -0.25rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #1b3b6f;
+    cursor: pointer;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.priceInfoBtn svg {
+    font-size: 0.85rem;
+}
+
+.priceInfoBtn:hover,
+.priceBreakdownOpen .priceInfoBtn {
+    color: #3471d5;
+}
+
+.priceBreakdownPanel {
+    position: absolute;
+    right: 0;
+    left: auto;
+    top: auto;
+    bottom: calc(100% + 10px);
+    z-index: 30;
+    width: min(300px, calc(100vw - 2rem));
+    min-width: min(260px, calc(100vw - 2rem));
+    max-width: min(320px, calc(100vw - 1.5rem));
+    box-sizing: border-box;
+    background: #fff;
+    border: 1px solid rgba(27, 59, 111, 0.14);
+    border-radius: 12px;
+    box-shadow: 0 14px 36px rgba(27, 59, 111, 0.18);
+    text-align: left;
+    overflow: hidden;
+}
+
+.priceBreakdownHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.7rem 0.85rem;
+    background: #1b3b6f;
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.priceBreakdownClose {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+}
+
+.priceBreakdownClose:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.priceBreakdownMeta {
+    margin: 0;
+    padding: 0.55rem 0.85rem 0.2rem;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #6b7a99;
+}
+
+.priceBreakdownBody {
+    padding: 0.25rem 0.85rem 0.55rem;
+}
+
+.priceBreakdownGroup + .priceBreakdownGroup {
+    margin-top: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.priceBreakdownGroupHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #0d1e3d;
+}
+
+.priceBreakdownRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.28rem;
+    padding-left: 0.55rem;
+    font-size: 0.76rem;
+    color: #6b7a99;
+}
+
+.priceBreakdownFooter {
+    padding: 0.65rem 0.85rem 0.8rem;
+    border-top: 2px solid #e8edf5;
+}
+
+.priceBreakdownTotal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0d1e3d;
+}
+
+.priceBreakdownNote {
+    margin: 0.25rem 0 0;
+    font-size: 0.66rem;
+    color: #6b7a99;
 }
 
 .selectBtn {
@@ -496,7 +668,16 @@
     }
 
     .priceMain {
+        justify-content: flex-start;
         font-size: 1.1rem;
+    }
+
+    .priceBreakdownPanel {
+        left: 0;
+        right: auto;
+        bottom: calc(100% + 10px);
+        width: min(280px, calc(100vw - 2rem));
+        min-width: min(240px, calc(100vw - 2rem));
     }
 
     .selectBtn {
@@ -525,5 +706,14 @@
 
     .priceMain {
         font-size: 1rem;
+    }
+
+    .priceTotalTag {
+        font-size: 0.68rem;
+    }
+
+    .priceBreakdownPanel {
+        width: min(260px, calc(100vw - 1.25rem));
+        min-width: 0;
     }
 }
