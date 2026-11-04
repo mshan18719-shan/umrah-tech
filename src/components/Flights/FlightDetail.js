@@ -362,7 +362,7 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
                             <span className={styles.endpointCode}>{firstSegment.departure.airport_code}</span>
                         </div>
                         <div className={styles.endpointTime}>
-                            {moment(firstSegment.departure.datetime).format("DD MMM YYYY, hh:mm A")}
+                            {moment(firstSegment.departure.datetime).format("DD MMM YYYY, HH:mm")}
                         </div>
                         <div className={styles.endpointMeta}>
                             {getAirportMeta(firstSegment.departure.airport_code, firstSegment.departure.airport_code)}
@@ -398,7 +398,7 @@ export default function FlightDetail({ flightdata, outlineBtn, showFlights, onCl
                             </span>
                         </div>
                         <div className={styles.endpointTime}>
-                            {moment(lastSegment.arrival.datetime).format("DD MMM YYYY, hh:mm A")}
+                            {moment(lastSegment.arrival.datetime).format("DD MMM YYYY, HH:mm")}
                         </div>
                         <div className={styles.endpointMeta}>
                             {getAirportMeta(lastSegment.arrival.airport_code, lastSegment.arrival.airport_code)}

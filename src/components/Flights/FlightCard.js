@@ -337,7 +337,7 @@ function FlightCardItem({
                   <div className={styles.routeCol}>
                     <div className={styles.flightEndpoint}>
                       <div className={styles.flightTime}>
-                        {moment(firstSegment.departure.datetime).format("LT")}
+                        {moment(firstSegment.departure.datetime).format("HH:mm")}
                       </div>
                       <div className={styles.airportCode}>
                         {firstSegment.departure.airport_code}
@@ -363,7 +363,7 @@ function FlightCardItem({
 
                     <div className={styles.flightEndpointRight}>
                       <div className={styles.flightTime}>
-                        {moment(lastSegment.arrival.datetime).format("LT")}
+                        {moment(lastSegment.arrival.datetime).format("HH:mm")}
                         {dayDiff > 0 && (
                           <sup className={styles.dayOffset}>+{dayDiff}</sup>
                         )}

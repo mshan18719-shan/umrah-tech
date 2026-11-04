@@ -148,8 +148,8 @@ export default function Search() {
 
               <li className="nav-item" role="presentation">
                 <button className={`nav-link ${activeTab === 'ai-tab-pane' ? 'active' : ''} h-100`} id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-tab-pane" type="button" role="tab" aria-controls="ai-tab-pane" aria-selected={activeTab === 'ai-tab-pane'} onClick={() => handleTabChange('ai-tab-pane')}>
-                  <HiOutlineSparkles color='#ffffff' size='25' />
-                  {' '}AI Mode
+                  <HiOutlineSparkles size={18} aria-hidden="true" />
+                  AI Mode
                 </button>
               </li>
             </ul>
@@ -199,7 +199,7 @@ export default function Search() {
 
               <li className="nav-item" role="presentation">
                 <button className={`nav-link ${activeTab === 'ai-tab-pane' ? 'active' : ''} h-100 ${styles.mobileTab}`} id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-tab-pane" type="button" role="tab" aria-controls="ai-tab-pane" aria-selected={activeTab === 'ai-tab-pane'} onClick={() => handleTabChange('ai-tab-pane')}>
-                  <HiOutlineSparkles color='#0b659b' size='40px' />
+                  <HiOutlineSparkles size={28} aria-hidden="true" />
                   <span className={styles.tabLabel}>AI Mode</span>
                 </button>
               </li>
@@ -242,7 +242,7 @@ export default function Search() {
                 <UmrahGetAway />
               </Suspense>
             </div> */}
-            <div className={`tab-pane fade ${activeTab === 'ai-tab-pane' ? 'show active' : ''}`} id="ai-tab-pane" role="tabpanel" aria-labelledby="ai-tab">
+            <div className={`tab-pane fade ${activeTab === 'ai-tab-pane' ? 'show active' : ''} m-2`} id="ai-tab-pane" role="tabpanel" aria-labelledby="ai-tab">
               <Suspense fallback={<div></div>}>
                 <AiSearch categoryList={categories} />
               </Suspense>

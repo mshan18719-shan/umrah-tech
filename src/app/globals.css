@@ -1803,7 +1803,20 @@ a {
 }
 
 .form-floating>label {
-    color: #9ca3af;
+    color: #4b5563;
+    font-weight: 550;
+}
+
+.form-floating>.form-control:not(:placeholder-shown)~label,
+.form-floating>.form-control:focus~label,
+.form-floating>.form-select~label {
+    color: #6b7a99;
+    font-weight: 600;
+}
+
+.form-floating>.form-control {
+    color: #111827;
+    font-weight: 600;
 }
 
 .tab-content .form-floating {

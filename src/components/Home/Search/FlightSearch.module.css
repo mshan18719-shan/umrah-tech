@@ -6,6 +6,33 @@
     min-width: 350px !important;
     z-index: 1000;
 }
+
+/* Mobile From/To floating fields — darker labels for readability */
+.mobileAirportField {
+    background: #f4f7fc;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.mobileAirportInput {
+    background: transparent !important;
+    color: #111827 !important;
+    font-weight: 650 !important;
+    font-size: 16px !important;
+    min-height: 58px;
+}
+
+.mobileAirportLabel {
+    color: #374151 !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+}
+
+.mobileAirportField:has(.mobileAirportInput:not(:placeholder-shown)) .mobileAirportLabel,
+.mobileAirportField:has(.mobileAirportInput:focus) .mobileAirportLabel {
+    color: #6b7a99 !important;
+    font-weight: 600 !important;
+}
 .clearButton {
     position: absolute;
     right: 12px;
@@ -87,7 +114,7 @@
     font-size: 10px;
     font-weight: 600;
     color: #1B3B6F;
-    background-color: #e8f5e9;
+    background-color: rgba(27, 59, 111, 0.1);
     border-radius: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -208,7 +235,7 @@
 
 /* Selected option highlight */
 .airportOption[data-selected="true"] {
-    background-color: #e8f5e9;
+    background-color: rgba(27, 59, 111, 0.08);
 }
 
 /* Empty state */

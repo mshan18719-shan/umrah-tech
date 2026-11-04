@@ -98,7 +98,7 @@ export default function ActivitySearch() {
     setSelectedLocation(destination);
     setFormData((prev) => ({
       ...prev,
-      name: destination.value,
+      name: destination.label,
     }));
     setShowSearchDropdown(false);
     setGooglePredictions([]);

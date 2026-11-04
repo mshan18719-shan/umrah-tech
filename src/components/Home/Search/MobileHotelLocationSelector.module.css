@@ -117,9 +117,9 @@
 }
 
 .searchInput:focus {
-    border-color: #28a745;
+    border-color: #1B3B6F;
     background-color: #ffffff;
-    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+    box-shadow: 0 0 0 3px rgba(27, 59, 111, 0.12);
 }
 
 .clearSearchButton {
@@ -184,7 +184,7 @@
 
 .sectionIcon {
     font-size: 14px;
-    color: #28a745;
+    color: #1B3B6F;
 }
 
 /* Location Option */
@@ -204,19 +204,19 @@
 }
 
 .selectedLocation {
-    background-color: #e8f5e9 !important;
-    border-left: 3px solid #28a745;
+    background-color: rgba(27, 59, 111, 0.08) !important;
+    border-left: 3px solid #1B3B6F;
     padding-left: 17px;
 }
 
 .selectedLocation:active {
-    background-color: #dcedc8 !important;
+    background-color: rgba(27, 59, 111, 0.14) !important;
 }
 
 .checkIcon {
     margin-left: auto;
     padding-left: 12px;
-    color: #28a745;
+    color: #1B3B6F;
     font-size: 20px;
     display: flex;
     align-items: center;
@@ -241,11 +241,11 @@
 }
 
 .selectedLocation .locationIcon {
-    color: #28a745;
+    color: #1B3B6F;
 }
 
 .selectedLocation .locationIconWrapper {
-    background-color: #c8e6c9;
+    background-color: rgba(27, 59, 111, 0.12);
 }
 
 .locationDetails {

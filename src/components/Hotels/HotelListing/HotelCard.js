@@ -171,6 +171,8 @@ function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
     ? getQuotedCancellation(quotedRate, currency, rates)
     : null;
   const showBreakfast = quotedRate ? rateHasBreakfast(quotedRate) : false;
+  // Listing cards: only surface free cancellation (hide fee / non-refundable)
+  const showFreeCancellation = quotedCancellation?.type === 'free';
 
   return (
     <div className="col-12 col-md-6 mb-3">
@@ -244,21 +246,17 @@ function HotelCardItem({ item, check_in, check_out, daysDiff, allHotels }) {
               </p>
             )}
 
-            {(showBreakfast || quotedCancellation) && (
+            {(showBreakfast || showFreeCancellation) && (
               <div className="htc-card__rate-badges">
                 {showBreakfast && (
                   <span className="htc-card__rate-badge htc-card__rate-badge--breakfast">
                     Breakfast Included
                   </span>
                 )}
-                {quotedCancellation && (
-                  <span
-                    className={`htc-card__rate-badge htc-card__rate-badge--cancel htc-card__rate-badge--cancel-${quotedCancellation.type}`}
-                  >
-                    {quotedCancellation.type === 'free' && (
-                      <FaCheck size={10} aria-hidden="true" />
-                    )}
-                    {quotedCancellation.message}
+                {showFreeCancellation && (
+                  <span className="htc-card__rate-badge htc-card__rate-badge--cancel htc-card__rate-badge--cancel-free">
+                    <FaCheck size={10} aria-hidden="true" />
+                    Free Cancellation
                   </span>
                 )}
               </div>

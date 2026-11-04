@@ -891,6 +891,8 @@ function MapListCard({
         ? getQuotedCancellation(quotedRate, currency, rates)
         : null;
     const showBreakfast = quotedRate ? rateHasBreakfast(quotedRate) : false;
+    // Listing cards: only surface free cancellation (hide fee / non-refundable)
+    const showFreeCancellation = quotedCancellation?.type === "free";
 
     useEffect(() => {
         if (isSelected && cardRef.current) {
@@ -960,23 +962,17 @@ function MapListCard({
                     <span>{detail?.address || "Address loading…"}</span>
                 </p>
 
-                {(showBreakfast || quotedCancellation) && (
+                {(showBreakfast || showFreeCancellation) && (
                     <div className={styles.listCardRateBadges}>
                         {showBreakfast && (
                             <span className={`${styles.listCardCancel} ${styles.listCardBreakfast}`}>
                                 Breakfast Included
                             </span>
                         )}
-                        {quotedCancellation && (
-                            <span
-                                className={`${styles.listCardCancel} ${
-                                    quotedCancellation.type === "free"
-                                        ? ""
-                                        : styles.listCardCancelMuted
-                                }`}
-                            >
-                                {quotedCancellation.type === "free" && <FaCheck size={10} />}
-                                {quotedCancellation.message}
+                        {showFreeCancellation && (
+                            <span className={styles.listCardCancel}>
+                                <FaCheck size={10} />
+                                Free Cancellation
                             </span>
                         )}
                     </div>
@@ -1050,6 +1046,8 @@ function MapFloatingCard({ hotel, onClose, check_in, check_out, nights, currency
         ? getQuotedCancellation(quotedRate, currency, rates)
         : null;
     const showBreakfast = quotedRate ? rateHasBreakfast(quotedRate) : false;
+    // Listing cards: only surface free cancellation (hide fee / non-refundable)
+    const showFreeCancellation = quotedCancellation?.type === "free";
 
     const shortLocation = detail?.address
         ? detail.address.split(",").slice(0, 2).join(",").trim()
@@ -1116,7 +1114,7 @@ function MapFloatingCard({ hotel, onClose, check_in, check_out, nights, currency
 
                 <div className={styles.floatingCardBottom}>
                     <div className={styles.floatingCardLeft}>
-                        {(showBreakfast || quotedCancellation) && (
+                        {(showBreakfast || showFreeCancellation) && (
                             <div className={styles.floatingCardRateBadges}>
                                 {showBreakfast && (
                                     <span
@@ -1125,18 +1123,10 @@ function MapFloatingCard({ hotel, onClose, check_in, check_out, nights, currency
                                         Breakfast Included
                                     </span>
                                 )}
-                                {quotedCancellation && (
-                                    <span
-                                        className={`${styles.floatingCardCancel} ${
-                                            quotedCancellation.type === "free"
-                                                ? ""
-                                                : styles.floatingCardCancelMuted
-                                        }`}
-                                    >
-                                        {quotedCancellation.type === "free" && (
-                                            <FaCheck size={10} />
-                                        )}
-                                        {quotedCancellation.message}
+                                {showFreeCancellation && (
+                                    <span className={styles.floatingCardCancel}>
+                                        <FaCheck size={10} />
+                                        Free Cancellation
                                     </span>
                                 )}
                             </div>

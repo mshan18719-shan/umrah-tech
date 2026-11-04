@@ -137,9 +137,9 @@
 }
 
 .searchInput:focus {
-    border-color: #02245d;
+    border-color: #1B3B6F;
     background-color: #ffffff;
-    box-shadow: 0 0 0 3px rgba(44, 56, 167, 0.1);
+    box-shadow: 0 0 0 3px rgba(27, 59, 111, 0.12);
 }
 
 .clearSearchButton {
@@ -212,8 +212,8 @@
     padding: 4px 10px;
     font-size: 11px;
     font-weight: 600;
-    color: #28a745;
-    background-color: #e8f5e9;
+    color: #1B3B6F;
+    background-color: rgba(27, 59, 111, 0.1);
     border-radius: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -235,8 +235,8 @@
 }
 
 .airportOption.selected {
-    background-color: #f0f4f8;
-    border-left: 4px solid #02245d;
+    background-color: rgba(27, 59, 111, 0.08);
+    border-left: 4px solid #1B3B6F;
     padding-left: 16px;
 }
 
@@ -253,7 +253,7 @@
 }
 
 .airportOption.selected .airportIconWrapper {
-    background-color: #c8e6c9;
+    background-color: rgba(27, 59, 111, 0.12);
 }
 
 .airportIcon {
@@ -262,7 +262,7 @@
 }
 
 .airportOption.selected .airportIcon {
-    color: #28a745;
+    color: #1B3B6F;
 }
 
 .airportDetails {
@@ -292,7 +292,7 @@
 }
 
 .airportOption.selected .airportCode {
-    color: #28a745;
+    color: #1B3B6F;
 }
 
 .airportLocation {
@@ -310,7 +310,7 @@
 }
 
 .checkmark {
-    color: #28a745;
+    color: #1B3B6F;
     font-size: 22px;
     animation: checkmarkPop 0.3s ease;
 }

@@ -67,7 +67,7 @@ const hasFreeCancellation = (item, selectedDate) => {
   const { cancel_policy, cancellation_policies } = cancellationPolicy;
   if (cancel_policy === 'non-refundable') return false;
   if (cancel_policy !== 'refundable') return false;
-  if (!cancellation_policies?.length) return true;
+  if (!cancellation_policies?.length) return false;
 
   const activityDate = moment(selectedDate);
   if (!activityDate.isValid()) return false;
@@ -322,7 +322,7 @@ function Main() {
 
     // Fresh search URL only — drop any leftover filter query params
     const params = new URLSearchParams();
-    params.set('city', selectedLocation.value);
+    params.set('city', selectedLocation.label);
     if (selectedLocation.country) {
       params.set('country', selectedLocation.country);
     }

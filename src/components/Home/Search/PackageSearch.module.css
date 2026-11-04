@@ -23,9 +23,15 @@
   min-width: 0;
 }
 
+.categorySelect::placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+  font-weight: 550;
+}
+
 .categorySelectEmpty {
-  color: #9ca3af;
-  font-weight: 500;
+  color: #4b5563;
+  font-weight: 550;
   font-size: 15px;
 }
 
@@ -57,9 +63,15 @@
   min-width: 0;
 }
 
+.listingSelect::placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+  font-weight: 550;
+}
+
 .listingSelectEmpty {
-  color: #9ca3af;
-  font-weight: 500;
+  color: #4b5563;
+  font-weight: 550;
 }
 
 .listingSelect:focus {

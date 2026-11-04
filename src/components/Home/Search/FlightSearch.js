@@ -162,12 +162,12 @@ addToRecentAirports,
     if (isMobile) {
         return (
             <>
-                <div className="form-floating w-100 position-relative">
+                <div className={`form-floating w-100 position-relative ${styles.mobileAirportField}`}>
                     <input
                         type="text"
                         id="floatingInput"
                         style={{ paddingLeft: '12px', border: 'none', paddingRight: value ? '40px' : '12px', cursor: 'pointer' }}
-                        className="form-control hotel-date-range border-0"
+                        className={`form-control hotel-date-range border-0 ${styles.mobileAirportInput}`}
                         placeholder=" "
                         value={getAirportLabel(value)}
                         onClick={() => setDropdownOpen(true)}
@@ -183,7 +183,7 @@ addToRecentAirports,
                             <FaTimes />
                         </button>
                     )}
-                    <label style={{ paddingLeft: '12px' }} htmlFor="floatingInput">{label}</label>
+                    <label className={styles.mobileAirportLabel} style={{ paddingLeft: '12px' }} htmlFor="floatingInput">{label}</label>
                 </div>
 
                 <MobileAirportSelector

@@ -10,9 +10,9 @@
     --ai-surface: #f7f9fc;
 
     background: #ffffff;
-    border-radius: 0 24px 24px 24px;
-    padding: 1.25rem 1.35rem 1.15rem;
-    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+    border-radius: 28px;
+    padding: 0.95rem 1.15rem 0.85rem;
+    box-shadow: 0 25px 60px rgba(6, 20, 34, 0.35);
     position: relative;
     overflow: hidden;
     width: 100%;
@@ -26,7 +26,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     flex-wrap: wrap;
 }
 
@@ -149,11 +149,12 @@
     padding: 0;
     margin-bottom: 8px;
     line-height: 1.5;
-    min-height: 72px;
+    min-height: 56px;
 }
 
 .aiTextarea::placeholder {
-    color: #9ca3af;
+    color: #4b5563;
+    opacity: 1;
 }
 
 .aiInputActions {
@@ -332,17 +333,17 @@
 /* Tablet */
 @media (max-width: 991px) {
     .aiSearchContainer {
-        border-radius: 0 16px 16px 16px;
-        padding: 1.1rem 1.1rem 1rem;
+        border-radius: 22px;
+        padding: 0.9rem 1rem 0.8rem;
     }
 }
 
 /* Mobile */
 @media (max-width: 767px) {
     .aiSearchContainer {
-        border-radius: 0 16px 16px 16px;
-        padding: 0.95rem 0.85rem 0.9rem;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        border-radius: 22px;
+        padding: 0.85rem 0.85rem 0.75rem;
+        box-shadow: 0 16px 40px rgba(6, 20, 34, 0.3);
     }
 
     .aiSearchHeader {
@@ -376,7 +377,7 @@
 
     .aiTextarea {
         font-size: 14px;
-        min-height: 64px;
+        min-height: 52px;
     }
 
     .aiActionBtn,
@@ -396,8 +397,8 @@
 
 @media (max-width: 480px) {
     .aiSearchContainer {
-        padding: 0.85rem 0.7rem 0.8rem;
-        border-radius: 0 12px 12px 12px;
+        padding: 0.75rem 0.7rem 0.7rem;
+        border-radius: 18px;
     }
 
     .aiStatusBadge {
